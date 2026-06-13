@@ -1,0 +1,1047 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Toy Room v2</title>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+        "cannon-es": "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"
+      }
+    }
+  </script>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172121;
+      --muted: #5f6e69;
+      --paper: rgba(255, 250, 240, 0.82);
+      --line: rgba(23, 33, 33, 0.15);
+      --teal: #123238;
+      --aqua: #66cbd8;
+      --amber: #f0bc42;
+      --coral: #ef7758;
+      --leaf: #5e9c62;
+      --violet: #8c7ac0;
+      --shadow: 0 16px 44px rgba(18, 50, 56, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f6f2ea;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    #app {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      background:
+        linear-gradient(180deg, #fff4d8 0%, #ebf8f5 54%, #fbefe7 100%);
+    }
+
+    #stage {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    #stage.dragging {
+      cursor: grabbing;
+    }
+
+    #stage.pet-hover {
+      cursor: pointer;
+    }
+
+    .glass {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--paper);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .topbar {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      right: 14px;
+      z-index: 8;
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      pointer-events: none;
+    }
+
+    .brand {
+      min-width: 0;
+      padding: 9px 11px;
+      display: grid;
+      gap: 2px;
+      pointer-events: auto;
+    }
+
+    .brand strong {
+      font-size: 14px;
+      line-height: 1.1;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .brand span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 780;
+      white-space: nowrap;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      pointer-events: auto;
+      flex-wrap: wrap;
+    }
+
+    .model-pill,
+    .route-link,
+    .icon-button,
+    .agent-button,
+    .ability-button,
+    .force-button,
+    .mode-button {
+      min-height: 38px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.78);
+      color: var(--ink);
+      font-weight: 780;
+      line-height: 1;
+    }
+
+    .model-pill,
+    .route-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0 11px;
+      font-size: 12px;
+      text-decoration: none;
+      white-space: nowrap;
+    }
+
+    .model-pill.active {
+      border-color: rgba(18, 50, 56, 0.2);
+      background: rgba(102, 203, 216, 0.38);
+      color: var(--teal);
+    }
+
+    .icon-button,
+    .mode-button,
+    .ability-button,
+    .force-button,
+    .agent-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 0 10px;
+      cursor: pointer;
+      transition: transform 150ms ease, background 150ms ease, border-color 150ms ease;
+    }
+
+    .icon-button {
+      width: 40px;
+      padding: 0;
+    }
+
+    .icon-button:hover,
+    .mode-button:hover,
+    .ability-button:hover,
+    .force-button:hover,
+    .agent-button:hover {
+      transform: translateY(-1px);
+      border-color: var(--teal);
+      background: #fff;
+    }
+
+    .icon-button.active,
+    .mode-button.active,
+    .ability-button.active,
+    .force-button.active,
+    .agent-button.active {
+      border-color: rgba(18, 50, 56, 0.24);
+      background: #fff;
+      box-shadow: 0 8px 18px rgba(18, 50, 56, 0.1);
+    }
+
+    [data-lucide] {
+      width: 18px;
+      height: 18px;
+      stroke-width: 2.2;
+      flex: none;
+    }
+
+    .agent-dock {
+      position: absolute;
+      left: 14px;
+      top: 82px;
+      z-index: 7;
+      width: min(312px, calc(100vw - 28px));
+      padding: 8px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px;
+      pointer-events: auto;
+    }
+
+    .agent-button {
+      min-width: 0;
+      justify-content: flex-start;
+      height: 40px;
+      font-size: 12px;
+      overflow: hidden;
+    }
+
+    .agent-swatch {
+      width: 12px;
+      height: 12px;
+      border-radius: 999px;
+      flex: none;
+      box-shadow: inset 0 0 0 1px rgba(23, 33, 33, 0.18);
+    }
+
+    .agent-button span:last-child {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    body[data-toybox-version="v3"] .agent-dock {
+      width: min(190px, calc(100vw - 28px));
+      grid-template-columns: minmax(0, 1fr);
+    }
+
+    body[data-toybox-version="v3"] .agent-button {
+      justify-content: center;
+    }
+
+    body[data-toybox-version="v3"] .side-panel {
+      width: min(342px, calc(100vw - 28px));
+    }
+
+    .ability-dock {
+      position: absolute;
+      left: 14px;
+      bottom: 92px;
+      z-index: 7;
+      width: min(312px, calc(100vw - 28px));
+      padding: 8px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 7px;
+      pointer-events: auto;
+    }
+
+    .ability-button {
+      min-width: 0;
+      height: 38px;
+      justify-content: flex-start;
+      font-size: 11px;
+      overflow: hidden;
+    }
+
+    .ability-button span {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .force-dock {
+      position: absolute;
+      left: 14px;
+      top: 190px;
+      z-index: 7;
+      width: min(312px, calc(100vw - 28px));
+      padding: 8px;
+      display: grid;
+      grid-template-columns: repeat(5, minmax(0, 1fr));
+      gap: 6px;
+      pointer-events: auto;
+    }
+
+    .force-button {
+      min-width: 0;
+      height: 36px;
+      padding: 0;
+      font-size: 0;
+    }
+
+    .force-button [data-lucide] {
+      width: 17px;
+      height: 17px;
+    }
+
+    .side-panel {
+      position: absolute;
+      right: 14px;
+      top: 82px;
+      bottom: 92px;
+      z-index: 7;
+      width: min(318px, calc(100vw - 28px));
+      padding: 11px;
+      display: grid;
+      grid-template-rows: auto auto auto auto auto auto auto minmax(0, 1fr);
+      gap: 10px;
+      pointer-events: auto;
+      overflow: auto;
+    }
+
+    .panel-section {
+      min-width: 0;
+      display: grid;
+      gap: 7px;
+    }
+
+    .section-title {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .readout {
+      min-height: 34px;
+      padding: 9px 10px;
+      border: 1px solid rgba(23, 33, 33, 0.1);
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.56);
+      font-size: 12px;
+      font-weight: 650;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .runtime-stack {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 6px;
+    }
+
+    .runtime-chip {
+      min-width: 0;
+      border: 1px solid rgba(23, 33, 33, 0.1);
+      border-radius: 7px;
+      padding: 6px 7px;
+      background: rgba(255, 255, 255, 0.5);
+      display: grid;
+      gap: 2px;
+    }
+
+    .runtime-chip strong {
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 900;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .runtime-chip span {
+      min-width: 0;
+      color: var(--ink);
+      font-size: 11px;
+      font-weight: 780;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .runtime-chip.ok {
+      border-color: rgba(94, 156, 98, 0.24);
+      background: rgba(94, 156, 98, 0.13);
+    }
+
+    .runtime-chip.warn {
+      border-color: rgba(240, 188, 66, 0.3);
+      background: rgba(240, 188, 66, 0.16);
+    }
+
+    .runtime-chip.off {
+      border-color: rgba(23, 33, 33, 0.1);
+      background: rgba(255, 255, 255, 0.42);
+    }
+
+    .judge-scorecard {
+      min-width: 0;
+      display: grid;
+      gap: 6px;
+    }
+
+    .judge-score-head {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .judge-score-head strong {
+      min-width: 0;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 900;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .judge-score-head span {
+      padding: 3px 6px;
+      border-radius: 6px;
+      background: rgba(18, 50, 56, 0.08);
+      color: var(--teal);
+      font-size: 10px;
+      font-weight: 900;
+      white-space: nowrap;
+    }
+
+    .judge-row {
+      min-width: 0;
+      border: 1px solid rgba(23, 33, 33, 0.1);
+      border-radius: 7px;
+      padding: 6px 7px;
+      background: rgba(255, 255, 255, 0.48);
+      display: grid;
+      grid-template-columns: 8px minmax(0, 1fr);
+      gap: 7px;
+      align-items: start;
+    }
+
+    .judge-row.ok {
+      border-color: rgba(94, 156, 98, 0.24);
+      background: rgba(94, 156, 98, 0.12);
+    }
+
+    .judge-row.warn {
+      border-color: rgba(240, 188, 66, 0.3);
+      background: rgba(240, 188, 66, 0.15);
+    }
+
+    .judge-dot {
+      width: 8px;
+      height: 8px;
+      margin-top: 4px;
+      border-radius: 999px;
+      background: rgba(23, 33, 33, 0.34);
+    }
+
+    .judge-row.ok .judge-dot {
+      background: var(--leaf);
+    }
+
+    .judge-row.warn .judge-dot {
+      background: var(--amber);
+    }
+
+    .ai-evidence {
+      min-width: 0;
+      display: grid;
+      gap: 6px;
+    }
+
+    .evidence-metrics {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 5px;
+    }
+
+    .evidence-metric {
+      min-width: 0;
+      border: 1px solid rgba(23, 33, 33, 0.1);
+      border-radius: 7px;
+      padding: 6px 6px;
+      background: rgba(255, 255, 255, 0.48);
+      display: grid;
+      gap: 1px;
+    }
+
+    .evidence-metric strong {
+      color: var(--teal);
+      font-size: 12px;
+      font-weight: 950;
+      line-height: 1;
+    }
+
+    .evidence-metric span {
+      min-width: 0;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 850;
+      text-transform: uppercase;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .judge-main {
+      min-width: 0;
+      display: grid;
+      gap: 2px;
+    }
+
+    .judge-label {
+      min-width: 0;
+      font-size: 11px;
+      font-weight: 900;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .judge-detail {
+      min-width: 0;
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 760;
+      line-height: 1.25;
+      overflow-wrap: anywhere;
+    }
+
+    .vision-board {
+      min-width: 0;
+      display: grid;
+      gap: 5px;
+    }
+
+    .vision-agent-row {
+      min-width: 0;
+      padding: 6px 7px;
+      border: 1px solid rgba(23, 33, 33, 0.1);
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.5);
+      display: grid;
+      grid-template-columns: 8px minmax(0, 1fr);
+      gap: 7px;
+      align-items: start;
+    }
+
+    .vision-agent-dot {
+      width: 8px;
+      height: 8px;
+      margin-top: 4px;
+      border-radius: 999px;
+      background: var(--aqua);
+      box-shadow: 0 0 0 3px rgba(102, 203, 216, 0.14);
+    }
+
+    .vision-agent-main {
+      min-width: 0;
+      display: grid;
+      gap: 2px;
+    }
+
+    .vision-agent-top {
+      min-width: 0;
+      display: flex;
+      justify-content: space-between;
+      gap: 7px;
+      align-items: baseline;
+    }
+
+    .vision-agent-name {
+      min-width: 0;
+      font-size: 11px;
+      font-weight: 900;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .vision-agent-plan {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 850;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .vision-agent-seen {
+      min-width: 0;
+      color: var(--ink);
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.28;
+      overflow-wrap: anywhere;
+    }
+
+    .sense-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+    }
+
+    .sense-tile {
+      min-width: 0;
+      display: grid;
+      gap: 5px;
+    }
+
+    .sense-tile canvas {
+      width: 100%;
+      aspect-ratio: 16 / 9;
+      border: 1px solid rgba(23, 33, 33, 0.12);
+      border-radius: 7px;
+      background: rgba(18, 50, 56, 0.1);
+      display: block;
+    }
+
+    .audio-bars {
+      height: 52px;
+      border: 1px solid rgba(23, 33, 33, 0.12);
+      border-radius: 7px;
+      padding: 6px;
+      display: flex;
+      align-items: end;
+      gap: 3px;
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    .audio-bar {
+      flex: 1;
+      min-width: 3px;
+      height: 100%;
+      transform-origin: bottom;
+      scale: 1 0.08;
+      border-radius: 999px;
+      background: var(--aqua);
+      transition: scale 100ms ease, background 100ms ease;
+    }
+
+    .audio-bar.hot {
+      background: var(--coral);
+    }
+
+    .brain-trace {
+      max-height: 168px;
+      overflow: auto;
+      display: grid;
+      gap: 6px;
+      align-content: start;
+      font-weight: 650;
+    }
+
+    .trace-row {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: 58px minmax(0, 1fr);
+      gap: 7px;
+      align-items: start;
+    }
+
+    .trace-label {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 850;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .trace-value {
+      min-width: 0;
+      color: var(--ink);
+      overflow-wrap: anywhere;
+    }
+
+    .trace-json {
+      padding: 6px 7px;
+      border-radius: 6px;
+      background: rgba(18, 50, 56, 0.08);
+      color: #123238;
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 10px;
+      line-height: 1.4;
+      white-space: pre-wrap;
+    }
+
+    .memory-list {
+      min-height: 0;
+      overflow: auto;
+      padding-right: 2px;
+      display: grid;
+      align-content: start;
+      gap: 7px;
+    }
+
+    .memory-chip {
+      border: 1px solid rgba(23, 33, 33, 0.1);
+      border-radius: 7px;
+      padding: 8px 9px;
+      background: rgba(255, 255, 255, 0.55);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .memory-chip strong {
+      display: block;
+      font-size: 12px;
+      font-weight: 850;
+      margin-bottom: 2px;
+    }
+
+    .speech {
+      position: absolute;
+      left: 50%;
+      bottom: 95px;
+      z-index: 6;
+      width: min(640px, calc(100vw - 32px));
+      min-height: 52px;
+      padding: 13px 16px;
+      display: grid;
+      align-items: center;
+      text-align: center;
+      font-size: clamp(14px, 1.7vw, 18px);
+      font-weight: 820;
+      line-height: 1.25;
+      opacity: 0;
+      transform: translateX(-50%);
+      translate: 0 8px;
+      pointer-events: none;
+      transition: opacity 180ms ease, translate 180ms ease;
+    }
+
+    .speech.visible {
+      opacity: 1;
+      translate: 0 0;
+    }
+
+    .composer {
+      position: absolute;
+      left: 50%;
+      bottom: 14px;
+      z-index: 8;
+      width: min(760px, calc(100vw - 28px));
+      min-height: 62px;
+      transform: translateX(-50%);
+      padding: 9px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      gap: 8px;
+      pointer-events: auto;
+    }
+
+    .composer input {
+      min-width: 0;
+      height: 44px;
+      border: 1px solid rgba(23, 33, 33, 0.12);
+      border-radius: 7px;
+      padding: 0 13px;
+      background: #fff;
+      color: var(--ink);
+      font-size: 14px;
+      font-weight: 650;
+      outline: none;
+    }
+
+    .composer input:focus {
+      border-color: var(--teal);
+    }
+
+    .send-button {
+      width: 46px;
+      height: 44px;
+      border: 0;
+      border-radius: 7px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      background: var(--teal);
+      cursor: pointer;
+    }
+
+    .effect-flash {
+      position: absolute;
+      inset: 0;
+      z-index: 4;
+      opacity: 0;
+      pointer-events: none;
+      background: rgba(141, 213, 229, 0.24);
+      transition: opacity 220ms ease;
+    }
+
+    .effect-flash.on {
+      opacity: 1;
+    }
+
+    .toast {
+      position: absolute;
+      left: 50%;
+      top: 80px;
+      z-index: 9;
+      max-width: min(420px, calc(100vw - 32px));
+      transform: translateX(-50%);
+      padding: 10px 12px;
+      color: #fff;
+      background: rgba(18, 50, 56, 0.9);
+      border-radius: 8px;
+      font-size: 12px;
+      font-weight: 760;
+      line-height: 1.35;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease, translate 180ms ease;
+    }
+
+    .toast.visible {
+      opacity: 1;
+      translate: 0 6px;
+    }
+
+    @media (min-width: 921px) {
+      .speech {
+        left: calc((100vw - 360px) / 2);
+        width: min(560px, calc(100vw - 408px));
+      }
+    }
+
+    @media (max-width: 920px) {
+      .topbar {
+        align-items: stretch;
+        flex-direction: column;
+        right: auto;
+        width: min(330px, calc(100vw - 28px));
+      }
+
+      .top-actions {
+        justify-content: flex-start;
+      }
+
+      .agent-dock {
+        top: 142px;
+      }
+
+      .force-dock {
+        top: 298px;
+        width: min(330px, calc(100vw - 28px));
+      }
+
+      .ability-dock {
+        bottom: 342px;
+        width: min(330px, calc(100vw - 28px));
+      }
+
+      .side-panel {
+        top: auto;
+        left: 14px;
+        right: 14px;
+        bottom: 86px;
+        width: auto;
+        max-height: 248px;
+        grid-template-columns: 1fr 1fr;
+        grid-template-rows: auto auto;
+      }
+
+      .brain-trace {
+        max-height: 92px;
+      }
+
+      .memory-list {
+        max-height: 106px;
+      }
+
+      .speech {
+        bottom: 154px;
+      }
+    }
+
+    @media (max-width: 680px) {
+      .agent-dock {
+        top: 172px;
+        grid-template-columns: minmax(0, 1fr);
+        width: min(184px, calc(100vw - 28px));
+      }
+
+      .agent-button {
+        height: 36px;
+      }
+
+      .side-panel {
+        display: none;
+      }
+
+      .ability-dock {
+        display: none;
+      }
+
+      .force-dock {
+        display: none;
+      }
+
+      .composer {
+        grid-template-columns: 1fr auto;
+      }
+
+      .mode-button {
+        grid-column: 1 / -1;
+        width: max-content;
+      }
+
+      .speech {
+        bottom: 126px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main id="app">
+    <canvas id="stage" aria-label="Toy Room v2 interactive physics stage"></canvas>
+    <div id="effectFlash" class="effect-flash"></div>
+
+    <nav class="topbar" aria-label="Toy Room v2 controls">
+      <div class="brand glass">
+        <strong>Toy Room v2</strong>
+        <span>MiniCPM vision-action toybox</span>
+      </div>
+      <div class="top-actions">
+        <span id="modelStatus" class="model-pill glass">PET LLM: checking</span>
+        <button id="gravityButton" class="icon-button glass" type="button" title="Flip gravity">
+          <i data-lucide="flip-vertical-2"></i>
+        </button>
+        <button id="autoButton" class="icon-button glass active" type="button" title="Autoplay">
+          <i data-lucide="bot"></i>
+        </button>
+        <button id="demoButton" class="icon-button glass" type="button" title="Run judge demo">
+          <i data-lucide="play"></i>
+        </button>
+        <button id="voiceButton" class="icon-button glass active" type="button" title="Mute agent voices">
+          <i data-lucide="volume-2"></i>
+        </button>
+        <button id="micButton" class="icon-button glass" type="button" title="Listen to room audio">
+          <i data-lucide="mic-off"></i>
+        </button>
+        <button id="rigButton" class="icon-button glass active" type="button" title="Toggle generated rig meshes">
+          <i data-lucide="bone"></i>
+        </button>
+        <button id="resetButton" class="icon-button glass" type="button" title="Reset room">
+          <i data-lucide="rotate-ccw"></i>
+        </button>
+        <a class="route-link glass" href="/pages">Pages</a>
+      </div>
+    </nav>
+
+    <section id="agentDock" class="agent-dock glass" aria-label="Agents">
+      <button class="agent-button active" type="button" data-agent="squeaky">
+        <span class="agent-swatch" style="background:#8db6bd"></span><span>Squeaky</span>
+      </button>
+      <button class="agent-button" type="button" data-agent="fire_boy">
+        <span class="agent-swatch" style="background:#ff684c"></span><span>Fire Boy</span>
+      </button>
+      <button class="agent-button" type="button" data-agent="shark_girl">
+        <span class="agent-swatch" style="background:#89d4e6"></span><span>Shark Girl</span>
+      </button>
+      <button class="agent-button" type="button" data-agent="electraica">
+        <span class="agent-swatch" style="background:#ffcc36"></span><span>Electraica</span>
+      </button>
+    </section>
+
+    <section id="abilityDock" class="ability-dock glass" aria-label="Active agent powers"></section>
+
+    <section id="forceDock" class="force-dock glass" aria-label="Active agent force controls"></section>
+
+    <aside class="side-panel glass" aria-label="Agent readouts">
+      <section class="panel-section">
+        <div class="section-title" id="perceptionTitle">Squeaky sees</div>
+        <div id="perceptionReadout" class="readout">quiet walls</div>
+      </section>
+
+      <section class="panel-section">
+        <div class="section-title">Agent loop</div>
+        <div id="agentReadout" class="readout">warming up</div>
+        <div id="modelMatrix" class="runtime-stack" aria-label="Runtime stack"></div>
+      </section>
+
+      <section class="panel-section">
+        <div class="section-title">Judge Scorecard</div>
+        <div id="judgeScorecard" class="judge-scorecard" aria-label="Hackathon readiness scorecard"></div>
+      </section>
+
+      <section class="panel-section">
+        <div class="section-title">AI Evidence</div>
+        <div id="aiEvidence" class="ai-evidence" aria-label="Trace-backed AI evidence"></div>
+      </section>
+
+      <section class="panel-section">
+        <div class="section-title">Agent Vision Board</div>
+        <div id="visionBoard" class="vision-board" aria-label="All agent local perception"></div>
+      </section>
+
+      <section class="panel-section">
+        <div class="sense-grid">
+          <div class="sense-tile">
+            <div class="section-title">Room</div>
+            <canvas id="userView"></canvas>
+          </div>
+          <div class="sense-tile">
+            <div class="section-title">Vision</div>
+            <canvas id="petView"></canvas>
+          </div>
+        </div>
+        <div id="audioBars" class="audio-bars" aria-label="Audio levels"></div>
+        <div id="balanceReadout" class="readout">100% / 0deg / 0kg</div>
+      </section>
+
+      <section class="panel-section">
+        <div class="section-title">Brain Trace</div>
+        <div id="brainTrace" class="brain-trace readout">waiting for first action</div>
+      </section>
+
+      <section class="panel-section">
+        <div class="section-title">Memory</div>
+        <div id="memoryList" class="memory-list"></div>
+      </section>
+    </aside>
+
+    <div id="speech" class="speech glass"></div>
+    <div id="toast" class="toast"></div>
+
+    <form id="composer" class="composer glass">
+      <button id="modeButton" class="mode-button" type="button">Council</button>
+      <input id="messageInput" autocomplete="off" placeholder="Teach, ask, or invent a toy-room spell" />
+      <button class="send-button" type="submit" title="Send">
+        <i data-lucide="send"></i>
+      </button>
+    </form>
+  </main>
+
+  <script type="module" src="/frontend/toybox/v2_main.js?v=20260613-ai-evidence"></script>
+</body>
+</html>

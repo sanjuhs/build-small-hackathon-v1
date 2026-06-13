@@ -1,0 +1,369 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tiny Toybox Pages</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172121;
+      --muted: #61706c;
+      --paper: #fffaf0;
+      --panel: rgba(255, 250, 240, 0.92);
+      --line: rgba(23, 33, 33, 0.14);
+      --teal: #123238;
+      --aqua: #66cbd8;
+      --amber: #f0bc42;
+      --coral: #ef7758;
+      --shadow: 0 18px 48px rgba(18, 50, 56, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        linear-gradient(180deg, #fff8e8 0%, #eef8f6 56%, #fff8e8 100%);
+    }
+
+    a {
+      color: inherit;
+      font: inherit;
+    }
+
+    .shell {
+      width: min(1180px, calc(100vw - 24px));
+      margin: 0 auto;
+      padding: 12px 0 36px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 10px;
+      z-index: 4;
+      min-height: 52px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .brand {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .brand strong {
+      font-size: 15px;
+      line-height: 1.1;
+      font-weight: 880;
+      white-space: nowrap;
+    }
+
+    .brand span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .quick-links {
+      display: flex;
+      justify-content: flex-end;
+      align-items: center;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+
+    .nav-link,
+    .open-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      min-height: 32px;
+      padding: 6px 10px;
+      background: #fff;
+      color: var(--ink);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .nav-link:hover,
+    .open-link:hover {
+      border-color: var(--teal);
+    }
+
+    .intro {
+      padding: 48px 0 22px;
+      display: grid;
+      gap: 10px;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 780px;
+      font-size: clamp(34px, 6vw, 76px);
+      line-height: 0.96;
+      letter-spacing: 0;
+      font-weight: 900;
+    }
+
+    .intro p {
+      margin: 0;
+      max-width: 680px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.5;
+      font-weight: 620;
+    }
+
+    .page-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 12px;
+    }
+
+    .page-card {
+      min-height: 360px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      display: grid;
+      grid-template-rows: 170px 1fr;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.72);
+      color: var(--ink);
+      text-decoration: none;
+      box-shadow: 0 10px 28px rgba(18, 50, 56, 0.08);
+      transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+    }
+
+    .page-card:hover {
+      transform: translateY(-2px);
+      border-color: var(--teal);
+      box-shadow: var(--shadow);
+    }
+
+    .thumb {
+      min-width: 0;
+      min-height: 0;
+      background: #f5eadb;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .thumb img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .card-body {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      padding: 14px;
+    }
+
+    .route {
+      width: max-content;
+      max-width: 100%;
+      border-radius: 999px;
+      padding: 4px 8px;
+      background: rgba(102, 203, 216, 0.22);
+      color: #143b42;
+      font-size: 11px;
+      font-weight: 820;
+      overflow-wrap: anywhere;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.08;
+      letter-spacing: 0;
+      font-weight: 880;
+    }
+
+    .page-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      font-weight: 560;
+    }
+
+    .open-link {
+      width: max-content;
+      margin-top: auto;
+      background: var(--teal);
+      color: #fff;
+      border-color: var(--teal);
+    }
+
+    .accent-amber .route { background: rgba(240, 188, 66, 0.28); color: #573c07; }
+    .accent-coral .route { background: rgba(239, 119, 88, 0.22); color: #6d2b1b; }
+    .accent-aqua .route { background: rgba(102, 203, 216, 0.24); color: #143b42; }
+    .accent-teal .route { background: rgba(18, 50, 56, 0.12); color: var(--teal); }
+
+    @media (max-width: 760px) {
+      body {
+        overflow-x: hidden;
+      }
+
+      .shell {
+        width: 100%;
+        padding: 12px 12px 36px;
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .quick-links {
+        justify-content: flex-start;
+      }
+
+      .intro {
+        padding-top: 32px;
+      }
+
+      h1 {
+        font-size: 32px;
+      }
+
+      .intro p,
+      .page-card p {
+        max-width: 32ch;
+        overflow-wrap: anywhere;
+      }
+
+      .page-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .card-body {
+        padding-right: 20px;
+      }
+
+      .page-card {
+        min-height: 0;
+        grid-template-rows: 150px 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <nav class="topbar">
+      <div class="brand">
+        <strong>Tiny Toybox</strong>
+        <span>Page directory</span>
+      </div>
+      <div class="quick-links" aria-label="Primary pages">
+        <a class="nav-link" href="/toy-v3">Toy Room v3</a>
+        <a class="nav-link" href="/toy-v2">Toy Room v2</a>
+        <a class="nav-link" href="/toy">Toy Room</a>
+        <a class="nav-link" href="/blender-models">Blender Models</a>
+        <a class="nav-link" href="/parts-lab">Parts Lab</a>
+      </div>
+    </nav>
+
+    <section class="intro">
+      <h1>Tiny Toybox Pages</h1>
+      <p>Open the playable room, inspect character models, review Blender rigs, or browse the layered character kit assets.</p>
+    </section>
+
+    <section class="page-grid" aria-label="Available pages">
+      <a class="page-card accent-coral" href="/toy-v3">
+        <div class="thumb"><img src="/fire-boy-rig/previews/fire-boy-fullrig-rest.png" alt="Fire Boy rigged character preview" /></div>
+        <div class="card-body">
+          <span class="route">/toy-v3</span>
+          <h2>Toy Room v3</h2>
+          <p>The shipped Fire Boy virtual pet: one controllable unclothed rig, brighter lighting, toy-room physics, MiniCPM hooks, babyish voice, and trace-backed actions.</p>
+          <span class="open-link">Open</span>
+        </div>
+      </a>
+
+      <a class="page-card accent-aqua" href="/toy">
+        <div class="thumb"><img src="/fire-boy-rig/previews/fire-boy-fullrig-rest.png" alt="Default Toy Room v3 Fire Boy preview" /></div>
+        <div class="card-body">
+          <span class="route">/toy</span>
+          <h2>Toy Room</h2>
+          <p>The default route for Toy Room v3, focused on Fire Boy as a virtual pet with physics controls and model-backed decisions.</p>
+          <span class="open-link">Open</span>
+        </div>
+      </a>
+
+      <a class="page-card accent-coral" href="/toy-v2">
+        <div class="thumb"><img src="/toy-assets/generated/part-concepts/parts-individual-v2-contact.png" alt="Toy Room v2 character kit preview" /></div>
+        <div class="card-body">
+          <span class="route">/toy-v2</span>
+          <h2>Toy Room v2</h2>
+          <p>The previous multi-agent prototype with Squeaky, Fire Boy, Shark Girl, Electraica, council scans, and the larger judge demo.</p>
+          <span class="open-link">Open</span>
+        </div>
+      </a>
+
+      <a class="page-card accent-amber" href="/models">
+        <div class="thumb"><img src="/toy-assets/generated/previews/contact-sheet.png" alt="Character model contact sheet" /></div>
+        <div class="card-body">
+          <span class="route">/models</span>
+          <h2>Model Lab</h2>
+          <p>A focused character lab for checking the procedural toy models, silhouettes, powers, and turntable views.</p>
+          <span class="open-link">Open</span>
+        </div>
+      </a>
+
+      <a class="page-card accent-teal" href="/blender-models">
+        <div class="thumb"><img src="/toy-assets/generated/previews/sam-contact-sheet.png" alt="SAM and Blender rig preview contact sheet" /></div>
+        <div class="card-body">
+          <span class="route">/blender-models</span>
+          <h2>Blender Models</h2>
+          <p>The GLB viewer for generated rigs, SAM cleanup passes, socketed assemblies, and Mixamo motion tests.</p>
+          <span class="open-link">Open</span>
+        </div>
+      </a>
+
+      <a class="page-card accent-coral" href="/parts-lab">
+        <div class="thumb"><img src="/toy-assets/generated/part-concepts/parts-individual-v2-contact.png" alt="Layered part concept contact sheet" /></div>
+        <div class="card-body">
+          <span class="route">/parts-lab</span>
+          <h2>Parts Lab</h2>
+          <p>The base bodies, clothing layers, backpacks, props, sockets, and source part references for each character.</p>
+          <span class="open-link">Open</span>
+        </div>
+      </a>
+
+      <a class="page-card accent-amber" href="/fireboy-rigged">
+        <div class="thumb"><img src="/fire-boy-rig/previews/fire-boy-fullrig-rest.png" alt="Fire Boy full rig preview" /></div>
+        <div class="card-body">
+          <span class="route">/fireboy-rigged</span>
+          <h2>Fire Boy Rigged</h2>
+          <p>The rigged character viewer for base-body skeleton checks and authored motion clips.</p>
+          <span class="open-link">Open</span>
+        </div>
+      </a>
+    </section>
+  </main>
+</body>
+</html>

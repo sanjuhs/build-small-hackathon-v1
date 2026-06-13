@@ -1,0 +1,552 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fire Boy Rigged | Tiny Toybox</title>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172121;
+      --muted: #66716d;
+      --paper: #fffaf0;
+      --panel: rgba(255, 250, 240, 0.88);
+      --line: rgba(23, 33, 33, 0.15);
+      --teal: #123238;
+      --aqua: #65cbda;
+      --coral: #f47d58;
+      --amber: #f2c14f;
+      --shadow: 0 18px 54px rgba(18, 50, 56, 0.15);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      min-height: 100%;
+      margin: 0;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #fff8e8 0%, #ffeede 58%, #fff8e8 100%);
+    }
+
+    button, a { font: inherit; }
+    button { color: inherit; }
+
+    .shell {
+      width: min(1180px, calc(100vw - 24px));
+      margin: 0 auto;
+      padding: 12px 0 30px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 10px;
+      z-index: 5;
+      min-height: 50px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: rgba(255, 250, 240, 0.9);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .brand { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+    .brand strong { font-size: 14px; line-height: 1.1; font-weight: 880; white-space: nowrap; }
+    .brand span { color: var(--muted); font-size: 11px; font-weight: 760; white-space: nowrap; }
+
+    .links { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+
+    .link-button {
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 6px 10px;
+      background: #fff;
+      color: var(--ink);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 740;
+    }
+    .link-button:hover { border-color: var(--teal); }
+
+    .stage-wrap {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: 280px 1fr;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      padding: 14px;
+    }
+
+    .panel h1 { font-size: 17px; margin: 0 0 4px; }
+    .panel p { color: var(--muted); font-size: 12.5px; line-height: 1.5; margin: 0 0 12px; }
+
+    .clip-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+
+    .clip-button {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 10px 8px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 13px;
+      font-weight: 780;
+      transition: transform 0.08s ease, border-color 0.08s ease;
+    }
+    .clip-button:hover { transform: translateY(-1px); border-color: var(--coral); }
+    .clip-button.active {
+      background: var(--coral);
+      border-color: var(--coral);
+      color: #fff;
+    }
+
+    .slider-row { margin-top: 14px; font-size: 12px; font-weight: 740; color: var(--muted); }
+    .slider-row input { width: 100%; accent-color: var(--coral); }
+
+    .rig-toggle {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 12.5px;
+      font-weight: 780;
+      cursor: pointer;
+      margin-bottom: 8px;
+    }
+    .rig-toggle input { accent-color: var(--coral); width: 15px; height: 15px; }
+
+    .rig-actions { display: flex; gap: 6px; margin-bottom: 8px; }
+    .rig-actions button {
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      padding: 3px 9px;
+      background: #fff;
+      cursor: pointer;
+      font-size: 11px;
+      font-weight: 740;
+    }
+    .rig-actions button:hover { border-color: var(--coral); }
+
+    .bone-list {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: #fff;
+      padding: 6px 8px;
+      display: none;
+    }
+    .bone-list.open { display: block; }
+    .bone-row {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      font-size: 11.5px;
+      font-weight: 700;
+      padding: 2px 0;
+      cursor: pointer;
+    }
+    .bone-row input { accent-color: var(--coral); }
+    .bone-row .dot { width: 8px; height: 8px; border-radius: 50%; flex: none; }
+
+    .bone-label {
+      font-size: 10px;
+      font-weight: 800;
+      font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+      color: #fff;
+      background: rgba(18, 50, 56, 0.82);
+      padding: 1px 6px;
+      border-radius: 5px;
+      white-space: nowrap;
+      border: 1.5px solid transparent;
+    }
+
+    .meta {
+      margin-top: 14px;
+      border-top: 1px dashed var(--line);
+      padding-top: 10px;
+      font-size: 11.5px;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .stage {
+      position: relative;
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      overflow: hidden;
+      background: radial-gradient(120% 90% at 50% 18%, #fffaf0 0%, #ffe9cc 58%, #ffd8ac 100%);
+      box-shadow: var(--shadow);
+      height: clamp(420px, 78vh, 760px);
+    }
+    .stage canvas { position: absolute; inset: 0; width: 100%; height: 100%; }
+
+    .stage .loading {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      color: var(--muted);
+      pointer-events: none;
+    }
+
+    @media (max-width: 860px) {
+      .stage-wrap { grid-template-columns: 1fr; }
+      .stage { height: 420px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="shell">
+    <nav class="topbar">
+      <div class="brand">
+        <strong>Rigged Characters</strong>
+        <span>20-bone skeletons on the unclothed base bodies, six motion clips each</span>
+      </div>
+      <div class="links">
+        <a class="link-button" href="/pages">Pages</a>
+        <a class="link-button" href="/blender-models">Blender Models</a>
+        <a class="link-button" href="/parts-lab">Parts Lab</a>
+        <a class="link-button" href="/toy">Toy Room</a>
+        <a class="link-button" href="/models">Model Lab</a>
+      </div>
+    </nav>
+
+    <section class="stage-wrap" aria-label="Fire Boy rigged character viewer">
+      <aside class="panel">
+        <h1>Characters</h1>
+        <div class="clip-grid" id="char-buttons"></div>
+        <h1 style="margin-top: 14px;">Motion clips</h1>
+        <p>Full humanoid rig: spine chain, neck + head + crown, shoulders, elbows, hands, knees and feet. Pick a clip — it crossfades.</p>
+        <div class="clip-grid" id="clip-buttons"></div>
+        <div class="slider-row">
+          <label for="speed">Playback speed <span id="speed-label">1.0×</span></label>
+          <input type="range" id="speed" min="0.2" max="2" step="0.1" value="1" />
+        </div>
+        <h1 style="margin-top: 14px;">Rig inspector</h1>
+        <label class="rig-toggle"><input type="checkbox" id="show-rig" /> Show skeleton (x-ray)</label>
+        <div class="rig-actions">
+          <button id="labels-all" type="button">All labels</button>
+          <button id="labels-none" type="button">No labels</button>
+        </div>
+        <div class="bone-list" id="bone-list"></div>
+        <div class="meta" id="meta">Loading model…</div>
+      </aside>
+      <div class="stage" id="stage">
+        <div class="loading" id="loading">Warming up Fire Boy…</div>
+      </div>
+    </section>
+  </div>
+
+  <script type="module">
+    import * as THREE from "three";
+    import { GLTFLoader } from "three/addons/loaders/GLTFLoader.js";
+    import { OrbitControls } from "three/addons/controls/OrbitControls.js";
+    import { CSS2DRenderer, CSS2DObject } from "three/addons/renderers/CSS2DRenderer.js";
+
+    const CHARACTERS = [
+      { slug: "fire-boy", label: "Fire Boy" },
+      { slug: "squeaky", label: "Squeaky" },
+      { slug: "electraica", label: "Electraica" },
+      { slug: "shark-girl", label: "Shark Girl" },
+    ];
+    const stage = document.getElementById("stage");
+    const loadingEl = document.getElementById("loading");
+    const buttonsEl = document.getElementById("clip-buttons");
+    const charButtonsEl = document.getElementById("char-buttons");
+    const metaEl = document.getElementById("meta");
+    const speedEl = document.getElementById("speed");
+    const speedLabel = document.getElementById("speed-label");
+
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(38, 1, 0.05, 60);
+    camera.position.set(-1.3, 0.8, 2.2);
+
+    const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+    renderer.outputColorSpace = THREE.SRGBColorSpace;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.72;
+    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    stage.appendChild(renderer.domElement);
+
+    const labelRenderer = new CSS2DRenderer();
+    labelRenderer.domElement.style.position = "absolute";
+    labelRenderer.domElement.style.inset = "0";
+    labelRenderer.domElement.style.pointerEvents = "none";
+    stage.appendChild(labelRenderer.domElement);
+
+    const controls = new OrbitControls(camera, renderer.domElement);
+    controls.target.set(0, 0.45, 0);
+    controls.enableDamping = true;
+    controls.minDistance = 0.9;
+    controls.maxDistance = 7;
+
+    scene.add(new THREE.HemisphereLight(0xffffff, 0xe8c49a, 2.55));
+    const key = new THREE.DirectionalLight(0xffffff, 3.9);
+    key.position.set(-2.4, 3.6, 2.6);
+    key.castShadow = true;
+    key.shadow.mapSize.set(1024, 1024);
+    key.shadow.camera.left = -1.5;
+    key.shadow.camera.right = 1.5;
+    key.shadow.camera.top = 1.5;
+    key.shadow.camera.bottom = -1.5;
+    scene.add(key);
+    const rim = new THREE.DirectionalLight(0xffd9a8, 1.45);
+    rim.position.set(2.4, 1.8, -2.0);
+    scene.add(rim);
+    const fill = new THREE.DirectionalLight(0xffffff, 1.15);
+    fill.position.set(1.8, 1.2, 2.6);
+    scene.add(fill);
+
+    const ground = new THREE.Mesh(
+      new THREE.CircleGeometry(1.5, 64),
+      new THREE.MeshStandardMaterial({ color: 0xf7dcb4, roughness: 0.95 })
+    );
+    ground.rotation.x = -Math.PI / 2;
+    ground.receiveShadow = true;
+    scene.add(ground);
+
+    let mixer = null;
+    let actions = {};
+    let activeName = null;
+    let currentModel = null;
+    let currentSlug = null;
+    const loader = new GLTFLoader();
+
+    // ---- rig inspector state ----
+    const showRigEl = document.getElementById("show-rig");
+    const boneListEl = document.getElementById("bone-list");
+    let skeletonHelper = null;
+    let boneEntries = []; // { bone, label, checked }
+    let rigVisible = false;
+
+    // glTF export strips the "." from Blender bone names (Shoulder.L -> ShoulderL).
+    const BONE_COLORS = {
+      Root: "#9aa5a1", Hips: "#f2c14f", Spine: "#f2a14f", Chest: "#f47d58",
+      Neck: "#e26a8a", Head: "#d65db1", Crown: "#b56bd8",
+      ShoulderL: "#65cbda", UpperArmL: "#4fb3d9", LowerArmL: "#3a93c9", HandL: "#2a72b5",
+      ShoulderR: "#7ad6a8", UpperArmR: "#52c08a", LowerArmR: "#36a86f", HandR: "#1f8f57",
+      UpperLegL: "#f2884f", LowerLegL: "#e06a3a", FootL: "#c9512a",
+      UpperLegR: "#caa3f5", LowerLegR: "#aa7fe8", FootR: "#8a5cd6",
+    };
+
+    function applyRigVisibility() {
+      if (skeletonHelper) skeletonHelper.visible = rigVisible;
+      for (const entry of boneEntries) {
+        entry.label.visible = rigVisible && entry.checked;
+      }
+      boneListEl.classList.toggle("open", rigVisible);
+      if (currentModel) {
+        currentModel.traverse((node) => {
+          if ((node.isMesh || node.isSkinnedMesh) && node.material) {
+            node.material.transparent = rigVisible;
+            node.material.opacity = rigVisible ? 0.35 : 1.0;
+            node.material.depthWrite = !rigVisible;
+          }
+        });
+      }
+    }
+
+    function buildRigInspector(model) {
+      if (skeletonHelper) {
+        scene.remove(skeletonHelper);
+        skeletonHelper = null;
+      }
+      boneEntries = [];
+      boneListEl.innerHTML = "";
+
+      const bones = [];
+      model.traverse((node) => {
+        if (node.isBone && !node.name.toLowerCase().includes("neutral")) bones.push(node);
+      });
+      if (!bones.length) return;
+
+      skeletonHelper = new THREE.SkeletonHelper(model);
+      scene.add(skeletonHelper);
+
+      for (const bone of bones) {
+        const color = BONE_COLORS[bone.name] ?? "#65cbda";
+        const div = document.createElement("div");
+        div.className = "bone-label";
+        div.textContent = bone.name;
+        div.style.borderColor = color;
+        const label = new CSS2DObject(div);
+        bone.add(label);
+
+        const entry = { bone, label, checked: true };
+        boneEntries.push(entry);
+
+        const row = document.createElement("label");
+        row.className = "bone-row";
+        const box = document.createElement("input");
+        box.type = "checkbox";
+        box.checked = true;
+        box.addEventListener("change", () => {
+          entry.checked = box.checked;
+          applyRigVisibility();
+        });
+        const dot = document.createElement("span");
+        dot.className = "dot";
+        dot.style.background = color;
+        const text = document.createElement("span");
+        text.textContent = bone.name;
+        row.append(box, dot, text);
+        boneListEl.appendChild(row);
+      }
+      applyRigVisibility();
+    }
+
+    showRigEl.addEventListener("change", () => {
+      rigVisible = showRigEl.checked;
+      applyRigVisibility();
+    });
+    document.getElementById("labels-all").addEventListener("click", () => {
+      for (const entry of boneEntries) entry.checked = true;
+      for (const box of boneListEl.querySelectorAll("input")) box.checked = true;
+      applyRigVisibility();
+    });
+    document.getElementById("labels-none").addEventListener("click", () => {
+      for (const entry of boneEntries) entry.checked = false;
+      for (const box of boneListEl.querySelectorAll("input")) box.checked = false;
+      applyRigVisibility();
+    });
+
+    function setActive(name) {
+      if (!actions[name] || name === activeName) return;
+      const next = actions[name];
+      next.reset().setEffectiveWeight(1).play();
+      if (activeName && actions[activeName]) {
+        actions[activeName].crossFadeTo(next, 0.35, true);
+      }
+      activeName = name;
+      for (const btn of buttonsEl.querySelectorAll("button")) {
+        btn.classList.toggle("active", btn.dataset.clip === name);
+      }
+    }
+
+    function loadCharacter(slug, label) {
+      if (slug === currentSlug) return;
+      currentSlug = slug;
+      for (const btn of charButtonsEl.querySelectorAll("button")) {
+        btn.classList.toggle("active", btn.dataset.slug === slug);
+      }
+      loadingEl.style.display = "flex";
+      loadingEl.textContent = `Warming up ${label}…`;
+      loader.load(
+        `/fire-boy-rig/${slug}-rigged-full.glb`,
+        (gltf) => {
+          if (currentModel) {
+            scene.remove(currentModel);
+            mixer?.stopAllAction();
+          }
+          actions = {};
+          activeName = null;
+          buttonsEl.innerHTML = "";
+
+          const model = gltf.scene;
+          model.traverse((node) => {
+            if (node.isMesh || node.isSkinnedMesh) {
+              node.castShadow = true;
+              node.frustumCulled = false;
+              if (node.material) node.material.side = THREE.DoubleSide;
+            }
+          });
+          scene.add(model);
+          currentModel = model;
+          loadingEl.style.display = "none";
+          buildRigInspector(model);
+
+          mixer = new THREE.AnimationMixer(model);
+          mixer.timeScale = Number(speedEl.value);
+          const order = ["Idle", "Walk", "Run", "Jump", "Wave", "Cheer", "Dance", "Spin", "Throw", "Sit"];
+          const clips = [...gltf.animations].sort(
+            (a, b) => order.indexOf(a.name) - order.indexOf(b.name)
+          );
+          for (const clip of clips) {
+            actions[clip.name] = mixer.clipAction(clip);
+            const btn = document.createElement("button");
+            btn.className = "clip-button";
+            btn.dataset.clip = clip.name;
+            btn.textContent = clip.name;
+            btn.addEventListener("click", () => setActive(clip.name));
+            buttonsEl.appendChild(btn);
+          }
+          setActive(clips[0]?.name);
+
+          metaEl.innerHTML = [
+            `<strong>${label}</strong> — ${clips.length} animation clips`,
+            `Source: unclothed SAM base body`,
+            `Rig: 20 deform bones + root`,
+            `File: ${slug}-rigged-full.glb`,
+          ].join("<br />");
+        },
+        undefined,
+        (err) => {
+          loadingEl.textContent = "Failed to load model: " + (err?.message ?? err);
+        }
+      );
+    }
+
+    for (const { slug, label } of CHARACTERS) {
+      const btn = document.createElement("button");
+      btn.className = "clip-button";
+      btn.dataset.slug = slug;
+      btn.textContent = label;
+      btn.addEventListener("click", () => loadCharacter(slug, label));
+      charButtonsEl.appendChild(btn);
+    }
+    loadCharacter(CHARACTERS[0].slug, CHARACTERS[0].label);
+
+    speedEl.addEventListener("input", () => {
+      const v = Number(speedEl.value);
+      speedLabel.textContent = v.toFixed(1) + "×";
+      if (mixer) mixer.timeScale = v;
+    });
+
+    function resize() {
+      const w = stage.clientWidth;
+      const h = stage.clientHeight;
+      renderer.setSize(w, h, false);
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      labelRenderer.setSize(w, h);
+      camera.aspect = w / h;
+      camera.updateProjectionMatrix();
+    }
+    new ResizeObserver(resize).observe(stage);
+    resize();
+
+    const clock = new THREE.Clock();
+    renderer.setAnimationLoop(() => {
+      const dt = clock.getDelta();
+      if (mixer) mixer.update(dt);
+      controls.update();
+      renderer.render(scene, camera);
+      labelRenderer.render(scene, camera);
+    });
+  </script>
+</body>
+</html>

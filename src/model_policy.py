@@ -1,0 +1,482 @@
+from __future__ import annotations
+
+import json
+import os
+import re
+from typing import Any
+from urllib.parse import urlparse, urlunparse
+
+from src.pet_actions import action_schema, validate_action
+from src.pet_memory import memory_path
+from src.pet_payload import compact_payload, target_from_payload, target_ids_from_payload
+from src.pet_profiles import PET_PROFILES, VALID_EMOTIONS, normalize_pet
+
+
+def try_model_policy(endpoint: str, payload: dict[str, Any]) -> dict[str, Any] | None:
+    try:
+        import httpx
+    except Exception:
+        return None
+
+    model = os.getenv("TOYBOX_LLM_MODEL", "local-small-model")
+    prompt_payload = compact_payload(payload)
+    ollama_endpoint = ollama_chat_endpoint(endpoint)
+
+    if ollama_endpoint:
+        action = try_ollama_structured_policy(httpx, ollama_endpoint, model, prompt_payload, payload)
+        if action:
+            return attach_model_debug(action, model)
+
+    if not can_call_endpoint(endpoint, "TOYBOX_LLM"):
+        return None
+
+    try:
+        request_json = {
+            "model": model,
+            "messages": [
+                {"role": "system", "content": text_policy_system_prompt()},
+                {"role": "user", "content": json.dumps(prompt_payload, ensure_ascii=True)},
+            ],
+            "temperature": 0.8,
+            "max_tokens": int(os.getenv("TOYBOX_LLM_MAX_TOKENS", "900")),
+            "stream": False,
+        }
+        if os.getenv("TOYBOX_LLM_SEND_THINK", "").lower() in {"1", "true", "yes"}:
+            request_json["think"] = False
+
+        response = httpx.post(
+            endpoint,
+            json=request_json,
+            headers=auth_headers(endpoint, "TOYBOX_LLM"),
+            timeout=float(os.getenv("TOYBOX_LLM_TIMEOUT", "18")),
+        )
+        response.raise_for_status()
+        data = response.json()
+        parsed = extract_json(data["choices"][0]["message"]["content"])
+        return attach_model_debug(validate_action(parsed, payload), model)
+    except Exception:
+        return None
+
+
+def model_status() -> dict[str, Any]:
+    endpoint = os.getenv("TOYBOX_LLM_ENDPOINT", "").strip()
+    model = os.getenv("TOYBOX_LLM_MODEL", "").strip()
+    vision_endpoint = os.getenv("TOYBOX_VISION_ENDPOINT", "").strip()
+    vision_model = os.getenv("TOYBOX_VISION_MODEL", "").strip()
+    llm_ollama = bool(endpoint and ollama_chat_endpoint(endpoint))
+    vision_ollama = bool(vision_endpoint and ollama_chat_endpoint(vision_endpoint))
+    llm_auth_required = bool(endpoint and not llm_ollama and endpoint_requires_bearer_auth(endpoint))
+    vision_auth_required = bool(
+        vision_endpoint and not vision_ollama and endpoint_requires_bearer_auth(vision_endpoint)
+    )
+    llm_auth_configured = bool(endpoint and api_key_for_endpoint(endpoint, "TOYBOX_LLM"))
+    vision_auth_configured = bool(vision_endpoint and api_key_for_endpoint(vision_endpoint, "TOYBOX_VISION"))
+    llm_configured = bool(endpoint and model)
+    vision_configured = bool(vision_endpoint and vision_model)
+    trace_policy_enabled = os.getenv("TOYBOX_TRACE_POLICY", "1").lower() not in {"0", "false", "no"}
+    if llm_configured and not allow_heuristic_fallback():
+        fallback_policy = "asleep_when_configured"
+    elif trace_policy_enabled:
+        fallback_policy = "trace_retrieval+heuristic"
+    else:
+        fallback_policy = "heuristic"
+    return {
+        "configured": llm_configured,
+        "enabled": llm_configured and (not llm_auth_required or llm_auth_configured),
+        "mode": "ollama" if llm_ollama else (endpoint_mode(endpoint) if endpoint else "fallback"),
+        "provider": endpoint_provider(endpoint),
+        "endpoint": endpoint or None,
+        "model": model or "fallback-policy",
+        "authRequired": llm_auth_required,
+        "authConfigured": llm_auth_configured,
+        "visionConfigured": vision_configured,
+        "visionEnabled": vision_configured and (not vision_auth_required or vision_auth_configured),
+        "visionMode": "ollama" if vision_ollama else (endpoint_mode(vision_endpoint) if vision_endpoint else "none"),
+        "visionProvider": endpoint_provider(vision_endpoint),
+        "visionEndpoint": vision_endpoint or None,
+        "visionModel": vision_model or None,
+        "visionAuthRequired": vision_auth_required,
+        "visionAuthConfigured": vision_auth_configured,
+        "fallbackPolicy": fallback_policy,
+        "tracePolicyEnabled": trace_policy_enabled,
+        "tracePath": os.getenv("TOYBOX_TRACE_PATH", "data/traces/pet-actions.jsonl"),
+        "memoryPath": str(memory_path()),
+    }
+
+
+def allow_heuristic_fallback() -> bool:
+    return os.getenv("TOYBOX_ALLOW_HEURISTIC_FALLBACK", "").lower() in {"1", "true", "yes"}
+
+
+def can_call_endpoint(endpoint: str, prefix: str) -> bool:
+    if not endpoint:
+        return False
+    if endpoint_requires_bearer_auth(endpoint):
+        return bool(api_key_for_endpoint(endpoint, prefix))
+    return True
+
+
+def auth_headers(endpoint: str, prefix: str) -> dict[str, str]:
+    headers: dict[str, str] = {}
+    api_key = api_key_for_endpoint(endpoint, prefix)
+    if api_key:
+        headers["Authorization"] = f"Bearer {api_key}"
+
+    bill_to = os.getenv(f"{prefix}_BILL_TO", "").strip() or os.getenv("TOYBOX_HF_BILL_TO", "").strip()
+    if bill_to and is_huggingface_endpoint(endpoint):
+        headers["X-HF-Bill-To"] = bill_to
+    return headers
+
+
+def api_key_for_endpoint(endpoint: str, prefix: str) -> str:
+    direct = os.getenv(f"{prefix}_API_KEY", "").strip()
+    if direct:
+        return direct
+
+    host = endpoint_hostname(endpoint)
+    if is_huggingface_endpoint(endpoint):
+        return (
+            os.getenv("HF_TOKEN", "").strip()
+            or os.getenv("HUGGINGFACEHUB_API_TOKEN", "").strip()
+            or os.getenv("HUGGING_FACE_HUB_TOKEN", "").strip()
+        )
+    if is_runpod_endpoint(endpoint):
+        return os.getenv("RUNPOD_API_KEY", "").strip()
+    if "openai.com" in host:
+        return os.getenv("OPENAI_API_KEY", "").strip()
+    return ""
+
+
+def endpoint_requires_bearer_auth(endpoint: str) -> bool:
+    if is_local_endpoint(endpoint):
+        return False
+    host = endpoint_hostname(endpoint)
+    known_hosts = (
+        "api.openai.com",
+        "router.huggingface.co",
+        "api-inference.huggingface.co",
+        "api.groq.com",
+        "api.together.xyz",
+        "api.fireworks.ai",
+        "api.mistral.ai",
+        "api.deepseek.com",
+        "openrouter.ai",
+        "api.runpod.ai",
+    )
+    return any(host == item or host.endswith(f".{item}") for item in known_hosts)
+
+
+def endpoint_mode(endpoint: str) -> str:
+    provider = endpoint_provider(endpoint)
+    if provider == "runpod":
+        return "runpod-openai-compatible"
+    if provider == "huggingface":
+        return "hf-openai-compatible"
+    return "openai-compatible"
+
+
+def endpoint_provider(endpoint: str) -> str | None:
+    if not endpoint:
+        return None
+    if is_huggingface_endpoint(endpoint):
+        return "huggingface"
+    if is_runpod_endpoint(endpoint):
+        return "runpod"
+    host = endpoint_hostname(endpoint)
+    if "openai.com" in host:
+        return "openai"
+    if "groq.com" in host:
+        return "groq"
+    if "together.xyz" in host:
+        return "together"
+    if "fireworks.ai" in host:
+        return "fireworks"
+    if "mistral.ai" in host:
+        return "mistral"
+    if "deepseek.com" in host:
+        return "deepseek"
+    if "openrouter.ai" in host:
+        return "openrouter"
+    return "custom"
+
+
+def is_huggingface_endpoint(endpoint: str) -> bool:
+    host = endpoint_hostname(endpoint)
+    return host == "huggingface.co" or host.endswith(".huggingface.co")
+
+
+def is_runpod_endpoint(endpoint: str) -> bool:
+    host = endpoint_hostname(endpoint)
+    return host == "api.runpod.ai" or host.endswith(".runpod.ai") or host.endswith(".runpod.net")
+
+
+def is_local_endpoint(endpoint: str) -> bool:
+    host = endpoint_hostname(endpoint)
+    return host in {"localhost", "127.0.0.1", "0.0.0.0", "::1"}
+
+
+def endpoint_hostname(endpoint: str) -> str:
+    try:
+        return (urlparse(endpoint).hostname or "").lower()
+    except Exception:
+        return ""
+
+
+def try_ollama_structured_policy(
+    httpx: Any,
+    endpoint: str,
+    model: str,
+    prompt_payload: dict[str, Any],
+    payload: dict[str, Any],
+) -> dict[str, Any] | None:
+    pet = normalize_pet(prompt_payload.get("pet"))
+    profile = PET_PROFILES[pet]
+    schema = action_schema(profile, target_ids_from_payload(payload))
+
+    try:
+        return post_ollama_action(
+            httpx,
+            endpoint,
+            model,
+            schema,
+            scene_brief(prompt_payload, profile),
+            float(os.getenv("TOYBOX_LLM_TEMPERATURE", "0.45")),
+            payload,
+        )
+    except Exception:
+        try:
+            return post_ollama_action(
+                httpx,
+                endpoint,
+                model,
+                schema,
+                minimal_scene_brief(prompt_payload, profile, payload),
+                0.2,
+                payload,
+            )
+        except Exception:
+            return None
+
+
+def post_ollama_action(
+    httpx: Any,
+    endpoint: str,
+    model: str,
+    schema: dict[str, Any],
+    user_content: str,
+    temperature: float,
+    payload: dict[str, Any],
+) -> dict[str, Any]:
+    response = httpx.post(
+        endpoint,
+        json={
+            "model": model,
+            "messages": [
+                {
+                    "role": "system",
+                    "content": (
+                        "You are PET-LLM, an embodied virtual pet brain. "
+                        "Fill the JSON schema for one visible room action or pet interaction. "
+                        "Invent a short spellName and compose primitive spell ops; never output code. "
+                        "Optionally invent a bounded soundRecipe of tiny oscillator tones; never output audio files. "
+                        "When the player wishes for, asks to create, spawn, add, summon, or make a new object, fill objectRecipe. "
+                        "If the player teaches a new word, rule, preference, or value, set newMemory. "
+                        "Use interaction verbs for eating berries, reading books, sitting, or sniffing plants. "
+                        "The speech field is the pet's short spoken line only."
+                    ),
+                },
+                {"role": "user", "content": user_content},
+            ],
+            "format": schema,
+            "options": ollama_generation_options(temperature),
+            "think": False,
+            "stream": False,
+        },
+        timeout=float(os.getenv("TOYBOX_LLM_TIMEOUT", "18")),
+    )
+    response.raise_for_status()
+    return validate_action(extract_json(response.json()["message"]["content"]), payload)
+
+
+def ollama_generation_options(temperature: float) -> dict[str, Any]:
+    options: dict[str, Any] = {
+        "temperature": temperature,
+        "num_predict": int(os.getenv("TOYBOX_LLM_NUM_PREDICT", "420")),
+    }
+    num_ctx = os.getenv("TOYBOX_LLM_NUM_CTX", "2048").strip()
+    if num_ctx:
+        options["num_ctx"] = int(num_ctx)
+    return options
+
+
+def text_policy_system_prompt() -> str:
+    return (
+        "You are PET-LLM, the tiny embodied action brain for a cute virtual pet in a Three.js physics toy room. "
+        "You are not a chatbot. You must choose one short line and one visible embodied action that the renderer can execute. "
+        "React to room objects, collisions, petting, poking, mouse hover, and recent forces. "
+        "Prefer playful agency, object awareness, and cute physical behavior over explaining yourself. "
+        "For Fire Boy, speak like a babyish warm ember: simple words, tiny confidence, no scary fire. "
+        "Do not write <think> tags. Do not include chain-of-thought. "
+        "Return only valid JSON matching this schema: "
+        '{"pet": string, "speech": string, "emotion": string, "animation": string, '
+        '"intent": string, "blendshape": object, "power": {"name": string, "targetId": string, '
+        '"strength": number, "durationMs": integer}, '
+        '"interaction": {"verb": string, "targetId": string, "partnerPet": string, "durationMs": integer}, '
+        '"spell": {"spellName": string, "ops": [{"op": string, "targetId": string, "vec": [number,number,number], '
+        '"factor": number, "radius": number, "strength": number, "durationMs": integer, "intensity": number, "color": string}]}, '
+        '"newMemory": {"concept": string, "meaning": string} or null, '
+        '"objectRecipe": {"id": string, "name": string, "kind": string, "shape": string, "color": string, '
+        '"accentColor": string, "size": {"x": number, "y": number, "z": number}, "radius": number, '
+        '"mass": number, "affordances": [string], "tags": [string], "parts": [object]} or null, '
+        '"sound": string, '
+        '"soundRecipe": {"label": string, "gain": number, "tones": [{"frequency": number, "offsetMs": integer, '
+        '"durationMs": integer, "gain": number, "wave": string}]} or null}. '
+        f"emotion must be one of {VALID_EMOTIONS}. "
+        "interaction.verb must be one of none, eat, read, sit, gather, sniff, inspect, water, share, clean, recycle, play, comfort, talk. "
+        "Blendshape may include numeric eye, smile, mouth, brow, cheek, squash, tilt, sparkle. "
+        "Spell ops must use only impulse, freeze, scale, attract, spawn_particle, set_light, or nudge_pet. "
+        "Spell targetId must be a listed object id, self, all-moving, all-toys, or all-agents. "
+        "Speech must be under 18 words, first-person, and pet-like. Pick only powers available to the selected pet. "
+        "Use interactions for ordinary pet behaviors like eating berries, reading books, sitting near chairs/tables, or sniffing plants. "
+        "Use newMemory only for durable lessons from the player, not ordinary observations. "
+        "Use objectRecipe only when the player asks to create, spawn, summon, wish for, add, or make a new room object. "
+        "objectRecipe parts may use simple box, sphere, and cylinder pieces with safe colors and small dimensions. "
+        "Optionally invent soundRecipe as 1-6 tiny oscillator tones; wave must be sine, triangle, square, or sawtooth. "
+        "If the user touched the pet, acknowledge touch with a cute physical reaction. "
+        "No markdown, no explanation."
+    )
+
+
+def ollama_chat_endpoint(endpoint: str) -> str | None:
+    parsed = urlparse(endpoint)
+    if not parsed.scheme or not parsed.netloc:
+        return None
+    if parsed.path.rstrip("/") == "/api/chat":
+        return endpoint
+    if "11434" not in parsed.netloc and "ollama" not in parsed.netloc.lower():
+        return None
+    return urlunparse((parsed.scheme, parsed.netloc, "/api/chat", "", "", ""))
+
+
+def scene_brief(prompt_payload: dict[str, Any], profile: dict[str, Any]) -> str:
+    objects = prompt_payload.get("objects") or []
+    object_lines = [
+        (
+            f"{item['id']} kind={item['kind']} name={item.get('name') or ''} generated={item.get('generated', False)} speed={item['speed']} "
+            f"distance={item['distanceToPet']} moving={item['moving']} "
+            f"affordances={','.join(item.get('affordances') or []) or 'none'} "
+            f"nutrition={item.get('nutrition', 0)} readable={item.get('readable', False)}"
+        )
+        for item in objects[:8]
+    ]
+    interactions = prompt_payload.get("interactions") or []
+    forces = prompt_payload.get("recentForces") or []
+    agents = prompt_payload.get("agents") or []
+    arrangements = prompt_payload.get("arrangements") or []
+    memories = prompt_payload.get("memories") or []
+    vision = prompt_payload.get("vision") or {}
+    audio = prompt_payload.get("audio") or {}
+    needs = prompt_payload.get("needs") or {}
+    balance = prompt_payload.get("balance") or {}
+    camera_source = prompt_payload.get("cameraFrameSource") or "unknown"
+
+    return "\n".join(
+        [
+            f"Pet: {prompt_payload['pet']}. Traits: {profile['traits']}.",
+            f"User message: {prompt_payload.get('user_message') or '(none)'}",
+            f"Objects: {'; '.join(object_lines) if object_lines else 'none'}",
+            f"Physical arrangements: {json.dumps(arrangements[:4], ensure_ascii=True) if arrangements else 'none'}",
+            f"Other agents: {json.dumps(agents[:6], ensure_ascii=True) if agents else 'none'}",
+            f"Memories: {json.dumps(memories[:8], ensure_ascii=True) if memories else 'none'}",
+            f"Vision: {json.dumps(vision, ensure_ascii=True) if vision else 'none'} camera={camera_source}",
+            f"Audio: {json.dumps(audio, ensure_ascii=True) if audio else 'none'}",
+            f"Needs: {json.dumps(needs, ensure_ascii=True) if needs else 'none'}",
+            f"Balance: {json.dumps(balance, ensure_ascii=True) if balance else 'none'}",
+            f"Recent forces: {json.dumps(forces[-4:], ensure_ascii=True)}",
+            f"Recent interactions: {json.dumps(interactions[-4:], ensure_ascii=True)}",
+            f"Allowed powers: {', '.join(profile['powers'])}.",
+            f"Allowed animations: {', '.join(profile['animations'])}.",
+            f"Allowed sounds: {', '.join(profile['sounds'])}.",
+            "Choose one playful, visible action. Use a real object id when one is listed; otherwise use all-moving.",
+            "Also invent a spellName and 1-4 spell ops from: impulse, freeze, scale, attract, spawn_particle, set_light, nudge_pet.",
+            "Optionally invent a soundRecipe of 1-6 oscillator tones that matches the spell, object, or thing the player asked for.",
+            "SoundRecipe tones use frequency 80-1800 Hz, offsetMs 0-1200, durationMs 24-900, gain 0.04-1, and wave sine/triangle/square/sawtooth.",
+            "Primitive targets may be object ids, self, all-moving, all-toys, or all-agents. Keep magnitudes gentle.",
+            "If the player asks to create, spawn, summon, wish for, add, or make a new room object, fill objectRecipe with one small physical toy recipe.",
+            "objectRecipe can describe instruments, furniture, plants, food, tools, decor, waste, or toys using up to six simple box/sphere/cylinder parts.",
+            "If the player explicitly teaches a term, rule, preference, or value, write newMemory={concept,meaning}; otherwise newMemory=null.",
+            "Use memories to transfer taught concepts to new objects and to respect player-taught values.",
+            "If physical arrangements include a stack, line, huddle, or wished toy and the player asks what they built, guess the arrangement in character.",
+            "For berries/food and high hunger, prefer interaction={verb:eat,targetId:berry id}.",
+            "For books or reading requests, prefer interaction={verb:read,targetId:book id}.",
+            "For chairs/tables/rest/social requests, prefer interaction=sit or gather. For plants, prefer sniff/inspect/water.",
+            "For waste, paper, can, bottle, or peel objects, prefer clean or recycle when the player asks for tidying.",
+            "For another nearby agent, use interaction=talk, play, comfort, or share and set partnerPet.",
+            "Use interaction={verb:none,targetId:any listed id,partnerPet:\"\",durationMs:1200} when only using a power.",
+            "Recent interactions may include pointer modality, screen coordinates, and pet hit point; treat mouse, touch, and pen as embodied contact.",
+            "Audio may include microphone input and room-output bands, peak, and rms; react to loud user sounds with small startles or curious listening.",
+            "Balance may include stability and tilt; if unstable, choose a cute steadying action or calmer power.",
+            "If touched or petted, prefer emotion=petted, animation=nuzzle, sound=pet_touch.",
+            "If poked, prefer emotion=startled, animation=startle, sound=startle.",
+            "If asked to freeze/stop/pause or a moving object is near, time_freeze is a good Squeaky power.",
+            "If pet=fire_boy, speech should sound babyish and warm: tiny words, little giggles, under 10 words.",
+            "Optionally set blendshape values to fine-control the face. Speech must be cute, first-person, under 12 words.",
+        ]
+    )
+
+
+def minimal_scene_brief(prompt_payload: dict[str, Any], profile: dict[str, Any], payload: dict[str, Any]) -> str:
+    pet = normalize_pet(prompt_payload.get("pet"))
+    target_id = target_from_payload(payload)
+    interactions = prompt_payload.get("interactions") or []
+    message = str(prompt_payload.get("user_message") or "").lower()
+    latest = next((item for item in reversed(interactions) if item.get("kind") in {"pet", "poke"}), None)
+
+    if latest and latest.get("kind") == "pet":
+        emotion, animation, sound = "petted", "nuzzle", "pet_touch"
+        power_name = "clock_bubble" if "clock_bubble" in profile["powers"] else profile["powers"][0]
+    elif latest:
+        emotion, animation, sound = "startled", "startle", "startle"
+        power_name = profile["powers"][0]
+    elif pet == "squeaky" and any(word in message for word in ["freeze", "stop", "pause", "time"]):
+        emotion, animation, sound = "focused", "trunk_wiggle", "clock_chime"
+        power_name = "time_freeze"
+    else:
+        emotion, animation, sound = "happy", profile["animations"][0], profile["sounds"][0]
+        power_name = profile["powers"][0]
+
+    return "\n".join(
+        [
+            "Create one compact virtual-pet action.",
+            f"pet={pet}",
+            f"user_message={prompt_payload.get('user_message') or '(none)'}",
+            f"targetId={target_id}",
+            f"emotion={emotion}",
+            f"animation={animation}",
+            f"power={power_name}",
+            f"interaction=none targetId={target_id}",
+            f"spellName={power_name.replace('_', ' ')} improvisation",
+            "spell ops: one gentle spawn_particle plus one safe impulse/freeze/attract op if useful",
+            "soundRecipe: optional tiny oscillator recipe matching the action",
+            "objectRecipe=null unless the user asks to create or wish a new room object into existence",
+            "newMemory=null unless the user explicitly taught a lasting concept",
+            f"sound={sound}",
+            "speech: cute first-person pet line, under 8 words; Fire Boy sounds babyish and warm.",
+        ]
+    )
+
+
+def extract_json(content: str) -> dict[str, Any]:
+    stripped = content.strip()
+    stripped = re.sub(r"<think>.*?</think>", "", stripped, flags=re.DOTALL | re.IGNORECASE).strip()
+    stripped = re.sub(r"^```(?:json)?", "", stripped).strip()
+    stripped = re.sub(r"```$", "", stripped).strip()
+    match = re.search(r"\{[^{}]*(?:\{[^{}]*(?:\{[^{}]*\}[^{}]*)*\}[^{}]*)*\}", stripped, re.DOTALL)
+    if not match:
+        raise ValueError("No JSON object in model response")
+    return json.loads(match.group(0))
+
+
+def attach_model_debug(action: dict[str, Any], model: str) -> dict[str, Any]:
+    action["debug"] = {"policy": "model", "model": model}
+    return action
