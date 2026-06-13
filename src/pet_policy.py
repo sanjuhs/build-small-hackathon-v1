@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from typing import Any
 
+from src.modal_omni_policy import try_modal_omni_policy
 from src.model_policy import model_status, try_model_policy
 from src.pet_actions import fallback_policy, model_unavailable_policy
 from src.pet_memory import remember_from_action
@@ -15,6 +16,22 @@ from src.vision_policy import try_vision_perception
 def choose_pet_action(payload: dict[str, Any]) -> dict[str, Any]:
     status = model_status()
     strict_model = bool(status.get("configured")) and not allow_heuristic_fallback()
+
+    if status.get("modalOmniConfigured"):
+        if status.get("modalOmniEnabled"):
+            action = try_modal_omni_policy(payload)
+            if action:
+                remember_from_action(action, payload)
+                write_trace(payload, action)
+                return action
+        if strict_model:
+            action = model_unavailable_policy(payload)
+            debug = action.setdefault("debug", {})
+            if isinstance(debug, dict):
+                debug["reason"] = "modal_omni_action_unavailable"
+                debug["modalOmniUrl"] = status.get("modalOmniUrl")
+            write_trace(payload, action)
+            return action
 
     if status.get("visionActionConfigured"):
         if status.get("visionActionEnabled"):

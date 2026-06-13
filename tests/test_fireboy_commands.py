@@ -3,6 +3,7 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
+from src.modal_omni_policy import coerce_modal_command_action
 from src.model_policy import model_status
 from src.pet_actions import fallback_policy
 
@@ -72,6 +73,10 @@ class FireBoyCommandPolicyTest(unittest.TestCase):
         with patch.dict(
             "os.environ",
             {
+                "TOYBOX_MODAL_OMNI_ACTION": "",
+                "TOYBOX_MODAL_OMNI_URL": "",
+                "TOYBOX_LLM_ENDPOINT": "",
+                "TOYBOX_LLM_MODEL": "",
                 "TOYBOX_MINICPM_V_ACTION": "1",
                 "TOYBOX_VISION_ENDPOINT": "https://api.modelbest.cn/v1/chat/completions",
                 "TOYBOX_VISION_MODEL": "MiniCPM-V-4.6-Instruct",
@@ -91,6 +96,44 @@ class FireBoyCommandPolicyTest(unittest.TestCase):
         self.assertFalse(status["visionAuthConfigured"])
         self.assertEqual(status["provider"], "modelbest")
         self.assertEqual(status["fallbackPolicy"], "asleep_when_configured")
+
+    def test_model_status_reports_modal_omni_action_brain(self) -> None:
+        with patch.dict(
+            "os.environ",
+            {
+                "TOYBOX_MODAL_OMNI_ACTION": "1",
+                "TOYBOX_MODAL_OMNI_URL": "https://example--minicpm-omni-demo.modal.run",
+                "TOYBOX_MODAL_OMNI_MODEL": "openbmb/MiniCPM-o-4_5",
+                "TOYBOX_LLM_ENDPOINT": "",
+                "TOYBOX_LLM_MODEL": "",
+                "TOYBOX_MINICPM_V_ACTION": "",
+                "TOYBOX_ALLOW_HEURISTIC_FALLBACK": "",
+            },
+            clear=False,
+        ):
+            status = model_status()
+
+        self.assertTrue(status["configured"])
+        self.assertTrue(status["enabled"])
+        self.assertTrue(status["modalOmniConfigured"])
+        self.assertTrue(status["modalOmniEnabled"])
+        self.assertEqual(status["provider"], "modal")
+        self.assertEqual(status["mode"], "modal-omni-websocket")
+        self.assertEqual(status["model"], "openbmb/MiniCPM-o-4_5")
+        self.assertEqual(status["fallbackPolicy"], "asleep_when_configured")
+
+    def test_modal_command_guard_prevents_walk_fireball(self) -> None:
+        payload = fireboy_payload("Fire Boy, walk around the toy room")
+        action = fallback_policy(payload)
+        action["power"]["name"] = "fireball"
+        action["interaction"]["verb"] = "play"
+
+        coerce_modal_command_action(action, payload)
+
+        self.assertEqual(action["power"]["name"], "ember_jump")
+        self.assertEqual(action["interaction"]["verb"], "walk")
+        self.assertEqual(action["animation"], "walk")
+        self.assertEqual(action["speech"], "Me walky loop.")
 
 
 if __name__ == "__main__":

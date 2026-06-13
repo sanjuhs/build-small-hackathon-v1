@@ -13,8 +13,8 @@ Toy Room v3 is packaged for the Build Small Hackathon as a tiny-world virtual pe
 
 | Prize | Current evidence |
 | --- | --- |
-| Best MiniCPM Build | `src/vision_policy.py` implements the MiniCPM-V visual cortex hook; `minicpm-v-serverless/` implements a ModelBest/OpenBMB MiniCPM-V serverless tester and API wrapper; `scripts/start_with_minicpm5.sh` runs a MiniCPM5 PET action policy through Ollama; `modal-minicpm-omni/` deploys `openbmb/MiniCPM-o-4_5` on Modal. |
-| Best Use of Modal | `modal-minicpm-omni/modal_minicpm_omni.py` builds the official MiniCPM-o demo into a Modal image, caches model weights in `minicpm-omni-cache`, loads them on an L40S GPU, and serves the web gateway through Modal. Modal CLI verification shows app `minicpm-omni-45` deployed with an active container. |
+| Best MiniCPM Build | Toy Room v3 calls `openbmb/MiniCPM-o-4_5` through the deployed Modal `/ws/chat` gateway in `src/modal_omni_policy.py`; `src/vision_policy.py`, `minicpm-v-serverless/`, and MiniCPM5/Ollama remain documented secondary MiniCPM routes. |
+| Best Use of Modal | `modal-minicpm-omni/modal_minicpm_omni.py` builds the official MiniCPM-o demo into a Modal image, caches model weights in `minicpm-omni-cache`, loads them on an L40S GPU, and serves the web gateway through Modal. Toy Room v3 uses that live Modal gateway as its primary action brain. |
 | Best Use of Codex | The repository history contains Codex-attributed commits for the v3 toy room, Fire Boy command loop, MiniCPM-V helper, docs, and submission hardening. |
 | Best Agent | The backend emits strict PET action JSON. The frontend executes it as character animation, speech, projectile fireballs, object pickup/carry, run routes, particles, physics updates, and loop metrics. |
 | Off Brand | The Space is a custom Three.js toy-room UI mounted inside a Gradio-compatible app, not a default chatbot. |
@@ -22,14 +22,14 @@ Toy Room v3 is packaged for the Build Small Hackathon as a tiny-world virtual pe
 
 ## Runtime Truth
 
-Toy Room v3 can run with no secrets. In that mode it uses trace retrieval plus bounded deterministic actions so the judge demo remains stable. The runtime panel and `/api/model-status` make this visible instead of pretending a hosted model is active.
+Toy Room v3 is configured for Modal MiniCPM-o by setting `TOYBOX_MODAL_OMNI_ACTION=1` and `TOYBOX_MODAL_OMNI_URL=https://sanjuhs123--minicpm-omni-demo.modal.run`. The runtime panel and `/api/model-status` make the active model path visible instead of pretending a hosted model is active.
 
 When model endpoints are configured, the same PET action contract supports:
 
+- Modal MiniCPM-o 4.5 through `src/modal_omni_policy.py`.
 - MiniCPM5 through local Ollama or any OpenAI-compatible text endpoint.
 - MiniCPM-V 4.6 through an OpenAI-compatible vision endpoint such as ModelBest/OpenBMB serverless.
 - RunPod/Hugging Face/OpenAI-compatible hosted routes.
-- A future Modal JSON adapter that wraps the deployed MiniCPM-o stack for direct Toy Room action decisions.
 
 ## Architecture
 
@@ -39,9 +39,11 @@ flowchart LR
   UI --> Payload["Compact scene payload\nobjects, Fire Boy state, camera frame"]
   Payload --> API["FastAPI /api/pet-action"]
   API --> Brain{"Configured brain?"}
+  Brain -->|Modal MiniCPM-o| ModalBrain["Modal /ws/chat\nopenbmb/MiniCPM-o-4_5"]
   Brain -->|MiniCPM/OpenAI endpoint| Model["PET action model"]
-  Brain -->|no secret| Trace["Trace retrieval"]
+  Brain -->|no model configured| Trace["Trace retrieval"]
   Trace --> Fallback["Bounded command policy"]
+  ModalBrain --> Action["PET action JSON"]
   Model --> Action["PET action JSON"]
   Fallback --> Action
   Action --> Renderer["Three.js + Cannon"]
@@ -53,12 +55,12 @@ flowchart LR
 ```mermaid
 flowchart TD
   ToyRoom["Toy Room v3"] --> TextHook["src/model_policy.py\nOpenAI-compatible text action brain"]
+  ToyRoom --> ModalHook["src/modal_omni_policy.py\nModal WebSocket action brain"]
   ToyRoom --> VisionHook["src/vision_policy.py\nMiniCPM-V visual cortex"]
+  ModalHook --> Omni["openbmb/MiniCPM-o-4_5 on Modal L40S"]
   TextHook --> LocalMini["MiniCPM5 via Ollama\nhf.co/openbmb/MiniCPM5-1B-GGUF"]
   VisionHook --> ModelBest["ModelBest/OpenBMB serverless\nMiniCPM-V-4.6-Instruct"]
   VisionHook --> LocalVision["Ollama MiniCPM-V 4.6"]
-  Modal["modal-minicpm-omni"] --> Omni["openbmb/MiniCPM-o-4_5 on Modal L40S"]
-  Omni -. "adapter planned" .-> TextHook
 ```
 
 ## Modal Evidence
@@ -81,7 +83,7 @@ modal app logs minicpm-omni-45
 curl https://sanjuhs123--minicpm-omni-demo.modal.run/health
 ```
 
-The Modal path is a real runtime/development component for the submission. Toy Room v3 itself remains fast by default and uses Modal as the heavy MiniCPM-o companion until the JSON action adapter is added.
+The Modal path is a real runtime component for Toy Room v3. Verified local UI command metrics for "walk around": one `/api/pet-action` call, one Modal `/ws/chat` turn, `promptTokens: 1638`, `completionTokens: 9`, `tokensPerSecond: 2.35`, and `clientRoundTripMs: 3880.4`.
 
 ## Security Hygiene
 
@@ -89,4 +91,3 @@ The Modal path is a real runtime/development component for the submission. Toy R
 - `.env.example` files are tracked for setup only.
 - Hugging Face and Modal credentials belong in Hugging Face Space secrets or Modal Secrets, not in the repository.
 - The current tracked file list includes `.env.example` files only; the real local Modal frontend `.env` is ignored.
-

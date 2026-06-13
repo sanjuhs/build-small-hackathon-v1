@@ -72,6 +72,10 @@ def model_status() -> dict[str, Any]:
     model = os.getenv("TOYBOX_LLM_MODEL", "").strip()
     vision_endpoint = os.getenv("TOYBOX_VISION_ENDPOINT", "").strip()
     vision_model = os.getenv("TOYBOX_VISION_MODEL", "").strip()
+    modal_requested = modal_omni_action_enabled()
+    modal_url = os.getenv("TOYBOX_MODAL_OMNI_URL", "").strip().rstrip("/")
+    modal_model = os.getenv("TOYBOX_MODAL_OMNI_MODEL", "openbmb/MiniCPM-o-4_5").strip() or "openbmb/MiniCPM-o-4_5"
+    modal_configured = modal_requested and bool(modal_url)
     vision_action_configured = vision_model_action_enabled() and bool(vision_endpoint and vision_model)
     llm_ollama = bool(endpoint and ollama_chat_endpoint(endpoint))
     vision_ollama = bool(vision_endpoint and ollama_chat_endpoint(vision_endpoint))
@@ -84,24 +88,43 @@ def model_status() -> dict[str, Any]:
     llm_configured = bool(endpoint and model)
     vision_configured = bool(vision_endpoint and vision_model)
     trace_policy_enabled = os.getenv("TOYBOX_TRACE_POLICY", "1").lower() not in {"0", "false", "no"}
-    if (llm_configured or vision_action_configured) and not allow_heuristic_fallback():
+    any_model_configured = modal_requested or llm_configured or vision_action_configured
+    any_model_enabled = (
+        modal_configured
+        or (llm_configured and (not llm_auth_required or llm_auth_configured))
+        or (vision_action_configured and (not vision_auth_required or vision_auth_configured))
+    )
+    if any_model_configured and not allow_heuristic_fallback():
         fallback_policy = "asleep_when_configured"
     elif trace_policy_enabled:
         fallback_policy = "trace_retrieval+heuristic"
     else:
         fallback_policy = "heuristic"
     return {
-        "configured": llm_configured or vision_action_configured,
-        "enabled": (llm_configured and (not llm_auth_required or llm_auth_configured))
-        or (vision_action_configured and (not vision_auth_required or vision_auth_configured)),
-        "mode": "ollama"
-        if llm_ollama
-        else (endpoint_mode(endpoint) if endpoint else (endpoint_mode(vision_endpoint) if vision_action_configured else "fallback")),
-        "provider": endpoint_provider(endpoint) or (endpoint_provider(vision_endpoint) if vision_action_configured else None),
-        "endpoint": endpoint or (vision_endpoint if vision_action_configured else None) or None,
-        "model": model or (vision_model if vision_action_configured else "") or "fallback-policy",
-        "authRequired": llm_auth_required or (vision_action_configured and vision_auth_required),
-        "authConfigured": llm_auth_configured or (vision_action_configured and vision_auth_configured),
+        "configured": any_model_configured,
+        "enabled": any_model_enabled,
+        "mode": "modal-omni-websocket"
+        if modal_requested
+        else (
+            "ollama"
+            if llm_ollama
+            else (endpoint_mode(endpoint) if endpoint else (endpoint_mode(vision_endpoint) if vision_action_configured else "fallback"))
+        ),
+        "provider": "modal"
+        if modal_requested
+        else (endpoint_provider(endpoint) or (endpoint_provider(vision_endpoint) if vision_action_configured else None)),
+        "endpoint": modal_url if modal_requested else (endpoint or (vision_endpoint if vision_action_configured else None) or None),
+        "model": modal_model if modal_requested else (model or (vision_model if vision_action_configured else "") or "fallback-policy"),
+        "authRequired": (False if modal_requested else llm_auth_required)
+        or (not modal_requested and vision_action_configured and vision_auth_required),
+        "authConfigured": (True if modal_configured else llm_auth_configured)
+        or (not modal_requested and vision_action_configured and vision_auth_configured),
+        "modalOmniRequested": modal_requested,
+        "modalOmniConfigured": modal_configured,
+        "modalOmniEnabled": modal_configured,
+        "modalOmniUrl": modal_url or None,
+        "modalOmniModel": modal_model,
+        "modalOmniWsPath": "/ws/chat",
         "visionConfigured": vision_configured,
         "visionEnabled": vision_configured and (not vision_auth_required or vision_auth_configured),
         "visionActionConfigured": vision_action_configured,
@@ -125,6 +148,10 @@ def allow_heuristic_fallback() -> bool:
 
 def vision_model_action_enabled() -> bool:
     return os.getenv("TOYBOX_MINICPM_V_ACTION", "").lower() in {"1", "true", "yes"}
+
+
+def modal_omni_action_enabled() -> bool:
+    return os.getenv("TOYBOX_MODAL_OMNI_ACTION", "").lower() in {"1", "true", "yes"}
 
 
 def can_call_endpoint(endpoint: str, prefix: str) -> bool:

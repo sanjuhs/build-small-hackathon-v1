@@ -73,11 +73,14 @@ https://build-small-hackathon-toy-room-v3.hf.space/toy-v3
 
 ## Space Variables
 
-For the reliable hackathon demo:
+For the Modal MiniCPM-o v3 demo:
 
 ```bash
-TOYBOX_TRACE_POLICY=1
-TOYBOX_ALLOW_HEURISTIC_FALLBACK=1
+TOYBOX_MODAL_OMNI_ACTION=1
+TOYBOX_MODAL_OMNI_URL=https://sanjuhs123--minicpm-omni-demo.modal.run
+TOYBOX_MODAL_OMNI_MODEL=openbmb/MiniCPM-o-4_5
+TOYBOX_MODAL_OMNI_SEND_IMAGE=1
+TOYBOX_TRACE_POLICY=0
 ```
 
 For a hosted PET LLM:
@@ -109,7 +112,7 @@ https://sanjuhs123--minicpm-omni-demo.modal.run
 
 It is the official MiniCPM-o 4.5 demo running on Modal. Modal logs confirm the worker loads `openbmb/MiniCPM-o-4_5`, places the LLM, vision, audio, and TTS components on `cuda:0`, and serves a healthy gateway after cold start.
 
-This qualifies the project for Modal usage because Modal is used as a real multimodal MiniCPM runtime/development component and is called out in the Space README. Toy Room v3 itself still needs a JSON action adapter before it can use that Modal deployment as the live control brain.
+This qualifies the project for Modal usage because Modal is used as the live multimodal MiniCPM runtime for Toy Room v3. `src/modal_omni_policy.py` adapts the Modal `/ws/chat` stream into validated PET action JSON, so typed/spoken commands directly drive Fire Boy's animation, speech, powers, and toy interactions.
 
 Useful Modal commands:
 

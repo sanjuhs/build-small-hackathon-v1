@@ -83,11 +83,11 @@ The video shows the actual `/toy-v3` UI: Fire Boy's rig, quick action buttons, p
 
 Current local model status for this commit:
 
-- The live demo runs in `trace_retrieval+heuristic` mode unless you configure `TOYBOX_LLM_ENDPOINT`.
-- MiniCPM-V is wired through `TOYBOX_VISION_ENDPOINT` and `TOYBOX_VISION_MODEL`, but it is not active unless those variables are set.
-- Modal is used by the deployed `minicpm-omni-45` MiniCPM-o 4.5 runtime/demo in `modal-minicpm-omni/`. That Modal app runs the official MiniCPM-o stack on an L40S GPU and is the heavier multimodal companion path for the submission.
-- Toy Room v3's public pet loop is intentionally reliable first: it can run without secrets through trace retrieval plus deterministic bounded actions, and the same PET action contract can be backed by MiniCPM5, MiniCPM-V, RunPod, Hugging Face, OpenAI-compatible servers, or a future Modal JSON adapter.
-- Measured local fallback `/api/pet-action` latency was about `322.5 ms` median across 5 samples after the latest restart. Token/sec is blank in fallback mode because no LLM tokens are generated.
+- Toy Room v3 uses the deployed Modal MiniCPM-o gateway as the primary action brain when `TOYBOX_MODAL_OMNI_ACTION=1` and `TOYBOX_MODAL_OMNI_URL` are set.
+- `/api/model-status` reports `provider: modal`, `mode: modal-omni-websocket`, `model: openbmb/MiniCPM-o-4_5`, `authRequired: false`, and `fallbackPolicy: asleep_when_configured`.
+- v3 is command-driven: page load and ambient autoplay do not call the model. One typed/spoken command or explicit quick button sends one `/api/pet-action` request, which opens one Modal `/ws/chat` turn and returns one PET state update.
+- Verified local UI command: "Fire Boy, walk around the toy room" produced `interaction: walk`, `speech: "Me walky loop."`, `promptTokens: 1638`, `completionTokens: 9`, `tokensPerSecond: 2.35`, and `clientRoundTripMs: 3880.4`.
+- Verified local API command with an agent-view image: "Fire Boy, pick up the blue box" produced `interaction: pickup`, `promptTokens: 768`, `completionTokens: 7`, `tokensPerSecond: 1.96`, and `serverLatencyMs: 3565.4`.
 
 ## Prize Qualification Map
 
@@ -96,8 +96,8 @@ The Build Small Hackathon prize page asks entrants to make prize usage explicit 
 | Track or prize | Evidence in this repo and Space |
 | --- | --- |
 | Thousand Token Wood | A tiny-world virtual pet where Fire Boy observes objects, reacts to commands, moves, carries toys, speaks, and fires visible powers inside a toy room. |
-| Best MiniCPM Build | MiniCPM-V visual cortex hook in `src/vision_policy.py`, ModelBest/OpenBMB MiniCPM-V serverless helper in `minicpm-v-serverless/`, MiniCPM5 local action-brain path, and deployed Modal MiniCPM-o 4.5 demo in `modal-minicpm-omni/`. |
-| Best Use of Modal | `modal-minicpm-omni/modal_minicpm_omni.py` deploys `openbmb/MiniCPM-o-4_5` to Modal with an L40S GPU, a Modal Volume for model cache, and a Modal Secret for Hugging Face access. |
+| Best MiniCPM Build | Toy Room v3 sends action-brain turns to `openbmb/MiniCPM-o-4_5` through the deployed Modal gateway. MiniCPM-V visual cortex and MiniCPM5 local routes remain configurable secondary paths. |
+| Best Use of Modal | `modal-minicpm-omni/modal_minicpm_omni.py` deploys `openbmb/MiniCPM-o-4_5` to Modal with an L40S GPU, a Modal Volume for model cache, and a Modal Secret for Hugging Face access. Toy Room v3 calls that Modal `/ws/chat` gateway directly from `src/modal_omni_policy.py`. |
 | Best Use of Codex | The GitHub repo has Codex-attributed implementation and documentation commits for v3, Fire Boy command control, MiniCPM-V helper, and submission docs. |
 | Best Agent | Commands become strict PET action JSON, then execute as animations, speech, powers, particles, object pickup/carry, and physics operations. |
 | Off Brand / custom UI | The user-facing app is a custom Three.js toy room inside a Gradio-compatible Space, not a default Gradio chat screen. |
@@ -339,6 +339,44 @@ If no endpoint is configured, the public build uses a deterministic heuristic fa
 
 The current OpenBMB/MiniCPM path is local-first through Ollama because the public HF router metadata did not expose provider-backed OpenBMB MiniCPM chat models during this build. The game still uses the same action JSON contract, so a hosted MiniCPM endpoint can be connected by setting `TOYBOX_LLM_ENDPOINT`, `TOYBOX_LLM_MODEL`, and a secret token.
 
+Use Modal MiniCPM-o as the Toy Room v3 brain:
+
+```bash
+export TOYBOX_MODAL_OMNI_ACTION=1
+export TOYBOX_MODAL_OMNI_URL=https://sanjuhs123--minicpm-omni-demo.modal.run
+export TOYBOX_MODAL_OMNI_MODEL=openbmb/MiniCPM-o-4_5
+export TOYBOX_MODAL_OMNI_SEND_IMAGE=1
+export TOYBOX_TRACE_POLICY=0
+```
+
+The state machine is intentionally one-turn and visible:
+
+```mermaid
+stateDiagram-v2
+    [*] --> Idle
+    Idle --> Capturing: player types or speaks
+    Capturing --> ModalTurn: POST /api/pet-action
+    ModalTurn --> ValidateAction: Modal /ws/chat streams JSON
+    ValidateAction --> ApplyAction: validate and command-guard PET JSON
+    ApplyAction --> Idle: animation, speech, power, pickup, or movement
+    ModalTurn --> ModelUnavailable: Modal unreachable and fallback disabled
+    ModelUnavailable --> Idle: visible sleepy model-off state
+```
+
+```mermaid
+sequenceDiagram
+    participant Player
+    participant Browser as Toy Room v3
+    participant API as FastAPI /api/pet-action
+    participant Modal as Modal MiniCPM-o /ws/chat
+    Player->>Browser: "Fire Boy, walk around"
+    Browser->>API: command + scene JSON + pet camera frame
+    API->>Modal: one streaming MiniCPM-o turn
+    Modal-->>API: JSON action + token counts
+    API-->>Browser: validated PET action
+    Browser->>Browser: play walk rig clip, speech, particles
+```
+
 Check Modal remote execution and the deployed MiniCPM-o app:
 
 ```bash
@@ -348,7 +386,7 @@ modal app logs minicpm-omni-45
 curl https://sanjuhs123--minicpm-omni-demo.modal.run/health
 ```
 
-The Modal app is intentionally kept separate from Toy Room v3's fast action loop. The app qualifies the submission for Modal usage because it is a real Modal runtime experiment for the MiniCPM-o multimodal model and is documented here, while Toy Room v3 stays responsive for judges even when no secret-backed model endpoint is configured.
+The Modal app is now the primary Toy Room v3 action loop. It uses the official MiniCPM-o 4.5 demo gateway protocol: the backend opens `/ws/chat`, sends a compact command/scene/image prompt, reads `prefill_done`, `chunk`, and `done` events, then exposes prompt tokens, completion tokens, Modal event count, latency, and tokens/sec in the Brain Trace panel.
 
 Measure the current local runtime:
 
@@ -390,6 +428,7 @@ Action traces are written to `data/traces/pet-actions.jsonl` by default. These b
 ## Code Shape
 
 - `src/pet_policy.py` is the small orchestration layer.
+- `src/modal_omni_policy.py` is the Modal MiniCPM-o WebSocket action brain for Toy Room v3.
 - `src/model_policy.py` talks to text/PET-LLM endpoints.
 - `src/vision_policy.py` talks to MiniCPM-V-style image endpoints.
 - `src/pet_actions.py` validates actions, face blendshapes, powers, and fallback behavior.

@@ -1463,7 +1463,29 @@ def clean_speech(value: Any, payload: dict[str, Any], power_name: str) -> str:
                 text = random.choice(["Hehe, warm pat.", "Me feel cozy now.", "Tiny ember happy."])
             else:
                 text = random.choice(["That pat fixed my tiny timeline.", "I feel very officially petted.", "My little clock-heart softened."])
+    if normalize_pet(payload.get("pet")) == "fire_boy":
+        text = fire_boy_baby_speech(text, power_name)
     return shorten(text)
+
+
+def fire_boy_baby_speech(text: str, power_name: str) -> str:
+    clean = re.sub(r"\s+", " ", text).strip()
+    lower = clean.lower()
+    if re.search(r"\b(me|tiny|lil|hehe|boop|baby|warm)\b", lower) and len(clean) <= 64:
+        return clean
+    if any(word in lower for word in ["walk", "stroll", "patrol"]):
+        return "Me walky loop."
+    if any(word in lower for word in ["run", "zoom", "dash", "race"]):
+        return "Me do zoom loop."
+    if any(word in lower for word in ["pick", "pickup", "hold", "carry", "bring", "fetch", "grab"]):
+        return "Me hold it, hehe."
+    if power_name == "fireball" or any(word in lower for word in ["fireball", "comet", "whoosh"]):
+        return "Me make warm sparkle."
+    if power_name == "smoke_poof" or "smoke" in lower or "poof" in lower:
+        return "Poof, hidey cloud."
+    if power_name == "ember_jump" or any(word in lower for word in ["jump", "hop", "bounce"]):
+        return "Boop, warm hop."
+    return "Me tiny Fire Boy."
 
 
 def shorten(text: str, max_words: int = 18) -> str:

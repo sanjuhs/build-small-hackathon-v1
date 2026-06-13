@@ -4,14 +4,14 @@ Toy Room v3 is the small, shippable cut of Tiny Toybox: one controllable Fire Bo
 
 ## Current Runtime Truth
 
-As of this build, the local app is running in `trace_retrieval+heuristic` mode:
+As of this build, Toy Room v3 is wired to the deployed Modal MiniCPM-o gateway:
 
-- `/api/model-status` reports `configured: false` for the PET LLM.
-- `/api/model-status` reports `visionConfigured: false` for MiniCPM-V.
-- `ollama ps` is empty, so no local MiniCPM/Ollama model is actively loaded.
-- The Modal app `minicpm-omni-45` exists and has served the official MiniCPM-o 4.5 demo, but that endpoint is not the same API contract as Toy Room v3's action brain or MiniCPM-V visual cortex.
+- `/api/model-status` reports `provider: modal`, `mode: modal-omni-websocket`, and `model: openbmb/MiniCPM-o-4_5`.
+- Toy Room v3 sends one `/api/pet-action` request per typed/spoken command or explicit quick button.
+- `src/modal_omni_policy.py` opens one Modal `/ws/chat` turn, sends compact scene JSON plus the pet camera frame, and validates the streamed MiniCPM-o JSON into the PET action contract.
+- v3 does not run page-load greetings or ambient autoplay model calls; it waits for direct player commands.
 
-That means the current shipped demo is responsive and embodied, but it is not currently doing live MiniCPM-V inference unless the required environment variables are supplied.
+Verified local browser command: "Fire Boy, walk around the toy room" produced `interaction: walk`, `speech: "Me walky loop."`, `promptTokens: 1638`, `completionTokens: 9`, `tokensPerSecond: 2.35`, and `clientRoundTripMs: 3880.4`.
 
 ## Product Loop
 
@@ -21,9 +21,11 @@ flowchart LR
   Browser --> Snapshot["Scene snapshot\nobjects, forces, pet state, camera frame"]
   Snapshot --> API["POST /api/pet-action"]
   API --> Policy{"Brain available?"}
+  Policy -->|Modal configured| Modal["Modal /ws/chat\nMiniCPM-o 4.5"]
   Policy -->|LLM endpoint configured| LLM["OpenAI-compatible PET LLM\nMiniCPM5, OpenAI, HF, RunPod"]
   Policy -->|no endpoint| Trace["Trace retrieval"]
   Trace --> Heuristic["Heuristic command policy"]
+  Modal --> Action["PET action JSON"]
   LLM --> Action["PET action JSON"]
   Heuristic --> Action
   Action --> Renderer["Three.js + Cannon renderer"]

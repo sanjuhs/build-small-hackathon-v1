@@ -219,7 +219,7 @@ let activeKind = DEFAULT_AGENT_KIND;
 let dragged = null;
 let dragPointerId = null;
 let hoverAgent = null;
-let autoplay = true;
+let autoplay = !IS_V3_MODE;
 let councilMode = !IS_V3_MODE;
 let rigMeshesVisible = true;
 let lastPhysicsTime = performance.now();
@@ -1488,6 +1488,7 @@ function traceActionJson(action, policy) {
   if (!action) return JSON.stringify({ policy, status: "pending" });
   return JSON.stringify({
     policy: action.debug?.policy || policy || "unknown",
+    provider: action.debug?.provider || null,
     speech: shortTraceText(action.speech || "", 64),
     interaction: action.interaction?.verb || null,
     spell: action.spell?.spellName || action.power?.name || null,
@@ -1498,7 +1499,12 @@ function traceActionJson(action, policy) {
     vision: action.debug?.visionApplied || null,
     latencyMs: action.debug?.clientRoundTripMs || action.debug?.serverLatencyMs || null,
     modelLatencyMs: action.debug?.modelLatencyMs || null,
+    promptTokens: action.debug?.promptTokens || null,
+    completionTokens: action.debug?.completionTokens || null,
     tokensPerSecond: action.debug?.tokensPerSecond || null,
+    functionCalls: action.debug?.functionCalls || null,
+    stateUpdatesRequested: action.debug?.stateUpdatesRequested || null,
+    modalEvents: action.debug?.modalEvents || null,
   }, null, 2);
 }
 
@@ -1618,6 +1624,12 @@ function renderRuntimeStack(agent = activeAgent()) {
 }
 
 function brainRuntimeState() {
+  if (modelStatus.modalOmniEnabled) {
+    return { label: shortRuntimeLabel(`Modal MiniCPM-o ${modelStatus.modalOmniModel || modelStatus.model || ""}`), state: "ok" };
+  }
+  if (modelStatus.modalOmniRequested && !modelStatus.modalOmniConfigured) {
+    return { label: "Modal URL missing", state: "warn" };
+  }
   if (modelStatus.visionActionEnabled) {
     return { label: shortRuntimeLabel(`MiniCPM-V ${modelStatus.visionModel || modelStatus.model || ""}`), state: "ok" };
   }
@@ -2094,17 +2106,26 @@ async function refreshModelStatus() {
   try {
     const response = await fetch("/api/model-status");
     modelStatus = await response.json();
-    const brain = modelStatus.visionActionEnabled
+    const brain = modelStatus.modalOmniEnabled
+      ? `Modal MiniCPM-o action: ${modelStatus.modalOmniModel || modelStatus.model}`
+      : modelStatus.modalOmniRequested && !modelStatus.modalOmniConfigured
+        ? "Modal URL missing"
+        : modelStatus.visionActionEnabled
       ? `MiniCPM-V action: ${modelStatus.visionModel || modelStatus.model}`
       : (modelStatus.enabled ? `${providerPrefix()}${modelStatus.model}` : policyFallbackLabel());
     const vision = modelStatus.visionEnabled ? ` + vision: ${modelStatus.visionModel}` : "";
-    dom.modelStatus.textContent = `MiniCPM: ${brain}${modelStatus.visionActionEnabled ? "" : vision}`;
-    const active = Boolean(modelStatus.enabled || modelStatus.visionEnabled || modelStatus.visionActionEnabled);
-    const warn = Boolean((modelStatus.configured && !modelStatus.enabled) || (modelStatus.visionActionConfigured && !modelStatus.visionActionEnabled));
+    dom.modelStatus.textContent = `MiniCPM: ${brain}${modelStatus.visionActionEnabled || modelStatus.modalOmniEnabled ? "" : vision}`;
+    const active = Boolean(modelStatus.enabled || modelStatus.visionEnabled || modelStatus.visionActionEnabled || modelStatus.modalOmniEnabled);
+    const warn = Boolean(
+      (modelStatus.configured && !modelStatus.enabled)
+      || (modelStatus.visionActionConfigured && !modelStatus.visionActionEnabled)
+      || (modelStatus.modalOmniRequested && !modelStatus.modalOmniEnabled)
+    );
     dom.modelStatus.classList.toggle("active", active);
     dom.modelStatus.classList.toggle("warn", warn && !active);
     document.body.dataset.llmMode = modelStatus.mode || "fallback";
     document.body.dataset.llmProvider = modelStatus.provider || "";
+    document.body.dataset.modalOmniEnabled = String(Boolean(modelStatus.modalOmniEnabled));
     document.body.dataset.visionMode = modelStatus.visionMode || "none";
     document.body.dataset.visionActionEnabled = String(Boolean(modelStatus.visionActionEnabled));
     document.body.dataset.modelConfigured = String(Boolean(modelStatus.configured || modelStatus.visionConfigured));
@@ -2185,6 +2206,12 @@ async function refreshAiEvidence() {
 
 function policyFallbackLabel() {
   const provider = modelStatus.provider ? `${modelStatus.provider} ` : "";
+  if (modelStatus.modalOmniRequested && !modelStatus.modalOmniConfigured) {
+    return "Modal URL missing";
+  }
+  if (modelStatus.modalOmniConfigured && !modelStatus.modalOmniEnabled) {
+    return "Modal disconnected";
+  }
   if (modelStatus.visionActionConfigured && modelStatus.visionAuthRequired && !modelStatus.visionAuthConfigured) {
     const visionProvider = modelStatus.visionProvider ? `${modelStatus.visionProvider} ` : "";
     return `${visionProvider}missing secret`;
@@ -2550,6 +2577,11 @@ function runLowLevelProofPulse(agent) {
 }
 
 function setAutoplay(enabled) {
+  if (IS_V3_MODE) {
+    autoplay = false;
+    dom.autoButton.classList.remove("active");
+    return;
+  }
   autoplay = Boolean(enabled);
   dom.autoButton.classList.toggle("active", autoplay);
 }
@@ -2969,6 +3001,11 @@ dom.resetButton.addEventListener("click", () => {
 
 dom.autoButton.addEventListener("click", () => {
   audio.unlock();
+  if (IS_V3_MODE) {
+    setAutoplay(false);
+    showToast("v3 listens for direct Fire Boy commands.");
+    return;
+  }
   setAutoplay(!autoplay);
   showToast(autoplay ? "Autoplay awake." : "Autoplay resting.");
 });
@@ -3141,6 +3178,8 @@ window.__toyboxV2Debug = {
 mountV3ViewDock();
 resize();
 requestAnimationFrame(animate);
-setTimeout(() => {
-  for (const agent of agents.values()) requestAction(agent, "wake up, look around, and greet the other toys");
-}, 900);
+if (!IS_V3_MODE) {
+  setTimeout(() => {
+    for (const agent of agents.values()) requestAction(agent, "wake up, look around, and greet the other toys");
+  }, 900);
+}
