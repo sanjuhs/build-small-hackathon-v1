@@ -72,6 +72,7 @@ def model_status() -> dict[str, Any]:
     model = os.getenv("TOYBOX_LLM_MODEL", "").strip()
     vision_endpoint = os.getenv("TOYBOX_VISION_ENDPOINT", "").strip()
     vision_model = os.getenv("TOYBOX_VISION_MODEL", "").strip()
+    vision_action_configured = vision_model_action_enabled() and bool(vision_endpoint and vision_model)
     llm_ollama = bool(endpoint and ollama_chat_endpoint(endpoint))
     vision_ollama = bool(vision_endpoint and ollama_chat_endpoint(vision_endpoint))
     llm_auth_required = bool(endpoint and not llm_ollama and endpoint_requires_bearer_auth(endpoint))
@@ -83,23 +84,28 @@ def model_status() -> dict[str, Any]:
     llm_configured = bool(endpoint and model)
     vision_configured = bool(vision_endpoint and vision_model)
     trace_policy_enabled = os.getenv("TOYBOX_TRACE_POLICY", "1").lower() not in {"0", "false", "no"}
-    if llm_configured and not allow_heuristic_fallback():
+    if (llm_configured or vision_action_configured) and not allow_heuristic_fallback():
         fallback_policy = "asleep_when_configured"
     elif trace_policy_enabled:
         fallback_policy = "trace_retrieval+heuristic"
     else:
         fallback_policy = "heuristic"
     return {
-        "configured": llm_configured,
-        "enabled": llm_configured and (not llm_auth_required or llm_auth_configured),
-        "mode": "ollama" if llm_ollama else (endpoint_mode(endpoint) if endpoint else "fallback"),
-        "provider": endpoint_provider(endpoint),
-        "endpoint": endpoint or None,
-        "model": model or "fallback-policy",
-        "authRequired": llm_auth_required,
-        "authConfigured": llm_auth_configured,
+        "configured": llm_configured or vision_action_configured,
+        "enabled": (llm_configured and (not llm_auth_required or llm_auth_configured))
+        or (vision_action_configured and (not vision_auth_required or vision_auth_configured)),
+        "mode": "ollama"
+        if llm_ollama
+        else (endpoint_mode(endpoint) if endpoint else (endpoint_mode(vision_endpoint) if vision_action_configured else "fallback")),
+        "provider": endpoint_provider(endpoint) or (endpoint_provider(vision_endpoint) if vision_action_configured else None),
+        "endpoint": endpoint or (vision_endpoint if vision_action_configured else None) or None,
+        "model": model or (vision_model if vision_action_configured else "") or "fallback-policy",
+        "authRequired": llm_auth_required or (vision_action_configured and vision_auth_required),
+        "authConfigured": llm_auth_configured or (vision_action_configured and vision_auth_configured),
         "visionConfigured": vision_configured,
         "visionEnabled": vision_configured and (not vision_auth_required or vision_auth_configured),
+        "visionActionConfigured": vision_action_configured,
+        "visionActionEnabled": vision_action_configured and (not vision_auth_required or vision_auth_configured),
         "visionMode": "ollama" if vision_ollama else (endpoint_mode(vision_endpoint) if vision_endpoint else "none"),
         "visionProvider": endpoint_provider(vision_endpoint),
         "visionEndpoint": vision_endpoint or None,
@@ -115,6 +121,10 @@ def model_status() -> dict[str, Any]:
 
 def allow_heuristic_fallback() -> bool:
     return os.getenv("TOYBOX_ALLOW_HEURISTIC_FALLBACK", "").lower() in {"1", "true", "yes"}
+
+
+def vision_model_action_enabled() -> bool:
+    return os.getenv("TOYBOX_MINICPM_V_ACTION", "").lower() in {"1", "true", "yes"}
 
 
 def can_call_endpoint(endpoint: str, prefix: str) -> bool:
@@ -151,6 +161,13 @@ def api_key_for_endpoint(endpoint: str, prefix: str) -> str:
         )
     if is_runpod_endpoint(endpoint):
         return os.getenv("RUNPOD_API_KEY", "").strip()
+    if is_modelbest_endpoint(endpoint):
+        return (
+            os.getenv(f"{prefix}_API_KEY", "").strip()
+            or os.getenv("MINICPM_V_API_KEY", "").strip()
+            or os.getenv("MODELBEST_API_KEY", "").strip()
+            or os.getenv("MODEL_BEST_API_KEY", "").strip()
+        )
     if "openai.com" in host:
         return os.getenv("OPENAI_API_KEY", "").strip()
     return ""
@@ -171,6 +188,8 @@ def endpoint_requires_bearer_auth(endpoint: str) -> bool:
         "api.deepseek.com",
         "openrouter.ai",
         "api.runpod.ai",
+        "api.modelbest.cn",
+        "modelbest.cn",
     )
     return any(host == item or host.endswith(f".{item}") for item in known_hosts)
 
@@ -191,6 +210,8 @@ def endpoint_provider(endpoint: str) -> str | None:
         return "huggingface"
     if is_runpod_endpoint(endpoint):
         return "runpod"
+    if is_modelbest_endpoint(endpoint):
+        return "modelbest"
     host = endpoint_hostname(endpoint)
     if "openai.com" in host:
         return "openai"
@@ -217,6 +238,11 @@ def is_huggingface_endpoint(endpoint: str) -> bool:
 def is_runpod_endpoint(endpoint: str) -> bool:
     host = endpoint_hostname(endpoint)
     return host == "api.runpod.ai" or host.endswith(".runpod.ai") or host.endswith(".runpod.net")
+
+
+def is_modelbest_endpoint(endpoint: str) -> bool:
+    host = endpoint_hostname(endpoint)
+    return host == "api.modelbest.cn" or host.endswith(".modelbest.cn")
 
 
 def is_local_endpoint(endpoint: str) -> bool:
@@ -424,6 +450,7 @@ def scene_brief(prompt_payload: dict[str, Any], profile: dict[str, Any]) -> str:
             "For chairs/tables/rest/social requests, prefer interaction=sit or gather. For plants, prefer sniff/inspect/water.",
             "For waste, paper, can, bottle, or peel objects, prefer clean or recycle when the player asks for tidying.",
             "If the player says pick up, grab, hold, fetch, carry, or bring a toy, use interaction verb pickup/carry/bring with the exact object id.",
+            "If the player asks to walk around, stroll, or patrol, use interaction={verb:walk,targetId:any listed id,partnerPet:\"\",durationMs:4200}.",
             "If the player asks to run around, zoom, dash, or race, use interaction={verb:run,targetId:any listed id,partnerPet:\"\",durationMs:2600}.",
             "If pet=fire_boy and the player asks for a fireball, use power=fireball and target the named toy if possible.",
             "For another nearby agent, use interaction=talk, play, comfort, or share and set partnerPet.",

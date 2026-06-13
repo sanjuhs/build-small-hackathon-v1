@@ -620,10 +620,12 @@ def toy_room_v3_html() -> str:
         'aria-label="Toy Room v2 controls"': 'aria-label="Toy Room v3 controls"',
         "<strong>Toy Room v2</strong>": "<strong>Toy Room v3</strong>",
         "<span>MiniCPM vision-action toybox</span>": "<span>Fire Boy virtual pet brain</span>",
+        '<div class="section-title">Room</div>': '<div class="section-title">Player view</div>',
+        '<div class="section-title">Vision</div>': '<div class="section-title">Fire Boy view</div>',
         '<a class="route-link glass" href="/pages">Pages</a>': '<a class="route-link glass" href="/toy-v2">v2</a><a class="route-link glass" href="/pages">Pages</a>',
         '<button id="modeButton" class="mode-button" type="button">Council</button>': '<button id="modeButton" class="mode-button" type="button">Fire Boy</button>',
         'placeholder="Teach, ask, or invent a toy-room spell"': 'placeholder="Talk to Fire Boy, move him, or ask him to play with a toy"',
-        "/frontend/toybox/v2_main.js?v=20260613-ai-evidence": "/frontend/toybox/v2_main.js?v=20260614-fireboy-v3-quick-actions",
+        "/frontend/toybox/v2_main.js?v=20260613-ai-evidence": "/frontend/toybox/v2_main.js?v=20260614-minicpm-v-action",
     }
     for source, target in replacements.items():
         html = html.replace(source, target)

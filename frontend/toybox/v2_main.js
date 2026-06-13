@@ -63,6 +63,19 @@ createIcons({ icons: LUCIDE_ICONS });
 const TOYBOX_VERSION = document.body.dataset.toyboxVersion || "v2";
 const IS_V3_MODE = TOYBOX_VERSION === "v3";
 const DEFAULT_AGENT_KIND = IS_V3_MODE ? "fire_boy" : "squeaky";
+
+function mountV3ViewDock() {
+  if (!IS_V3_MODE || document.querySelector(".v3-view-dock")) return;
+  const grid = document.querySelector(".sense-grid");
+  const app = document.getElementById("app");
+  if (!grid || !app) return;
+  const dock = document.createElement("section");
+  dock.className = "v3-view-dock";
+  dock.setAttribute("aria-label", "Player and Fire Boy camera views");
+  dock.appendChild(grid);
+  app.appendChild(dock);
+}
+
 const AGENT_SPECS = IS_V3_MODE
   ? [
     { kind: "fire_boy", label: "Fire Boy", home: new CANNON.Vec3(-0.25, 0.06, 0.24), yaw: 0.06 },
@@ -984,8 +997,8 @@ function applyObjectRecipe(agent, recipe) {
 function executeInteraction(agent, interaction = {}) {
   const verb = interaction.verb || "none";
   if (verb === "none") return false;
-  if (verb === "run") {
-    runAgentRoute(agent, Number(interaction.durationMs || 2600));
+  if (verb === "run" || verb === "walk") {
+    runAgentRoute(agent, Number(interaction.durationMs || (verb === "walk" ? 4200 : 2600)), { walk: verb === "walk" });
     recordInteraction({ kind: verb, pet: agent.kind, objectId: interaction.targetId || "" });
     return true;
   }
@@ -1084,8 +1097,9 @@ function pickUpObject(agent, target, verb, durationMs = 2400) {
   }
 }
 
-function runAgentRoute(agent, durationMs = 2600) {
+function runAgentRoute(agent, durationMs = 2600, options = {}) {
   const start = agent.pet.group.position.clone();
+  const isWalk = Boolean(options.walk);
   const route = [
     new THREE.Vector3(1.18, 0, 0.12),
     new THREE.Vector3(0.72, 0, -1.08),
@@ -1099,8 +1113,8 @@ function runAgentRoute(agent, durationMs = 2600) {
     setTimeout(() => {
       const next = clampAgentPosition(start.clone().add(offset));
       agent.rig.moveTo(new CANNON.Vec3(next.x, 0.06, next.z), { settleOnFloor: true });
-      playRigMotion(agent, "Run");
-      effects.burst(agent.pet.group.position.clone().add(new THREE.Vector3(0, 0.32, 0)), PET_LOOKS[agent.kind].power, 8, 0.58);
+      playRigMotion(agent, isWalk ? "Walk" : "Run");
+      effects.burst(agent.pet.group.position.clone().add(new THREE.Vector3(0, 0.32, 0)), PET_LOOKS[agent.kind].power, isWalk ? 3 : 8, isWalk ? 0.24 : 0.58);
     }, index * Math.max(260, durationMs / route.length));
   }
 }
@@ -1604,8 +1618,17 @@ function renderRuntimeStack(agent = activeAgent()) {
 }
 
 function brainRuntimeState() {
+  if (modelStatus.visionActionEnabled) {
+    return { label: shortRuntimeLabel(`MiniCPM-V ${modelStatus.visionModel || modelStatus.model || ""}`), state: "ok" };
+  }
   if (modelStatus.enabled) {
     return { label: shortRuntimeLabel(`${modelStatus.provider || modelStatus.mode || "model"} ${modelStatus.model || ""}`), state: "ok" };
+  }
+  if (modelStatus.visionActionConfigured && modelStatus.visionAuthRequired && !modelStatus.visionAuthConfigured) {
+    return { label: "MiniCPM secret missing", state: "warn" };
+  }
+  if (modelStatus.visionActionConfigured && !modelStatus.visionActionEnabled) {
+    return { label: "MiniCPM disconnected", state: "warn" };
   }
   if (modelStatus.configured && modelStatus.authRequired && !modelStatus.authConfigured) {
     return { label: "secret missing", state: "warn" };
@@ -2071,13 +2094,19 @@ async function refreshModelStatus() {
   try {
     const response = await fetch("/api/model-status");
     modelStatus = await response.json();
-    const brain = modelStatus.enabled ? `${providerPrefix()}${modelStatus.model}` : policyFallbackLabel();
+    const brain = modelStatus.visionActionEnabled
+      ? `MiniCPM-V action: ${modelStatus.visionModel || modelStatus.model}`
+      : (modelStatus.enabled ? `${providerPrefix()}${modelStatus.model}` : policyFallbackLabel());
     const vision = modelStatus.visionEnabled ? ` + vision: ${modelStatus.visionModel}` : "";
-    dom.modelStatus.textContent = `MiniCPM brain: ${brain}${vision}`;
-    dom.modelStatus.classList.toggle("active", modelStatus.enabled || modelStatus.visionEnabled);
+    dom.modelStatus.textContent = `MiniCPM: ${brain}${modelStatus.visionActionEnabled ? "" : vision}`;
+    const active = Boolean(modelStatus.enabled || modelStatus.visionEnabled || modelStatus.visionActionEnabled);
+    const warn = Boolean((modelStatus.configured && !modelStatus.enabled) || (modelStatus.visionActionConfigured && !modelStatus.visionActionEnabled));
+    dom.modelStatus.classList.toggle("active", active);
+    dom.modelStatus.classList.toggle("warn", warn && !active);
     document.body.dataset.llmMode = modelStatus.mode || "fallback";
     document.body.dataset.llmProvider = modelStatus.provider || "";
     document.body.dataset.visionMode = modelStatus.visionMode || "none";
+    document.body.dataset.visionActionEnabled = String(Boolean(modelStatus.visionActionEnabled));
     document.body.dataset.modelConfigured = String(Boolean(modelStatus.configured || modelStatus.visionConfigured));
     renderRuntimeStack(activeAgent());
   } catch {
@@ -2156,6 +2185,14 @@ async function refreshAiEvidence() {
 
 function policyFallbackLabel() {
   const provider = modelStatus.provider ? `${modelStatus.provider} ` : "";
+  if (modelStatus.visionActionConfigured && modelStatus.visionAuthRequired && !modelStatus.visionAuthConfigured) {
+    const visionProvider = modelStatus.visionProvider ? `${modelStatus.visionProvider} ` : "";
+    return `${visionProvider}missing secret`;
+  }
+  if (modelStatus.visionActionConfigured && !modelStatus.visionActionEnabled) {
+    const visionProvider = modelStatus.visionProvider ? `${modelStatus.visionProvider} ` : "";
+    return `${visionProvider}disconnected`;
+  }
   if (modelStatus.configured && modelStatus.authRequired && !modelStatus.authConfigured) {
     return `${provider}missing secret`;
   }
@@ -3101,6 +3138,7 @@ window.__toyboxV2Debug = {
   }),
 };
 
+mountV3ViewDock();
 resize();
 requestAnimationFrame(animate);
 setTimeout(() => {

@@ -1,7 +1,9 @@
 from __future__ import annotations
 
 import unittest
+from unittest.mock import patch
 
+from src.model_policy import model_status
 from src.pet_actions import fallback_policy
 
 
@@ -59,6 +61,36 @@ class FireBoyCommandPolicyTest(unittest.TestCase):
 
         self.assertEqual(action["interaction"]["verb"], "run")
         self.assertEqual(action["power"]["name"], "ember_jump")
+
+    def test_walk_around_uses_walk_interaction(self) -> None:
+        action = fallback_policy(fireboy_payload("Fire Boy, walk around the toy room"))
+
+        self.assertEqual(action["interaction"]["verb"], "walk")
+        self.assertEqual(action["animation"], "walk")
+
+    def test_model_status_reports_minicpm_v_action_missing_secret(self) -> None:
+        with patch.dict(
+            "os.environ",
+            {
+                "TOYBOX_MINICPM_V_ACTION": "1",
+                "TOYBOX_VISION_ENDPOINT": "https://api.modelbest.cn/v1/chat/completions",
+                "TOYBOX_VISION_MODEL": "MiniCPM-V-4.6-Instruct",
+                "TOYBOX_ALLOW_HEURISTIC_FALLBACK": "",
+                "TOYBOX_VISION_API_KEY": "",
+                "MINICPM_V_API_KEY": "",
+                "MODELBEST_API_KEY": "",
+            },
+            clear=False,
+        ):
+            status = model_status()
+
+        self.assertTrue(status["configured"])
+        self.assertTrue(status["visionActionConfigured"])
+        self.assertFalse(status["visionActionEnabled"])
+        self.assertTrue(status["visionAuthRequired"])
+        self.assertFalse(status["visionAuthConfigured"])
+        self.assertEqual(status["provider"], "modelbest")
+        self.assertEqual(status["fallbackPolicy"], "asleep_when_configured")
 
 
 if __name__ == "__main__":

@@ -27,7 +27,7 @@ PET_PROFILES = {
         "name": "Fire Boy",
         "traits": "warm, babyish, brave, dramatic, tries to be safe but loves a tiny flourish",
         "powers": ["fireball", "ember_jump", "smoke_poof"],
-        "animations": ["flame_wiggle", "bounce", "look_left_right", "nuzzle", "startle"],
+        "animations": ["flame_wiggle", "bounce", "walk", "run", "look_left_right", "nuzzle", "startle"],
         "sounds": ["whoosh", "soft_pop", "pet_touch", "happy_chirp", "startle", "purr", "ember_purr", "tiny_giggle"],
     },
     "shark_girl": {

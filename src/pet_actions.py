@@ -27,6 +27,7 @@ INTERACTION_VERBS = [
     "pickup",
     "carry",
     "bring",
+    "walk",
     "run",
 ]
 
@@ -315,6 +316,7 @@ def fallback_policy(payload: dict[str, Any]) -> dict[str, Any]:
     wish_request = any(word in message for word in ["wish", "create", "spawn", "make a", "make me", "add a", "add an", "summon"])
     pickup_request = any(phrase in message for phrase in ["pick up", "pickup", "grab", "hold", "lift the", "take the"])
     carry_request = any(phrase in message for phrase in ["carry", "bring me", "bring the", "fetch", "take it to"])
+    walk_request = any(phrase in message for phrase in ["walk around", "walk in circles", "walk the room", "stroll around"])
     run_request = any(phrase in message for phrase in ["run around", "run in circles", "go around", "zoom around", "dash around", "race around"])
     charade_request = any(
         phrase in message
@@ -354,13 +356,22 @@ def fallback_policy(payload: dict[str, Any]) -> dict[str, Any]:
             power_name = "shrink" if pet == "squeaky" else profile["powers"][0]
             emotion = "startled"
             animation = "startle"
-    elif run_request:
+    elif walk_request or run_request:
         power_name = "ember_jump" if pet == "fire_boy" else social_power_for(pet, message)
         emotion = "glee"
-        animation = "bounce" if "bounce" in profile["animations"] else social_animation_for(pet)
-        interaction = {"verb": "run", "targetId": target_from_payload(payload), "partnerPet": "", "durationMs": 2800}
+        animation = "walk" if walk_request and "walk" in profile["animations"] else ("bounce" if "bounce" in profile["animations"] else social_animation_for(pet))
+        interaction = {
+            "verb": "walk" if walk_request else "run",
+            "targetId": target_from_payload(payload),
+            "partnerPet": "",
+            "durationMs": 4200 if walk_request else 2800,
+        }
         power_target_id = "self"
-        speech_override = "Me do zoom loop." if pet == "fire_boy" else "I will run a tiny loop."
+        speech_override = (
+            "Me walky loop."
+            if pet == "fire_boy" and walk_request
+            else ("Me do zoom loop." if pet == "fire_boy" else "I will run a tiny loop.")
+        )
         spell_override = {
             "spellName": "tiny room zoom",
             "ops": [
@@ -1348,6 +1359,7 @@ def line_for_interaction(verb: str) -> str:
         "pickup": ["Me got it.", "Tiny pickup job.", "I can hold this."],
         "carry": ["Carry mode, careful feet.", "I will move it gently.", "Tiny delivery paws."],
         "bring": ["I bring it close.", "Delivery coming softly.", "I fetched the toy."],
+        "walk": ["Me walky loop.", "Tiny feet go slow.", "I walk around now."],
         "run": ["Zoom loop time.", "Tiny feet go fast.", "I run around now."],
     }
     return random.choice(lines.get(verb, ["I found a tiny plan."]))
