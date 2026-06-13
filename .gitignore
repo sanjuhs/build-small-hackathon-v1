@@ -1,0 +1,41 @@
+# Local environments and secrets
+.env
+.env.*
+!.env.example
+!**/.env.example
+.venv/
+venv/
+env/
+
+# Python/runtime caches
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+
+# Node/frontend caches
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# OS/editor noise
+.DS_Store
+.idea/
+.vscode/
+.claude/
+
+# Local app runtime state
+.toybox.pid
+.toybox.log
+*.log
+data/traces/*.jsonl
+data/memories/*.jsonl
+
+# Generated Blender scratch files
+*.blend
+*.blend1
+*.blend2
+*.blend@
