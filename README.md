@@ -21,7 +21,14 @@ Local ship route:
 
 Hosted Space:
 
-- `https://build-small-hackathon-toy-room-v2.hf.space/toy-v2`
+- v3 target: `https://build-small-hackathon-toy-room-v3.hf.space/toy-v3`
+- previous v2 build: `https://build-small-hackathon-toy-room-v2.hf.space/toy-v2`
+
+Key docs:
+
+- [Toy Room v3 architecture](docs/virtual-toy-v3-architecture.md)
+- [Hugging Face Spaces and submission notes](docs/hf-spaces-submission.md)
+- [Discord submission draft](docs/discord-submission-post.md)
 
 ## Toy Room v3
 
@@ -33,8 +40,26 @@ V3 adds:
 - Fire Boy GLB animation clips connected to actions such as jump, throw, wave, sit, dance, and spin
 - a babyish Fire Boy speech profile with higher-pitched browser voice settings
 - a focused toy room with food, books, chairs, lamps, plants, balls, blocks, dominos, waste, a recycle bin, and a ramp
+- commanded virtual-pet actions: ask Fire Boy to pick up/carry a box, fireball a cube, or run around the toy room
+- a visible warm fireball projectile for Fire Boy's `fireball` power
+- runtime loop metrics for command latency, server policy latency, approximate renderer state ops, approximate state-changing function calls, and token/sec when a model reports it
 - a Fire Boy-specific judge demo for memory, vision, force input, generated objects, recycling, speech, and traces
 - `/toy-v3` as the explicit v3 route, with `/toy` now pointing to the shipped v3 experience
+
+Try these commands in `/toy-v3`:
+
+```text
+Fire Boy, pick up the box
+Fire Boy, fireball the cube
+Fire Boy, run around the toy room
+```
+
+Current local model status for this commit:
+
+- The live demo runs in `trace_retrieval+heuristic` mode unless you configure `TOYBOX_LLM_ENDPOINT`.
+- MiniCPM-V is wired through `TOYBOX_VISION_ENDPOINT` and `TOYBOX_VISION_MODEL`, but it is not active unless those variables are set.
+- Modal currently hosts the separate `minicpm-omni-45` MiniCPM-o 4.5 demo. It needs a JSON action adapter before Toy Room v3 can use it as the live control brain.
+- Measured local fallback `/api/pet-action` latency was about `143 ms` median across 5 samples. Token/sec is blank in fallback mode because no LLM tokens are generated.
 
 ## Toy Room v2
 
