@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MiniCPM-V Serverless Vision Chat</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <div class="mark" aria-hidden="true">V</div>
+          <div>
+            <p class="eyebrow">MiniCPM-V 4.6</p>
+            <h1>Vision Chat</h1>
+          </div>
+        </div>
+        <div class="top-actions">
+          <div id="status-pill" class="pill">Checking</div>
+          <button id="new-chat" type="button">New chat</button>
+          <details class="settings">
+            <summary>Settings</summary>
+            <div class="settings-panel">
+              <dl>
+                <div>
+                  <dt>Endpoint</dt>
+                  <dd id="api-base">Unknown</dd>
+                </div>
+                <div>
+                  <dt>API key</dt>
+                  <dd id="api-key-state">Unknown</dd>
+                </div>
+                <div>
+                  <dt>Inputs</dt>
+                  <dd>Text + images</dd>
+                </div>
+              </dl>
+              <label>
+                System prompt
+                <textarea id="system-prompt" rows="3">You are MiniCPM-V 4.6, a fast vision-language assistant. Be precise about what is visible, and say when something is uncertain.</textarea>
+              </label>
+              <div class="field-grid">
+                <label>
+                  Model
+                  <select id="model-select">
+                    <option value="">Default</option>
+                  </select>
+                </label>
+                <label>
+                  Tokens
+                  <input id="max-tokens" type="number" min="64" max="2048" step="64" value="768" />
+                </label>
+                <label>
+                  Temp
+                  <input id="temperature" type="number" min="0" max="1.5" step="0.1" value="0.2" />
+                </label>
+              </div>
+              <pre id="inspector">{}</pre>
+            </div>
+          </details>
+        </div>
+      </header>
+
+      <main class="chat-shell">
+        <section class="hero" id="empty-state">
+          <p class="eyebrow">Serverless vision endpoint</p>
+          <h2>Ask MiniCPM-V about images.</h2>
+          <p>Drop in screenshots, photos, diagrams, forms, UI states, or camera captures.</p>
+        </section>
+
+        <div id="messages" class="messages" aria-live="polite"></div>
+
+        <form id="chat-form" class="composer">
+          <div id="camera-stage" class="camera-stage" hidden>
+            <video id="camera-preview" autoplay playsinline muted></video>
+            <div class="camera-actions">
+              <button id="capture-photo" type="button">Capture</button>
+              <button id="close-camera" type="button">Close</button>
+            </div>
+          </div>
+
+          <div id="attachments" class="attachments"></div>
+
+          <div class="composer-box">
+            <textarea id="prompt" rows="1" placeholder="Ask about an image, UI, chart, document, or screenshot..."></textarea>
+            <div class="composer-actions">
+              <input id="image-input" type="file" multiple accept="image/png,image/jpeg,image/webp" />
+              <button id="pick-images" type="button">Images</button>
+              <button id="open-camera" type="button">Camera</button>
+              <span id="media-status" class="media-status">Ready</span>
+              <span class="spacer"></span>
+              <button id="send-chat" class="send-button" type="submit">Send</button>
+            </div>
+          </div>
+        </form>
+      </main>
+    </div>
+
+    <template id="message-template">
+      <article class="message">
+        <div class="avatar"></div>
+        <div class="bubble">
+          <div class="message-meta"></div>
+          <div class="message-text"></div>
+        </div>
+      </article>
+    </template>
+
+    <script src="/app.js?v=vision-chat-20260614" type="module"></script>
+  </body>
+</html>
