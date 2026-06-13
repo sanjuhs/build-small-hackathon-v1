@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import time
 from typing import Any
 
 from src.model_policy import auth_headers, can_call_endpoint, extract_json, ollama_chat_endpoint
@@ -29,8 +30,9 @@ def try_vision_perception(payload: dict[str, Any]) -> dict[str, Any] | None:
 
     for mode, url in attempts:
         try:
+            started = time.perf_counter()
             content = post_vision_request(httpx, mode, url, model, camera_frame)
-            return clean_vision_perception(extract_json(content), model)
+            return clean_vision_perception(extract_json(content), model, mode, round((time.perf_counter() - started) * 1000, 1))
         except Exception as exc:
             errors.append(f"{mode}: {exc}")
 
@@ -140,7 +142,7 @@ def log_vision_errors(model: str, errors: list[str]) -> None:
     print(f"Vision model {model} did not return perception: {joined}", flush=True)
 
 
-def clean_vision_perception(value: dict[str, Any], model: str) -> dict[str, Any]:
+def clean_vision_perception(value: dict[str, Any], model: str, mode: str, latency_ms: float) -> dict[str, Any]:
     blendshape = value.get("blendshape") if isinstance(value.get("blendshape"), dict) else {}
     cleaned_shape = {}
     for key in FACE_BLENDSHAPE_KEYS:
@@ -163,5 +165,5 @@ def clean_vision_perception(value: dict[str, Any], model: str) -> dict[str, Any]
         "blendshape": cleaned_shape,
         "hazards": [str(item)[:80] for item in hazards[:5]],
         "toyObjects": [str(item)[:60] for item in toy_objects[:8]],
-        "debug": {"visionModel": model},
+        "debug": {"visionModel": model, "visionMode": mode, "visionLatencyMs": latency_ms},
     }

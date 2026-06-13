@@ -24,6 +24,10 @@ INTERACTION_VERBS = [
     "play",
     "comfort",
     "talk",
+    "pickup",
+    "carry",
+    "bring",
+    "run",
 ]
 
 SPELL_OPS = ["impulse", "freeze", "scale", "attract", "spawn_particle", "set_light", "nudge_pet"]
@@ -309,6 +313,9 @@ def fallback_policy(payload: dict[str, Any]) -> dict[str, Any]:
     sound_request = any(word in message for word in ["sound", "heard", "hear", "listen", "noise", "clap", "sing", "loud"])
     loud_audio = audio_peak > 0.68 or audio_rms > 0.38
     wish_request = any(word in message for word in ["wish", "create", "spawn", "make a", "make me", "add a", "add an", "summon"])
+    pickup_request = any(phrase in message for phrase in ["pick up", "pickup", "grab", "hold", "lift the", "take the"])
+    carry_request = any(phrase in message for phrase in ["carry", "bring me", "bring the", "fetch", "take it to"])
+    run_request = any(phrase in message for phrase in ["run around", "run in circles", "go around", "zoom around", "dash around", "race around"])
     charade_request = any(
         phrase in message
         for phrase in [
@@ -347,10 +354,46 @@ def fallback_policy(payload: dict[str, Any]) -> dict[str, Any]:
             power_name = "shrink" if pet == "squeaky" else profile["powers"][0]
             emotion = "startled"
             animation = "startle"
+    elif run_request:
+        power_name = "ember_jump" if pet == "fire_boy" else social_power_for(pet, message)
+        emotion = "glee"
+        animation = "bounce" if "bounce" in profile["animations"] else social_animation_for(pet)
+        interaction = {"verb": "run", "targetId": target_from_payload(payload), "partnerPet": "", "durationMs": 2800}
+        power_target_id = "self"
+        speech_override = "Me do zoom loop." if pet == "fire_boy" else "I will run a tiny loop."
+        spell_override = {
+            "spellName": "tiny room zoom",
+            "ops": [
+                {"op": "nudge_pet", "targetId": "self", "vec": [0.6, 0.45, 0.4], "durationMs": 460, "color": "#ff9b45"},
+                {"op": "spawn_particle", "targetId": "self", "durationMs": 1100, "color": "#ff9b45"},
+            ],
+        }
+    elif pickup_request or carry_request:
+        preferred_target = object_from_message(objects, message, preferred={"box", "cube", "block", "toy", "ball"})
+        target = preferred_target or nearest_object_with_affordance(objects, "play") or nearest_object_by_distance(objects)
+        target_id = str((target or {}).get("id") or target_from_payload(payload))
+        verb = "bring" if carry_request and any(word in message for word in ["bring", "fetch"]) else ("carry" if carry_request else "pickup")
+        power_name = "ember_jump" if pet == "fire_boy" else social_power_for(pet, message)
+        emotion = "focused"
+        animation = focus_animation_for(pet)
+        interaction = {"verb": verb, "targetId": target_id, "partnerPet": "", "durationMs": 2600}
+        power_target_id = target_id
+        label = object_label(target or {"id": target_id})
+        speech_override = f"Me hold {shorten(label, 18)}." if pet == "fire_boy" else f"I picked up {shorten(label, 22)}."
+        spell_override = {
+            "spellName": "warm little pickup",
+            "ops": [
+                {"op": "spawn_particle", "targetId": target_id, "durationMs": 900, "color": "#ffd75a"},
+                {"op": "set_light", "targetId": target_id, "intensity": 54, "durationMs": 220, "color": "#ffd75a"},
+            ],
+        }
     elif requested_power and not (social_partner and agent_social_request):
         power_name = requested_power
         emotion = "focused" if requested_power in {"time_freeze", "rewind", "magnet_pull", "tide_pull"} else "glee"
         animation = focus_animation_for(pet) if emotion == "focused" else social_animation_for(pet)
+        target = object_from_message(objects, message)
+        if target:
+            power_target_id = str(target.get("id") or power_target_id)
     elif learned:
         power_name = str(learned.get("powerName") or profile["powers"][0])
         emotion = str(learned.get("emotion") or "focused")
@@ -1249,6 +1292,12 @@ def nearest_object_with_affordance(objects: list[dict[str, Any]], affordance: st
     return sorted(matches, key=lambda item: float(item.get("distanceToPet") or 999))[0]
 
 
+def nearest_object_by_distance(objects: list[dict[str, Any]]) -> dict[str, Any] | None:
+    if not objects:
+        return None
+    return sorted(objects, key=lambda item: float(item.get("distanceToPet") or 999))[0]
+
+
 def requested_power_from_message(pet: str, message: str) -> str:
     aliases = {
         "time freeze": "time_freeze",
@@ -1296,6 +1345,10 @@ def line_for_interaction(verb: str) -> str:
         "play": ["Play protocol engaged.", "A tiny game begins.", "I found the fun part."],
         "comfort": ["Soft comfort delivered.", "I will be gentle here.", "Tiny care mode."],
         "talk": ["Tiny conversation time.", "I have words for my friend.", "Council voice activated."],
+        "pickup": ["Me got it.", "Tiny pickup job.", "I can hold this."],
+        "carry": ["Carry mode, careful feet.", "I will move it gently.", "Tiny delivery paws."],
+        "bring": ["I bring it close.", "Delivery coming softly.", "I fetched the toy."],
+        "run": ["Zoom loop time.", "Tiny feet go fast.", "I run around now."],
     }
     return random.choice(lines.get(verb, ["I found a tiny plan."]))
 

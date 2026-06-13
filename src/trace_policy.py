@@ -154,9 +154,24 @@ def action_satisfies_request(compact: dict[str, Any], action: dict[str, Any]) ->
     message = str(compact.get("user_message") or "").lower()
     interaction = action.get("interaction") if isinstance(action.get("interaction"), dict) else {}
     verb = str(interaction.get("verb") or "")
+    power = action.get("power") if isinstance(action.get("power"), dict) else {}
+    power_name = str(power.get("name") or "")
+    spell = action.get("spell") if isinstance(action.get("spell"), dict) else {}
+    spell_name = str(spell.get("spellName") or "").lower()
     intent = str(action.get("intent") or "").lower()
     speech = str(action.get("speech") or "").lower()
 
+    if any(phrase in message for phrase in ("pick up", "pickup", "grab", "hold", "lift the", "carry", "bring me", "bring the", "fetch")):
+        if verb not in {"pickup", "carry", "bring"}:
+            return False
+        if power_name == "fireball" or "fireball" in spell_name or "comet" in spell_name:
+            return False
+    if any(phrase in message for phrase in ("run around", "run in circles", "go around", "zoom around", "dash around", "race around")):
+        if verb != "run":
+            return False
+    if "fireball" in message or "fire ball" in message:
+        if power_name != "fireball":
+            return False
     if any(word in message for word in ("remember", "learn", "lesson", "rule")):
         memory = action.get("newMemory") if isinstance(action.get("newMemory"), dict) else None
         if not memory or not memory.get("concept"):

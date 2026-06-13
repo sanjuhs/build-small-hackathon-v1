@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import json
 import struct
+import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -657,7 +658,13 @@ def fireboy_rigged() -> str:
 @server.post("/api/pet-action")
 async def pet_action(request: Request) -> JSONResponse:
     payload: dict[str, Any] = await request.json()
+    started = time.perf_counter()
     action = choose_pet_action(payload)
+    elapsed_ms = round((time.perf_counter() - started) * 1000, 1)
+    debug = action.setdefault("debug", {})
+    if isinstance(debug, dict):
+        debug["serverLatencyMs"] = elapsed_ms
+        debug["cameraFrameSource"] = payload.get("cameraFrameSource") or ""
     return JSONResponse(action)
 
 

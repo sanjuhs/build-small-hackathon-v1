@@ -40,7 +40,14 @@ def choose_pet_action(payload: dict[str, Any]) -> dict[str, Any]:
 
 
 def apply_vision_blendshape(action: dict[str, Any], vision: dict[str, Any] | None) -> None:
-    if not vision or action.get("blendshape"):
+    if not vision:
+        return
+    debug = action.setdefault("debug", {})
+    if isinstance(debug, dict):
+        debug.update(vision.get("debug") if isinstance(vision.get("debug"), dict) else {})
+        if vision.get("summary"):
+            debug["visionSummary"] = str(vision.get("summary"))[:160]
+    if action.get("blendshape"):
         return
     blendshape = vision.get("blendshape")
     if isinstance(blendshape, dict) and blendshape:

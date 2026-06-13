@@ -71,6 +71,14 @@ if ! command -v uv >/dev/null 2>&1; then
   exit 1
 fi
 
+if [[ -f ".env" ]]; then
+  echo "Loading local .env runtime settings."
+  set -a
+  # shellcheck disable=SC1091
+  source ".env"
+  set +a
+fi
+
 queued_pids=""
 
 if [[ -f "$PID_FILE" ]]; then

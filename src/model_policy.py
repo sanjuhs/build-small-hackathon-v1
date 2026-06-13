@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import re
+import time
 from typing import Any
 from urllib.parse import urlparse, urlunparse
 
@@ -23,14 +24,16 @@ def try_model_policy(endpoint: str, payload: dict[str, Any]) -> dict[str, Any] |
     ollama_endpoint = ollama_chat_endpoint(endpoint)
 
     if ollama_endpoint:
+        started = time.perf_counter()
         action = try_ollama_structured_policy(httpx, ollama_endpoint, model, prompt_payload, payload)
         if action:
-            return attach_model_debug(action, model)
+            return attach_model_debug(action, model, provider="ollama", latency_ms=elapsed_ms(started))
 
     if not can_call_endpoint(endpoint, "TOYBOX_LLM"):
         return None
 
     try:
+        started = time.perf_counter()
         request_json = {
             "model": model,
             "messages": [
@@ -53,7 +56,13 @@ def try_model_policy(endpoint: str, payload: dict[str, Any]) -> dict[str, Any] |
         response.raise_for_status()
         data = response.json()
         parsed = extract_json(data["choices"][0]["message"]["content"])
-        return attach_model_debug(validate_action(parsed, payload), model)
+        return attach_model_debug(
+            validate_action(parsed, payload),
+            model,
+            provider=endpoint_provider(endpoint) or endpoint_mode(endpoint),
+            latency_ms=elapsed_ms(started),
+            usage=data.get("usage") if isinstance(data, dict) else None,
+        )
     except Exception:
         return None
 
@@ -281,7 +290,7 @@ def post_ollama_action(
                         "Optionally invent a bounded soundRecipe of tiny oscillator tones; never output audio files. "
                         "When the player wishes for, asks to create, spawn, add, summon, or make a new object, fill objectRecipe. "
                         "If the player teaches a new word, rule, preference, or value, set newMemory. "
-                        "Use interaction verbs for eating berries, reading books, sitting, or sniffing plants. "
+                        "Use interaction verbs for eating berries, reading books, sitting, sniffing plants, picking up toys, carrying toys, or running around. "
                         "The speech field is the pet's short spoken line only."
                     ),
                 },
@@ -295,7 +304,10 @@ def post_ollama_action(
         timeout=float(os.getenv("TOYBOX_LLM_TIMEOUT", "18")),
     )
     response.raise_for_status()
-    return validate_action(extract_json(response.json()["message"]["content"]), payload)
+    data = response.json()
+    action = validate_action(extract_json(data["message"]["content"]), payload)
+    action["_modelMetrics"] = ollama_response_metrics(data)
+    return action
 
 
 def ollama_generation_options(temperature: float) -> dict[str, Any]:
@@ -332,7 +344,7 @@ def text_policy_system_prompt() -> str:
         '"soundRecipe": {"label": string, "gain": number, "tones": [{"frequency": number, "offsetMs": integer, '
         '"durationMs": integer, "gain": number, "wave": string}]} or null}. '
         f"emotion must be one of {VALID_EMOTIONS}. "
-        "interaction.verb must be one of none, eat, read, sit, gather, sniff, inspect, water, share, clean, recycle, play, comfort, talk. "
+        "interaction.verb must be one of none, eat, read, sit, gather, sniff, inspect, water, share, clean, recycle, play, comfort, talk, pickup, carry, bring, run. "
         "Blendshape may include numeric eye, smile, mouth, brow, cheek, squash, tilt, sparkle. "
         "Spell ops must use only impulse, freeze, scale, attract, spawn_particle, set_light, or nudge_pet. "
         "Spell targetId must be a listed object id, self, all-moving, all-toys, or all-agents. "
@@ -411,6 +423,9 @@ def scene_brief(prompt_payload: dict[str, Any], profile: dict[str, Any]) -> str:
             "For books or reading requests, prefer interaction={verb:read,targetId:book id}.",
             "For chairs/tables/rest/social requests, prefer interaction=sit or gather. For plants, prefer sniff/inspect/water.",
             "For waste, paper, can, bottle, or peel objects, prefer clean or recycle when the player asks for tidying.",
+            "If the player says pick up, grab, hold, fetch, carry, or bring a toy, use interaction verb pickup/carry/bring with the exact object id.",
+            "If the player asks to run around, zoom, dash, or race, use interaction={verb:run,targetId:any listed id,partnerPet:\"\",durationMs:2600}.",
+            "If pet=fire_boy and the player asks for a fireball, use power=fireball and target the named toy if possible.",
             "For another nearby agent, use interaction=talk, play, comfort, or share and set partnerPet.",
             "Use interaction={verb:none,targetId:any listed id,partnerPet:\"\",durationMs:1200} when only using a power.",
             "Recent interactions may include pointer modality, screen coordinates, and pet hit point; treat mouse, touch, and pen as embodied contact.",
@@ -477,6 +492,56 @@ def extract_json(content: str) -> dict[str, Any]:
     return json.loads(match.group(0))
 
 
-def attach_model_debug(action: dict[str, Any], model: str) -> dict[str, Any]:
-    action["debug"] = {"policy": "model", "model": model}
+def attach_model_debug(
+    action: dict[str, Any],
+    model: str,
+    provider: str | None = None,
+    latency_ms: float | None = None,
+    usage: dict[str, Any] | None = None,
+) -> dict[str, Any]:
+    metrics = action.pop("_modelMetrics", {})
+    debug: dict[str, Any] = {"policy": "model", "model": model}
+    if provider:
+        debug["provider"] = provider
+    if latency_ms is not None:
+        debug["modelLatencyMs"] = latency_ms
+    if isinstance(metrics, dict):
+        debug.update(metrics)
+    if isinstance(usage, dict):
+        completion_tokens = usage.get("completion_tokens") or usage.get("completionTokens")
+        prompt_tokens = usage.get("prompt_tokens") or usage.get("promptTokens")
+        total_tokens = usage.get("total_tokens") or usage.get("totalTokens")
+        if completion_tokens is not None:
+            debug["completionTokens"] = completion_tokens
+        if prompt_tokens is not None:
+            debug["promptTokens"] = prompt_tokens
+        if total_tokens is not None:
+            debug["totalTokens"] = total_tokens
+        if latency_ms and completion_tokens:
+            debug["tokensPerSecond"] = round(float(completion_tokens) / max(latency_ms / 1000, 0.001), 2)
+    action["debug"] = debug
     return action
+
+
+def elapsed_ms(started: float) -> float:
+    return round((time.perf_counter() - started) * 1000, 1)
+
+
+def ollama_response_metrics(data: dict[str, Any]) -> dict[str, Any]:
+    metrics: dict[str, Any] = {}
+    eval_count = data.get("eval_count")
+    eval_duration = data.get("eval_duration")
+    prompt_eval_count = data.get("prompt_eval_count")
+    prompt_eval_duration = data.get("prompt_eval_duration")
+    if eval_count is not None:
+        metrics["completionTokens"] = eval_count
+    if prompt_eval_count is not None:
+        metrics["promptTokens"] = prompt_eval_count
+    if eval_duration:
+        duration_seconds = float(eval_duration) / 1_000_000_000
+        metrics["completionDurationMs"] = round(duration_seconds * 1000, 1)
+        if eval_count:
+            metrics["tokensPerSecond"] = round(float(eval_count) / max(duration_seconds, 0.001), 2)
+    if prompt_eval_duration:
+        metrics["promptEvalDurationMs"] = round(float(prompt_eval_duration) / 1_000_000, 1)
+    return metrics
