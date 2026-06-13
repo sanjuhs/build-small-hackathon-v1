@@ -1,0 +1,337 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tiny Toybox Parts Lab</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172121;
+      --muted: #64706c;
+      --paper: #fffaf0;
+      --line: rgba(23, 33, 33, 0.14);
+      --panel: rgba(255, 250, 240, 0.88);
+      --aqua: #65cbda;
+      --shadow: 0 18px 54px rgba(18, 50, 56, 0.14);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: linear-gradient(180deg, #fff8e8, #edf8f6 62%, #fff8e8);
+    }
+
+    a,
+    button {
+      font: inherit;
+      color: inherit;
+    }
+
+    .shell {
+      width: min(1320px, calc(100vw - 24px));
+      margin: 0 auto;
+      padding: 12px 0 36px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 10px;
+      z-index: 4;
+      min-height: 50px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: rgba(255, 250, 240, 0.92);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+      min-width: 0;
+    }
+
+    .brand strong {
+      font-size: 14px;
+      font-weight: 880;
+      line-height: 1.1;
+      white-space: nowrap;
+    }
+
+    .brand span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .links {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+      justify-content: flex-end;
+    }
+
+    .link-button,
+    .kind,
+    .attach {
+      border: 1px solid rgba(23, 33, 33, 0.12);
+      border-radius: 7px;
+      background: #ffffff;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 780;
+      line-height: 1;
+    }
+
+    .link-button {
+      min-height: 36px;
+      padding: 8px 11px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .contact,
+    .character {
+      margin-top: 12px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+    }
+
+    .contact img {
+      width: 100%;
+      display: block;
+    }
+
+    .source-note {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 760;
+      margin: 6px 2px 0;
+    }
+
+    .character {
+      display: grid;
+      grid-template-columns: minmax(300px, 0.95fr) minmax(0, 1.4fr);
+      gap: 0;
+    }
+
+    .sheet {
+      border-right: 1px solid var(--line);
+      background: #fff8ec;
+    }
+
+    .sheet img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+    }
+
+    .parts {
+      min-width: 0;
+      padding: 14px;
+    }
+
+    .char-head {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    h1,
+    h2 {
+      margin: 0;
+      letter-spacing: 0;
+      line-height: 1.02;
+    }
+
+    h1 {
+      padding: 22px 0 6px;
+      font-size: clamp(28px, 5vw, 52px);
+    }
+
+    h2 {
+      font-size: clamp(22px, 3vw, 34px);
+    }
+
+    .count {
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 780;
+      white-space: nowrap;
+    }
+
+    .part-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .part-card {
+      min-width: 0;
+      border: 1px solid rgba(23, 33, 33, 0.11);
+      border-radius: 8px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.74);
+    }
+
+    .part-card img {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      display: block;
+      object-fit: contain;
+      background: #fff8ec;
+    }
+
+    .part-meta {
+      padding: 9px;
+    }
+
+    .part-name {
+      min-height: 36px;
+      font-size: 13px;
+      font-weight: 850;
+      line-height: 1.2;
+      overflow-wrap: anywhere;
+    }
+
+    .chips {
+      margin-top: 8px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .kind,
+    .attach {
+      padding: 5px 7px;
+      font-size: 11px;
+      font-weight: 800;
+      background: #fff7df;
+    }
+
+    .attach {
+      background: #e9fbfb;
+    }
+
+    @media (max-width: 960px) {
+      .character {
+        grid-template-columns: 1fr;
+      }
+
+      .sheet {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .part-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (max-width: 620px) {
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .links {
+        justify-content: flex-start;
+      }
+
+      .part-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <nav class="topbar">
+      <div class="brand">
+        <strong>Tiny Toybox Parts Lab</strong>
+        <span>Base bodies, clothing layers, backpacks, props</span>
+      </div>
+      <div class="links">
+        <a class="link-button" href="/pages">Pages</a>
+        <a class="link-button" href="/blender-models">Model Viewer</a>
+        <a class="link-button" href="/models">Model Lab</a>
+        <a class="link-button" href="/toy">Toy Room</a>
+      </div>
+    </nav>
+
+    <h1>Layered Character Kits</h1>
+
+    <section class="contact">
+      <img id="contact-sheet" src="/toy-assets/generated/part-concepts/parts-individual-v2-contact.png" alt="Part concept references for all four characters" />
+    </section>
+    <div id="source-note" class="source-note"></div>
+
+    <div id="characters"></div>
+  </main>
+
+  <script type="module">
+    const root = document.getElementById("characters");
+    const response = await fetch("/toy-assets/generated/part-concepts/parts-manifest.json");
+    const manifest = await response.json();
+    document.getElementById("contact-sheet").src = manifest.contactSheet || "/toy-assets/generated/part-concepts/parts-individual-v2-contact.png";
+    document.getElementById("source-note").textContent = manifest.source || "";
+
+    function card(part, base = false) {
+      const article = document.createElement("article");
+      article.className = "part-card";
+      article.innerHTML = `
+        <img src="${part.image}" alt="${part.name}" />
+        <div class="part-meta">
+          <div class="part-name">${part.name}</div>
+          <div class="chips">
+            <span class="kind">${base ? "base" : part.kind}</span>
+            <span class="attach">${part.attach}</span>
+          </div>
+        </div>
+      `;
+      return article;
+    }
+
+    for (const character of manifest.characters) {
+      const section = document.createElement("section");
+      section.className = "character";
+      const count = character.parts.length + 1;
+      section.innerHTML = `
+        <div class="sheet"><img src="${character.sheet}" alt="${character.name} generated parts sheet" /></div>
+        <div class="parts">
+          <div class="char-head">
+            <h2>${character.name}</h2>
+            <div class="count">${count} pieces</div>
+          </div>
+          <div class="part-grid"></div>
+        </div>
+      `;
+      const grid = section.querySelector(".part-grid");
+      grid.append(card(character.base, true));
+      for (const part of character.parts) grid.append(card(part));
+      root.append(section);
+    }
+  </script>
+</body>
+</html>

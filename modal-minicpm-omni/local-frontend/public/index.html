@@ -1,0 +1,163 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>MiniCPM Omni Chat</title>
+    <link rel="stylesheet" href="/styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <div class="brand-lockup">
+          <div class="brand-mark" aria-hidden="true">o</div>
+          <div>
+            <p class="eyebrow">MiniCPM-o 4.5</p>
+            <h1>Omni Chat</h1>
+          </div>
+        </div>
+
+        <div class="header-actions">
+          <div id="ws-state" class="pill">Idle</div>
+          <button id="warm-health" class="quiet-button" type="button">Wake</button>
+          <button id="refresh-status" class="quiet-button" type="button">Refresh</button>
+          <a id="open-remote" class="quiet-button" target="_blank" rel="noreferrer">Remote</a>
+          <details class="settings-menu">
+            <summary>Settings</summary>
+            <div class="settings-panel">
+              <div class="endpoint">
+                <label for="remote-url">Remote endpoint</label>
+                <div class="endpoint-row">
+                  <input id="remote-url" autocomplete="off" spellcheck="false" />
+                  <button id="save-remote" type="button">Save</button>
+                </div>
+              </div>
+
+              <div class="status-grid" aria-label="Modal status">
+                <div class="metric">
+                  <span>Health</span>
+                  <strong id="metric-health">Unknown</strong>
+                </div>
+                <div class="metric">
+                  <span>Worker</span>
+                  <strong id="metric-worker">Unknown</strong>
+                </div>
+                <div class="metric">
+                  <span>Queue</span>
+                  <strong id="metric-queue">Unknown</strong>
+                </div>
+                <div class="metric">
+                  <span>Latency</span>
+                  <strong id="metric-latency">Unknown</strong>
+                </div>
+              </div>
+
+              <label class="settings-field" for="system-prompt">
+                System prompt
+                <textarea id="system-prompt" rows="3">You are MiniCPM-o 4.5 running on Modal. Be concise, practical, and explicit about what you observe.</textarea>
+              </label>
+
+              <div class="advanced-controls">
+                <label class="locked-control" title="The Modal gateway currently needs streaming for reliable chat.">
+                  <input id="streaming" type="checkbox" checked disabled />
+                  Stream
+                </label>
+                <label>
+                  Tokens
+                  <input id="max-tokens" type="number" min="16" max="2048" step="16" value="512" />
+                </label>
+                <label>
+                  Temp
+                  <input id="temperature" type="number" min="0" max="1.5" step="0.1" value="0.7" />
+                </label>
+                <label>
+                  Top P
+                  <input id="top-p" type="number" min="0.05" max="1" step="0.05" value="0.8" />
+                </label>
+              </div>
+
+              <div class="settings-actions">
+                <button id="clear-chat" type="button">Clear chat</button>
+                <button id="clear-log" type="button">Clear events</button>
+                <button id="stop-modal" class="danger" type="button">Stop containers</button>
+              </div>
+
+              <div class="mode-list">
+                <a data-remote-path="/" target="_blank" rel="noreferrer">Home</a>
+                <a data-remote-path="/turnbased" target="_blank" rel="noreferrer">Turn-based</a>
+                <a data-remote-path="/omni" target="_blank" rel="noreferrer">Omni</a>
+                <a data-remote-path="/audio_duplex" target="_blank" rel="noreferrer">Audio Duplex</a>
+                <a data-remote-path="/realtime" target="_blank" rel="noreferrer">Realtime API</a>
+                <a data-remote-path="/mobile" target="_blank" rel="noreferrer">Mobile</a>
+              </div>
+
+              <div class="debug-grid">
+                <section>
+                  <h2>Inspector</h2>
+                  <pre id="inspector">{}</pre>
+                </section>
+                <section>
+                  <h2>Events</h2>
+                  <div id="event-log" class="event-log"></div>
+                </section>
+              </div>
+            </div>
+          </details>
+        </div>
+      </header>
+
+      <main class="chat-shell">
+        <section class="chat-panel" aria-label="MiniCPM conversation">
+          <div id="empty-state" class="empty-state">
+            <p class="eyebrow">Turn-based multimodal chat</p>
+            <h2>Talk to MiniCPM Omni</h2>
+            <p>Voice notes, images, camera shots, and videos all go through the same conversation.</p>
+          </div>
+          <div id="messages" class="messages" aria-live="polite"></div>
+
+          <form id="chat-form" class="composer">
+            <div id="camera-stage" class="camera-stage" hidden>
+              <video id="camera-preview" autoplay playsinline muted></video>
+              <div class="camera-actions">
+                <button id="capture-photo" type="button" disabled>Photo</button>
+                <button id="record-video" type="button" disabled>Record clip</button>
+              </div>
+            </div>
+
+            <div id="attachments" class="attachments"></div>
+
+            <div class="composer-box">
+              <textarea id="prompt" rows="1" placeholder="Message MiniCPM..."></textarea>
+              <div class="composer-actions">
+                <input id="file-input" type="file" multiple accept="image/*,audio/*,video/*" />
+                <button id="record-audio" class="tool-button" type="button">Voice</button>
+                <button id="image-picker" class="tool-button" type="button">Image</button>
+                <button id="toggle-camera" class="tool-button" type="button">Camera</button>
+                <span id="capture-status" class="capture-status">Ready</span>
+                <span class="spacer"></span>
+                <label class="speak-toggle" title="Speak finished assistant replies using this browser.">
+                  <input id="tts" type="checkbox" />
+                  Speak
+                </label>
+                <button id="stop-speech" class="tool-button" type="button" disabled>Mute</button>
+                <button id="send-chat" class="send-button" type="submit">Send</button>
+              </div>
+            </div>
+          </form>
+        </section>
+      </main>
+    </div>
+
+    <template id="message-template">
+      <div class="message">
+        <div class="avatar"></div>
+        <div class="bubble">
+          <div class="message-meta"></div>
+          <div class="message-text"></div>
+        </div>
+      </div>
+    </template>
+
+    <script src="/app.js?v=media-guard-20260614" type="module"></script>
+  </body>
+</html>

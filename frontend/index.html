@@ -1,0 +1,537 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tiny Toybox</title>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+        "cannon-es": "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"
+      }
+    }
+  </script>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #1d2424;
+      --muted: #6d7471;
+      --paper: #fffaf0;
+      --line: rgba(29, 36, 36, 0.16);
+      --blue: #88b9c2;
+      --teal: #123238;
+      --amber: #ffcc4f;
+      --coral: #ff704d;
+      --aqua: #70cfe0;
+      --shadow: 0 16px 48px rgba(22, 36, 38, 0.16);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      width: 100%;
+      height: 100%;
+      margin: 0;
+      overflow: hidden;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background: #f6f2ea;
+    }
+
+    button,
+    input {
+      font: inherit;
+    }
+
+    #app {
+      position: fixed;
+      inset: 0;
+      overflow: hidden;
+      background:
+        radial-gradient(circle at 16% 10%, rgba(255, 204, 79, 0.24), transparent 30%),
+        linear-gradient(180deg, #fff6dd 0%, #eff7f5 52%, #f8efe8 100%);
+    }
+
+    #stage {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      display: block;
+      cursor: grab;
+      touch-action: none;
+    }
+
+    #stage.dragging {
+      cursor: grabbing;
+    }
+
+    #stage.pet-hover {
+      cursor: pointer;
+    }
+
+    .topbar {
+      position: absolute;
+      top: 16px;
+      left: 16px;
+      right: 16px;
+      z-index: 5;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      pointer-events: none;
+    }
+
+    .brand,
+    .model-pill,
+    .model-link,
+    .pet-switcher,
+    .sense-tile,
+    .perception,
+    .composer,
+    .speech {
+      border: 1px solid var(--line);
+      background: rgba(255, 250, 240, 0.78);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .brand {
+      min-width: 0;
+      border-radius: 8px;
+      padding: 9px 12px;
+      font-size: 13px;
+      font-weight: 750;
+      letter-spacing: 0;
+      pointer-events: auto;
+      white-space: nowrap;
+    }
+
+    .model-pill {
+      border-radius: 8px;
+      padding: 9px 12px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      pointer-events: auto;
+      white-space: nowrap;
+    }
+
+    .model-pill.active {
+      color: var(--teal);
+      background: rgba(139, 213, 229, 0.72);
+    }
+
+    .model-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-width: 40px;
+      height: 38px;
+      border-radius: 8px;
+      padding: 0 11px;
+      color: var(--ink);
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 760;
+      pointer-events: auto;
+      white-space: nowrap;
+    }
+
+    .pet-switcher {
+      display: flex;
+      gap: 6px;
+      border-radius: 8px;
+      padding: 6px;
+      pointer-events: auto;
+    }
+
+    .pet-button,
+    .icon-button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      min-width: 40px;
+      height: 38px;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      color: var(--ink);
+      background: transparent;
+      cursor: pointer;
+      transition: transform 160ms ease, background 160ms ease, border-color 160ms ease;
+    }
+
+    .pet-button {
+      padding: 0 10px;
+      font-size: 13px;
+      font-weight: 720;
+    }
+
+    .pet-button svg,
+    .model-link svg,
+    .icon-button svg {
+      width: 18px;
+      height: 18px;
+      stroke-width: 2.2;
+      flex: none;
+    }
+
+    .pet-button:hover,
+    .icon-button:hover {
+      transform: translateY(-1px);
+      background: rgba(255, 255, 255, 0.62);
+      border-color: rgba(29, 36, 36, 0.12);
+    }
+
+    .pet-button.active {
+      background: #ffffff;
+      border-color: rgba(29, 36, 36, 0.16);
+      box-shadow: 0 6px 18px rgba(22, 36, 38, 0.1);
+    }
+
+    .speech {
+      position: absolute;
+      left: 50%;
+      bottom: 94px;
+      z-index: 4;
+      width: min(520px, calc(100vw - 32px));
+      min-height: 52px;
+      transform: translateX(-50%);
+      border-radius: 8px;
+      padding: 13px 16px;
+      display: grid;
+      align-items: center;
+      text-align: center;
+      font-size: clamp(14px, 1.8vw, 18px);
+      font-weight: 760;
+      line-height: 1.25;
+      opacity: 0;
+      translate: 0 8px;
+      pointer-events: none;
+      transition: opacity 180ms ease, translate 180ms ease;
+    }
+
+    .speech.visible {
+      opacity: 1;
+      translate: 0 0;
+    }
+
+    .perception {
+      position: absolute;
+      left: 16px;
+      bottom: 16px;
+      z-index: 5;
+      width: min(268px, calc(100vw - 32px));
+      border-radius: 8px;
+      padding: 10px 12px;
+      pointer-events: none;
+    }
+
+    .perception-title {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .perception-title svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .perception-readout {
+      min-height: 22px;
+      margin-top: 6px;
+      font-size: 13px;
+      font-weight: 650;
+      line-height: 1.3;
+      color: var(--ink);
+    }
+
+    .senses {
+      position: absolute;
+      top: 78px;
+      right: 16px;
+      z-index: 5;
+      width: 244px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      pointer-events: none;
+    }
+
+    .sense-tile {
+      min-width: 0;
+      border-radius: 8px;
+      padding: 7px;
+      overflow: hidden;
+    }
+
+    .sense-tile.wide {
+      grid-column: 1 / -1;
+    }
+
+    .sense-label {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 850;
+      line-height: 1;
+      letter-spacing: 0.08em;
+    }
+
+    .sense-view {
+      width: 100%;
+      height: 58px;
+      margin-top: 6px;
+      display: block;
+      border-radius: 6px;
+      background: rgba(29, 36, 36, 0.08);
+      object-fit: cover;
+    }
+
+    .audio-bars {
+      height: 38px;
+      margin-top: 8px;
+      display: grid;
+      grid-template-columns: repeat(14, 1fr);
+      gap: 3px;
+      align-items: end;
+    }
+
+    .audio-bar {
+      height: 100%;
+      min-height: 4px;
+      border-radius: 4px 4px 2px 2px;
+      background: linear-gradient(180deg, var(--aqua), var(--teal));
+      transform-origin: center bottom;
+      scale: 1 0.08;
+      transition: scale 80ms linear, background 120ms ease;
+    }
+
+    .audio-bar.hot {
+      background: linear-gradient(180deg, var(--amber), var(--coral));
+    }
+
+    .balance-readout {
+      margin-top: 6px;
+      color: var(--ink);
+      font-size: 13px;
+      font-weight: 780;
+      line-height: 1.2;
+    }
+
+    .composer {
+      position: absolute;
+      right: 16px;
+      bottom: 16px;
+      z-index: 6;
+      width: min(560px, calc(100vw - 316px));
+      min-width: 340px;
+      border-radius: 8px;
+      padding: 8px;
+      display: grid;
+      grid-template-columns: 40px 1fr 40px 40px;
+      gap: 7px;
+    }
+
+    .composer input {
+      width: 100%;
+      min-width: 0;
+      height: 40px;
+      border: 1px solid rgba(29, 36, 36, 0.12);
+      border-radius: 7px;
+      padding: 0 12px;
+      color: var(--ink);
+      background: #ffffff;
+      outline: none;
+      font-weight: 650;
+    }
+
+    .composer input:focus {
+      border-color: rgba(18, 50, 56, 0.42);
+      box-shadow: 0 0 0 3px rgba(112, 207, 224, 0.22);
+    }
+
+    .icon-button {
+      width: 40px;
+      padding: 0;
+      background: #ffffff;
+      border-color: rgba(29, 36, 36, 0.12);
+    }
+
+    .icon-button.primary {
+      color: #ffffff;
+      background: var(--teal);
+    }
+
+    .icon-button.active {
+      color: var(--ink);
+      background: var(--amber);
+    }
+
+    .effect-flash {
+      position: absolute;
+      inset: 0;
+      z-index: 3;
+      pointer-events: none;
+      opacity: 0;
+      background: radial-gradient(circle at 50% 42%, rgba(136, 185, 194, 0.28), transparent 52%);
+      transition: opacity 220ms ease;
+    }
+
+    .effect-flash.on {
+      opacity: 1;
+    }
+
+    .toast {
+      position: absolute;
+      top: 72px;
+      left: 50%;
+      z-index: 7;
+      transform: translateX(-50%);
+      max-width: min(560px, calc(100vw - 32px));
+      border-radius: 8px;
+      padding: 9px 12px;
+      color: #ffffff;
+      background: rgba(18, 50, 56, 0.9);
+      box-shadow: var(--shadow);
+      font-size: 13px;
+      font-weight: 700;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 180ms ease, translate 180ms ease;
+      translate: 0 -8px;
+    }
+
+    .toast.visible {
+      opacity: 1;
+      translate: 0 0;
+    }
+
+    @media (max-width: 820px) {
+      .topbar {
+        align-items: flex-start;
+      }
+
+      .brand {
+        display: none;
+      }
+
+      .model-pill {
+        display: none;
+      }
+
+      .model-link span {
+        display: none;
+      }
+
+      .pet-button span {
+        display: none;
+      }
+
+      .composer {
+        left: 16px;
+        right: 16px;
+        width: auto;
+        min-width: 0;
+        bottom: 16px;
+      }
+
+      .perception {
+        left: 16px;
+        right: 16px;
+        bottom: 80px;
+        width: auto;
+      }
+
+      .senses {
+        top: 144px;
+        right: 12px;
+        width: 118px;
+        grid-template-columns: 1fr;
+        gap: 7px;
+      }
+
+      .sense-tile.user-feed,
+      .sense-tile.balance-feed {
+        display: none;
+      }
+
+      .sense-view {
+        height: 64px;
+      }
+
+      .audio-bars {
+        height: 30px;
+      }
+
+      .speech {
+        bottom: 154px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main id="app">
+    <canvas id="stage"></canvas>
+    <div class="effect-flash" id="effectFlash"></div>
+    <div class="topbar">
+      <div class="brand">Tiny Toybox</div>
+      <div class="model-pill" id="modelStatus">PET LLM: checking</div>
+      <a class="model-link" href="/pages" title="All pages"><i data-lucide="sparkles"></i><span>Pages</span></a>
+      <a class="model-link" href="/models" title="Model lab"><i data-lucide="sparkles"></i><span>Models</span></a>
+      <div class="pet-switcher" aria-label="Pets">
+        <button class="pet-button active" data-pet="squeaky" title="Squeaky"><i data-lucide="clock-3"></i><span>Squeaky</span></button>
+        <button class="pet-button" data-pet="electraica" title="Electraica"><i data-lucide="zap"></i><span>Electraica</span></button>
+        <button class="pet-button" data-pet="fire_boy" title="Fire Boy"><i data-lucide="flame"></i><span>Fire Boy</span></button>
+        <button class="pet-button" data-pet="shark_girl" title="Shark Girl"><i data-lucide="waves"></i><span>Shark Girl</span></button>
+      </div>
+    </div>
+    <div class="toast" id="toast"></div>
+    <div class="speech" id="speech">Tick-tock.</div>
+    <section class="senses" aria-label="Live senses">
+      <div class="sense-tile user-feed">
+        <div class="sense-label">YOU</div>
+        <canvas class="sense-view" id="userView" width="164" height="92"></canvas>
+      </div>
+      <div class="sense-tile">
+        <div class="sense-label">PET</div>
+        <canvas class="sense-view" id="petView" width="164" height="92"></canvas>
+      </div>
+      <div class="sense-tile wide">
+        <div class="sense-label">AUDIO</div>
+        <div class="audio-bars" id="audioBars" aria-hidden="true"></div>
+      </div>
+      <div class="sense-tile wide balance-feed">
+        <div class="sense-label">BALANCE</div>
+        <div class="balance-readout" id="balanceReadout">100% / 0deg / 0kg</div>
+      </div>
+    </section>
+    <section class="perception" aria-live="polite">
+      <div class="perception-title"><i data-lucide="scan-eye"></i><span id="perceptionTitle">Squeaky sees</span></div>
+      <div class="perception-readout" id="perceptionReadout">clock, cube, soft ball</div>
+    </section>
+    <form class="composer" id="composer">
+      <button class="icon-button" type="button" id="resetButton" title="Reset room"><i data-lucide="rotate-ccw"></i></button>
+      <input id="messageInput" maxlength="180" placeholder="Say something to the pet" autocomplete="off" />
+      <button class="icon-button primary" type="submit" title="Send"><i data-lucide="send"></i></button>
+      <button class="icon-button active" type="button" id="autoButton" title="Autoplay"><i data-lucide="sparkles"></i></button>
+    </form>
+  </main>
+
+  <script type="module" src="/frontend/toybox/main.js"></script>
+</body>
+</html>

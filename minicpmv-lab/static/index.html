@@ -1,0 +1,114 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MiniCPM-V Lab</title>
+  <link rel="stylesheet" href="/static/styles.css" />
+  <script src="https://unpkg.com/lucide@0.468.0/dist/umd/lucide.min.js"></script>
+</head>
+<body>
+  <main class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">Local Ollama Vision Lab</p>
+        <h1>MiniCPM-V 4.6</h1>
+      </div>
+      <div class="status-strip">
+        <span id="statusDot" class="status-dot"></span>
+        <span id="statusText">Checking Ollama...</span>
+      </div>
+    </header>
+
+    <section class="control-band">
+      <label class="field model-field">
+        <span>Model</span>
+        <input id="modelInput" value="hf.co/ggml-org/MiniCPM-V-4.6-GGUF:Q4_K_M" />
+      </label>
+      <label class="field compact">
+        <span>Max tokens</span>
+        <input id="maxTokens" type="number" min="64" max="4096" step="64" value="900" />
+      </label>
+      <label class="field compact">
+        <span>Temp</span>
+        <input id="temperature" type="number" min="0" max="1" step="0.05" value="0.1" />
+      </label>
+      <button id="refreshStatus" class="icon-button" title="Refresh model status">
+        <i data-lucide="refresh-cw"></i>
+      </button>
+    </section>
+
+    <nav class="tabs" aria-label="Lab modes">
+      <button class="tab active" data-tab="chat"><i data-lucide="image"></i><span>Image Chat</span></button>
+      <button class="tab" data-tab="pdf"><i data-lucide="file-text"></i><span>PDF OCR</span></button>
+      <button class="tab" data-tab="stats"><i data-lucide="activity"></i><span>Run Stats</span></button>
+    </nav>
+
+    <section id="chatPanel" class="panel active">
+      <div class="split">
+        <div class="upload-pane">
+          <div id="imageDrop" class="drop-zone">
+            <input id="imageInput" type="file" accept="image/*" />
+            <i data-lucide="upload-cloud"></i>
+            <strong>Drop or choose an image</strong>
+            <span>PNG, JPEG, screenshots, scans</span>
+          </div>
+          <img id="imagePreview" class="preview-image" alt="" />
+        </div>
+        <div class="work-pane">
+          <label class="field stack">
+            <span>Prompt</span>
+            <textarea id="chatPrompt">Describe this image carefully. Include visible objects, text, handwriting, stamps, signatures, layout, and uncertain details.</textarea>
+          </label>
+          <div class="actions-row">
+            <button id="runChat" class="primary-button"><i data-lucide="play"></i><span>Run</span></button>
+            <button id="clearChat" class="secondary-button"><i data-lucide="eraser"></i><span>Clear</span></button>
+          </div>
+          <div id="chatMetrics" class="metrics-grid"></div>
+          <pre id="chatOutput" class="output-box"></pre>
+        </div>
+      </div>
+    </section>
+
+    <section id="pdfPanel" class="panel">
+      <div class="pdf-layout">
+        <aside class="pdf-sidebar">
+          <div id="pdfDrop" class="drop-zone small">
+            <input id="pdfInput" type="file" accept="application/pdf" />
+            <i data-lucide="file-up"></i>
+            <strong>Drop or choose a PDF</strong>
+            <span>Each page runs locally through MiniCPM-V</span>
+          </div>
+          <label class="field">
+            <span>Max pages</span>
+            <input id="pdfMaxPages" type="number" min="1" max="50" value="10" />
+          </label>
+          <label class="field">
+            <span>DPI</span>
+            <input id="pdfDpi" type="number" min="72" max="220" step="12" value="144" />
+          </label>
+          <label class="field stack">
+            <span>OCR instructions</span>
+            <textarea id="pdfPrompt">Transcribe every visible detail on this page in reading order. Include printed text, handwriting, stamps, signatures, page numbers, tables, checkboxes, and marginal notes. Mark uncertain text with [unclear]. Do not summarize.</textarea>
+          </label>
+          <button id="runPdf" class="primary-button wide"><i data-lucide="scan-text"></i><span>Transcribe PDF</span></button>
+        </aside>
+        <div class="pdf-results">
+          <div id="pdfSummary" class="summary-line">No PDF run yet.</div>
+          <div id="pdfPages" class="page-list"></div>
+        </div>
+      </div>
+    </section>
+
+    <section id="statsPanel" class="panel">
+      <div class="stats-header">
+        <h2>Timing History</h2>
+        <button id="clearStats" class="secondary-button"><i data-lucide="trash-2"></i><span>Clear</span></button>
+      </div>
+      <div id="historyTable" class="history-table"></div>
+    </section>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>
+

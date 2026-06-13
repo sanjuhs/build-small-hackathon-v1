@@ -1,0 +1,342 @@
+[
+  {
+    "id": "squeaky-base-body",
+    "character": "squeaky",
+    "name": "Unclothed plush elephant body",
+    "kind": "base-body",
+    "attach": "Root",
+    "image": "assets/generated/part-concepts/individual-v2/squeaky/base-body.png",
+    "prompt": "standing unclothed chibi plush elephant base body with soft gray fabric, round ears, short trunk, stubby arms and feet, embroidered friendly face, no hat, no backpack, no clock. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, clean readable silhouette, soft rounded forms, textured GLB suitable for later Blender cleanup, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 63,
+      "y_min": 107,
+      "x_max": 1101,
+      "y_max": 1243
+    },
+    "output": "assets/generated/part-models/raw/squeaky/squeaky-base-body-sam.glb",
+    "metadata": "assets/generated/part-models/raw/squeaky/squeaky-base-body-sam-result.json"
+  },
+  {
+    "id": "squeaky-bowler-hat",
+    "character": "squeaky",
+    "name": "Bowler hat",
+    "kind": "headwear",
+    "attach": "Hat",
+    "image": "assets/generated/part-concepts/individual-v2/squeaky/bowler-hat.png",
+    "prompt": "small black bowler hat for a chibi plush elephant toy, rounded crown, short brim, simple clean toy accessory. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, clean readable silhouette, soft rounded forms, textured GLB suitable for later Blender cleanup, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 59,
+      "y_min": 233,
+      "x_max": 1243,
+      "y_max": 981
+    },
+    "output": "assets/generated/part-models/raw/squeaky/squeaky-bowler-hat-sam.glb",
+    "metadata": "assets/generated/part-models/raw/squeaky/squeaky-bowler-hat-sam-result.json"
+  },
+  {
+    "id": "squeaky-book-backpack",
+    "character": "squeaky",
+    "name": "Book backpack",
+    "kind": "backpack",
+    "attach": "Backpack",
+    "image": "assets/generated/part-concepts/individual-v2/squeaky/book-backpack.png",
+    "prompt": "cute book backpack made from stacked storybooks with straps, compact toy prop for a plush character. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, clean readable silhouette, soft rounded forms, textured GLB suitable for later Blender cleanup, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 191,
+      "y_min": 95,
+      "x_max": 1169,
+      "y_max": 1027
+    },
+    "output": "assets/generated/part-models/raw/squeaky/squeaky-book-backpack-sam.glb",
+    "metadata": "assets/generated/part-models/raw/squeaky/squeaky-book-backpack-sam-result.json"
+  },
+  {
+    "id": "squeaky-pocket-clock",
+    "character": "squeaky",
+    "name": "Pocket clock",
+    "kind": "handheld-prop",
+    "attach": "Prop.R",
+    "image": "assets/generated/part-concepts/individual-v2/squeaky/pocket-clock.png",
+    "prompt": "round golden pocket clock toy prop with a small loop and chain detail, readable clock face, chibi accessory scale. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, clean readable silhouette, soft rounded forms, textured GLB suitable for later Blender cleanup, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 168,
+      "y_min": 168,
+      "x_max": 1088,
+      "y_max": 1098
+    },
+    "output": "assets/generated/part-models/raw/squeaky/squeaky-pocket-clock-sam.glb",
+    "metadata": "assets/generated/part-models/raw/squeaky/squeaky-pocket-clock-sam-result.json"
+  },
+  {
+    "id": "electraica-base-body",
+    "character": "electraica",
+    "name": "Unclothed electric plush body",
+    "kind": "base-body",
+    "attach": "Root",
+    "image": "assets/generated/part-concepts/individual-v2/electraica/base-body.png",
+    "prompt": "standing unclothed chibi electric plush girl base body with teal and cream fabric, simple closed crescent embroidered eyes, stubby arms and feet, no bulb, no battery backpack, no nut, no bolt, no chest plate. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, clean readable silhouette, soft rounded forms, textured GLB suitable for later Blender cleanup, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 151,
+      "y_min": 151,
+      "x_max": 1019,
+      "y_max": 1231
+    },
+    "output": "assets/generated/part-models/raw/electraica/electraica-base-body-sam.glb",
+    "metadata": "assets/generated/part-models/raw/electraica/electraica-base-body-sam-result.json"
+  },
+  {
+    "id": "electraica-bulb-head",
+    "character": "electraica",
+    "name": "Always-on bulb",
+    "kind": "headwear",
+    "attach": "Hat",
+    "image": "assets/generated/part-concepts/individual-v2/electraica/bulb-head.png",
+    "prompt": "always-on light bulb head accessory for a chibi electric plush character, warm glowing bulb with small base cap, toy-like rounded form. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, clean readable silhouette, soft rounded forms, textured GLB suitable for later Blender cleanup, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 288,
+      "y_min": 128,
+      "x_max": 970,
+      "y_max": 1142
+    },
+    "output": "assets/generated/part-models/raw/electraica/electraica-bulb-head-sam.glb",
+    "metadata": "assets/generated/part-models/raw/electraica/electraica-bulb-head-sam-result.json"
+  },
+  {
+    "id": "electraica-battery-backpack",
+    "character": "electraica",
+    "name": "Electric battery backpack",
+    "kind": "backpack",
+    "attach": "Backpack",
+    "image": "assets/generated/part-concepts/individual-v2/electraica/battery-backpack.png",
+    "prompt": "small electric battery backpack toy prop with rounded corners, visible plus and minus markings, straps, teal and yellow accents. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, clean readable silhouette, soft rounded forms, textured GLB suitable for later Blender cleanup, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 66,
+      "y_min": 56,
+      "x_max": 1192,
+      "y_max": 1168
+    },
+    "output": "assets/generated/part-models/raw/electraica/electraica-battery-backpack-sam.glb",
+    "metadata": "assets/generated/part-models/raw/electraica/electraica-battery-backpack-sam-result.json"
+  },
+  {
+    "id": "electraica-hex-nut",
+    "character": "electraica",
+    "name": "Hex nut",
+    "kind": "handheld-prop",
+    "attach": "Prop.L",
+    "image": "assets/generated/part-concepts/individual-v2/electraica/hex-nut.png",
+    "prompt": "single oversized hex nut hand prop for a chibi plush electrician, metallic but soft toy styling, central hole clearly visible. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, clean readable silhouette, soft rounded forms, textured GLB suitable for later Blender cleanup, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 178,
+      "y_min": 272,
+      "x_max": 1032,
+      "y_max": 1032
+    },
+    "output": "assets/generated/part-models/raw/electraica/electraica-hex-nut-sam.glb",
+    "metadata": "assets/generated/part-models/raw/electraica/electraica-hex-nut-sam-result.json"
+  },
+  {
+    "id": "electraica-bolt",
+    "character": "electraica",
+    "name": "Bolt",
+    "kind": "handheld-prop",
+    "attach": "Prop.R",
+    "image": "assets/generated/part-concepts/individual-v2/electraica/bolt.png",
+    "prompt": "single oversized bolt hand prop for a chibi plush electrician, short screw thread and hex head, toy-like rounded edges. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, clean readable silhouette, soft rounded forms, textured GLB suitable for later Blender cleanup, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 274,
+      "y_min": 188,
+      "x_max": 898,
+      "y_max": 1106
+    },
+    "output": "assets/generated/part-models/raw/electraica/electraica-bolt-sam.glb",
+    "metadata": "assets/generated/part-models/raw/electraica/electraica-bolt-sam-result.json"
+  },
+  {
+    "id": "electraica-chest-plate",
+    "character": "electraica",
+    "name": "Lightning chest plate",
+    "kind": "clothing",
+    "attach": "Spine",
+    "image": "assets/generated/part-concepts/individual-v2/electraica/chest-plate.png",
+    "prompt": "small lightning chest plate clothing accessory for a chibi electric plush character, simple shield shape with yellow lightning emblem. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, clean readable silhouette, soft rounded forms, textured GLB suitable for later Blender cleanup, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 127,
+      "y_min": 205,
+      "x_max": 1235,
+      "y_max": 925
+    },
+    "output": "assets/generated/part-models/raw/electraica/electraica-chest-plate-sam.glb",
+    "metadata": "assets/generated/part-models/raw/electraica/electraica-chest-plate-sam-result.json"
+  },
+  {
+    "id": "fire-boy-base-body",
+    "character": "fire-boy",
+    "name": "Unclothed flame plush body",
+    "kind": "base-body",
+    "attach": "Root",
+    "image": "assets/generated/part-concepts/individual-v2/fire-boy/base-body.png",
+    "prompt": "standing unclothed chibi plush fire boy base body with red fabric body, flame-shaped head, cream face, embroidered smile, stubby arms and feet, no tuxedo, no extinguisher, no flute, no strap. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, clean readable silhouette, soft rounded forms, textured GLB suitable for later Blender cleanup, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 197,
+      "y_min": 71,
+      "x_max": 981,
+      "y_max": 1241
+    },
+    "output": "assets/generated/part-models/raw/fire-boy/fire-boy-base-body-sam.glb",
+    "metadata": "assets/generated/part-models/raw/fire-boy/fire-boy-base-body-sam-result.json"
+  },
+  {
+    "id": "fire-boy-tuxedo",
+    "character": "fire-boy",
+    "name": "Tuxedo jacket",
+    "kind": "clothing",
+    "attach": "Spine",
+    "image": "assets/generated/part-concepts/individual-v2/fire-boy/tuxedo.png",
+    "prompt": "tiny black tuxedo jacket clothing layer for a chibi plush fire character, white shirt front, small black tie, rounded soft fabric. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, clean readable silhouette, soft rounded forms, textured GLB suitable for later Blender cleanup, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 89,
+      "y_min": 201,
+      "x_max": 1235,
+      "y_max": 1025
+    },
+    "output": "assets/generated/part-models/raw/fire-boy/fire-boy-tuxedo-sam.glb",
+    "metadata": "assets/generated/part-models/raw/fire-boy/fire-boy-tuxedo-sam-result.json"
+  },
+  {
+    "id": "fire-boy-extinguisher-backpack",
+    "character": "fire-boy",
+    "name": "Fire extinguisher backpack",
+    "kind": "backpack",
+    "attach": "Backpack",
+    "image": "assets/generated/part-concepts/individual-v2/fire-boy/extinguisher-backpack.png",
+    "prompt": "small red fire extinguisher backpack toy prop with hose detail and straps, rounded plush-safe shapes. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, clean readable silhouette, soft rounded forms, textured GLB suitable for later Blender cleanup, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 206,
+      "y_min": 84,
+      "x_max": 1018,
+      "y_max": 1130
+    },
+    "output": "assets/generated/part-models/raw/fire-boy/fire-boy-extinguisher-backpack-sam.glb",
+    "metadata": "assets/generated/part-models/raw/fire-boy/fire-boy-extinguisher-backpack-sam-result.json"
+  },
+  {
+    "id": "fire-boy-flute",
+    "character": "fire-boy",
+    "name": "Flute",
+    "kind": "handheld-prop",
+    "attach": "Prop.R",
+    "image": "assets/generated/part-concepts/individual-v2/fire-boy/flute.png",
+    "prompt": "small golden flute hand prop for a chibi plush musician, simple cylinder with finger holes, toy accessory scale. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, clean readable silhouette, soft rounded forms, textured GLB suitable for later Blender cleanup, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 40,
+      "y_min": 308,
+      "x_max": 1330,
+      "y_max": 834
+    },
+    "output": "assets/generated/part-models/raw/fire-boy/fire-boy-flute-sam.glb",
+    "metadata": "assets/generated/part-models/raw/fire-boy/fire-boy-flute-sam-result.json"
+  },
+  {
+    "id": "fire-boy-shoulder-strap",
+    "character": "fire-boy",
+    "name": "Shoulder strap",
+    "kind": "strap",
+    "attach": "Spine",
+    "image": "assets/generated/part-concepts/individual-v2/fire-boy/shoulder-strap.png",
+    "prompt": "single diagonal shoulder strap accessory for a chibi plush character, soft black band with simple buckles. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, clean readable silhouette, soft rounded forms, textured GLB suitable for later Blender cleanup, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 88,
+      "y_min": 206,
+      "x_max": 1238,
+      "y_max": 906
+    },
+    "output": "assets/generated/part-models/raw/fire-boy/fire-boy-shoulder-strap-sam.glb",
+    "metadata": "assets/generated/part-models/raw/fire-boy/fire-boy-shoulder-strap-sam-result.json"
+  },
+  {
+    "id": "shark-girl-base-body",
+    "character": "shark-girl",
+    "name": "Unclothed shark plush body",
+    "kind": "base-body",
+    "attach": "Root",
+    "image": "assets/generated/part-concepts/individual-v2/shark-girl/base-body.png",
+    "prompt": "standing unclothed chibi plush shark girl base body with blue-gray shark hood, fins and tail, cream face and belly, embroidered sweet face, no tie, no starfish clip, no guitar, no strap. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, clean readable silhouette, soft rounded forms, textured GLB suitable for later Blender cleanup, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 99,
+      "y_min": 81,
+      "x_max": 1051,
+      "y_max": 1235
+    },
+    "output": "assets/generated/part-models/raw/shark-girl/shark-girl-base-body-sam.glb",
+    "metadata": "assets/generated/part-models/raw/shark-girl/shark-girl-base-body-sam-result.json"
+  },
+  {
+    "id": "shark-girl-cream-bowtie",
+    "character": "shark-girl",
+    "name": "Cream butler tie",
+    "kind": "clothing",
+    "attach": "Spine",
+    "image": "assets/generated/part-concepts/individual-v2/shark-girl/cream-bowtie.png",
+    "prompt": "cream-colored butler bow tie clothing accessory for a chibi plush shark character, small formal bow with soft fabric folds. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, clean readable silhouette, soft rounded forms, textured GLB suitable for later Blender cleanup, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 125,
+      "y_min": 229,
+      "x_max": 1221,
+      "y_max": 869
+    },
+    "output": "assets/generated/part-models/raw/shark-girl/shark-girl-cream-bowtie-sam.glb",
+    "metadata": "assets/generated/part-models/raw/shark-girl/shark-girl-cream-bowtie-sam-result.json"
+  },
+  {
+    "id": "shark-girl-starfish-clip",
+    "character": "shark-girl",
+    "name": "Starfish clip",
+    "kind": "headwear",
+    "attach": "Hat",
+    "image": "assets/generated/part-concepts/individual-v2/shark-girl/starfish-clip.png",
+    "prompt": "small peach starfish hair clip accessory for a chibi plush shark character, rounded five-arm star shape. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, clean readable silhouette, soft rounded forms, textured GLB suitable for later Blender cleanup, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 180,
+      "y_min": 170,
+      "x_max": 1056,
+      "y_max": 1048
+    },
+    "output": "assets/generated/part-models/raw/shark-girl/shark-girl-starfish-clip-sam.glb",
+    "metadata": "assets/generated/part-models/raw/shark-girl/shark-girl-starfish-clip-sam-result.json"
+  },
+  {
+    "id": "shark-girl-guitar",
+    "character": "shark-girl",
+    "name": "Guitar",
+    "kind": "handheld-prop",
+    "attach": "Prop.R",
+    "image": "assets/generated/part-concepts/individual-v2/shark-girl/guitar.png",
+    "prompt": "small cute guitar toy prop for a chibi plush shark character, rounded body, short neck, visible strings, warm wood color. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, clean readable silhouette, soft rounded forms, textured GLB suitable for later Blender cleanup, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 268,
+      "y_min": 26,
+      "x_max": 1150,
+      "y_max": 1121
+    },
+    "output": "assets/generated/part-models/raw/shark-girl/shark-girl-guitar-sam.glb",
+    "metadata": "assets/generated/part-models/raw/shark-girl/shark-girl-guitar-sam-result.json"
+  },
+  {
+    "id": "shark-girl-guitar-strap",
+    "character": "shark-girl",
+    "name": "Guitar strap",
+    "kind": "strap",
+    "attach": "Spine",
+    "image": "assets/generated/part-concepts/individual-v2/shark-girl/guitar-strap.png",
+    "prompt": "single guitar strap accessory for a chibi plush shark character, soft narrow band with small attachment loops. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, clean readable silhouette, soft rounded forms, textured GLB suitable for later Blender cleanup, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 82,
+      "y_min": 188,
+      "x_max": 1316,
+      "y_max": 904
+    },
+    "output": "assets/generated/part-models/raw/shark-girl/shark-girl-guitar-strap-sam.glb",
+    "metadata": "assets/generated/part-models/raw/shark-girl/shark-girl-guitar-strap-sam-result.json"
+  }
+]

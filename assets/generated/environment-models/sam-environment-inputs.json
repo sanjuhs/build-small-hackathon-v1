@@ -1,0 +1,341 @@
+[
+  {
+    "id": "berry-rose",
+    "name": "Rose berry cluster",
+    "kind": "berry",
+    "image": "assets/generated/environment-concepts/individual/berry-rose.png",
+    "prompt": "rose-pink magical berry cluster with small leaves, cute rounded chibi toy proportions, edible pet-room prop. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, soft rounded forms, clean readable silhouette, textured GLB suitable for a Three.js virtual pet room, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 152,
+      "y_min": 116,
+      "x_max": 1100,
+      "y_max": 1126
+    },
+    "affordances": [
+      "eat",
+      "sniff",
+      "share"
+    ],
+    "tags": [
+      "food",
+      "hunger"
+    ],
+    "output": "assets/generated/environment-models/raw/berry-rose-sam.glb",
+    "metadata": "assets/generated/environment-models/raw/berry-rose-sam-result.json"
+  },
+  {
+    "id": "berry-amber",
+    "name": "Amber berry cluster",
+    "kind": "berry",
+    "image": "assets/generated/environment-concepts/individual/berry-amber.png",
+    "prompt": "amber-orange magical berry cluster with small leaves and pale speckles, cute rounded chibi toy proportions, edible pet-room prop. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, soft rounded forms, clean readable silhouette, textured GLB suitable for a Three.js virtual pet room, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 118,
+      "y_min": 174,
+      "x_max": 1112,
+      "y_max": 1072
+    },
+    "affordances": [
+      "eat",
+      "sniff",
+      "share"
+    ],
+    "tags": [
+      "food",
+      "hunger"
+    ],
+    "output": "assets/generated/environment-models/raw/berry-amber-sam.glb",
+    "metadata": "assets/generated/environment-models/raw/berry-amber-sam-result.json"
+  },
+  {
+    "id": "berry-moon",
+    "name": "Moon berry cluster",
+    "kind": "berry",
+    "image": "assets/generated/environment-concepts/individual/berry-moon.png",
+    "prompt": "purple-blue moonberry cluster with crescent markings and small leaves, cute rounded chibi toy proportions, edible pet-room prop. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, soft rounded forms, clean readable silhouette, textured GLB suitable for a Three.js virtual pet room, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 138,
+      "y_min": 122,
+      "x_max": 1126,
+      "y_max": 1114
+    },
+    "affordances": [
+      "eat",
+      "sniff",
+      "share"
+    ],
+    "tags": [
+      "food",
+      "hunger"
+    ],
+    "output": "assets/generated/environment-models/raw/berry-moon-sam.glb",
+    "metadata": "assets/generated/environment-models/raw/berry-moon-sam-result.json"
+  },
+  {
+    "id": "story-book-blue",
+    "name": "Blue closed storybook",
+    "kind": "book",
+    "image": "assets/generated/environment-concepts/individual/story-book-blue.png",
+    "prompt": "closed chunky blue storybook with rounded corners and cream pages, cute chibi toy prop, no readable text. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, soft rounded forms, clean readable silhouette, textured GLB suitable for a Three.js virtual pet room, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 88,
+      "y_min": 114,
+      "x_max": 1170,
+      "y_max": 1114
+    },
+    "affordances": [
+      "read",
+      "carry",
+      "stack"
+    ],
+    "tags": [
+      "book",
+      "reading"
+    ],
+    "output": "assets/generated/environment-models/raw/story-book-blue-sam.glb",
+    "metadata": "assets/generated/environment-models/raw/story-book-blue-sam-result.json"
+  },
+  {
+    "id": "story-book-open",
+    "name": "Open storybook",
+    "kind": "book",
+    "image": "assets/generated/environment-concepts/individual/story-book-open.png",
+    "prompt": "open chunky storybook with rounded pages and green cover, cute chibi toy prop, no readable text. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, soft rounded forms, clean readable silhouette, textured GLB suitable for a Three.js virtual pet room, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 53,
+      "y_min": 213,
+      "x_max": 1263,
+      "y_max": 993
+    },
+    "affordances": [
+      "read",
+      "inspect"
+    ],
+    "tags": [
+      "book",
+      "reading"
+    ],
+    "output": "assets/generated/environment-models/raw/story-book-open-sam.glb",
+    "metadata": "assets/generated/environment-models/raw/story-book-open-sam-result.json"
+  },
+  {
+    "id": "chair-mint",
+    "name": "Mint toy chair",
+    "kind": "chair",
+    "image": "assets/generated/environment-concepts/individual/chair-mint.png",
+    "prompt": "small mint-green toy chair with cream cushion, rounded chibi proportions, pet-room furniture prop. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, soft rounded forms, clean readable silhouette, textured GLB suitable for a Three.js virtual pet room, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 244,
+      "y_min": 78,
+      "x_max": 1014,
+      "y_max": 1154
+    },
+    "affordances": [
+      "sit",
+      "climb",
+      "gather"
+    ],
+    "tags": [
+      "furniture",
+      "social"
+    ],
+    "output": "assets/generated/environment-models/raw/chair-mint-sam.glb",
+    "metadata": "assets/generated/environment-models/raw/chair-mint-sam-result.json"
+  },
+  {
+    "id": "chair-coral",
+    "name": "Coral toy chair",
+    "kind": "chair",
+    "image": "assets/generated/environment-concepts/individual/chair-coral.png",
+    "prompt": "small coral-orange toy chair with cream cushion, rounded chibi proportions, pet-room furniture prop. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, soft rounded forms, clean readable silhouette, textured GLB suitable for a Three.js virtual pet room, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 244,
+      "y_min": 66,
+      "x_max": 1018,
+      "y_max": 1174
+    },
+    "affordances": [
+      "sit",
+      "climb",
+      "gather"
+    ],
+    "tags": [
+      "furniture",
+      "social"
+    ],
+    "output": "assets/generated/environment-models/raw/chair-coral-sam.glb",
+    "metadata": "assets/generated/environment-models/raw/chair-coral-sam-result.json"
+  },
+  {
+    "id": "chair-honey",
+    "name": "Honey toy stool chair",
+    "kind": "chair",
+    "image": "assets/generated/environment-concepts/individual/chair-honey.png",
+    "prompt": "small honey-yellow stool chair with cream cushion, rounded chibi proportions, pet-room furniture prop. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, soft rounded forms, clean readable silhouette, textured GLB suitable for a Three.js virtual pet room, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 180,
+      "y_min": 96,
+      "x_max": 1030,
+      "y_max": 1178
+    },
+    "affordances": [
+      "sit",
+      "climb",
+      "gather"
+    ],
+    "tags": [
+      "furniture",
+      "social"
+    ],
+    "output": "assets/generated/environment-models/raw/chair-honey-sam.glb",
+    "metadata": "assets/generated/environment-models/raw/chair-honey-sam-result.json"
+  },
+  {
+    "id": "tea-table-round",
+    "name": "Round tea table",
+    "kind": "table",
+    "image": "assets/generated/environment-concepts/individual/tea-table-round.png",
+    "prompt": "small round honey wood tea table with chunky legs, rounded chibi proportions, pet-room furniture prop. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, soft rounded forms, clean readable silhouette, textured GLB suitable for a Three.js virtual pet room, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 139,
+      "y_min": 193,
+      "x_max": 1175,
+      "y_max": 1075
+    },
+    "affordances": [
+      "gather",
+      "place_object",
+      "hide_under"
+    ],
+    "tags": [
+      "furniture",
+      "social"
+    ],
+    "output": "assets/generated/environment-models/raw/tea-table-round-sam.glb",
+    "metadata": "assets/generated/environment-models/raw/tea-table-round-sam-result.json"
+  },
+  {
+    "id": "play-table-square",
+    "name": "Square play table",
+    "kind": "table",
+    "image": "assets/generated/environment-concepts/individual/play-table-square.png",
+    "prompt": "small square cream and mint play table with rounded corners, chibi toy proportions, pet-room furniture prop. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, soft rounded forms, clean readable silhouette, textured GLB suitable for a Three.js virtual pet room, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 128,
+      "y_min": 134,
+      "x_max": 1128,
+      "y_max": 1144
+    },
+    "affordances": [
+      "gather",
+      "place_object",
+      "hide_under"
+    ],
+    "tags": [
+      "furniture",
+      "social"
+    ],
+    "output": "assets/generated/environment-models/raw/play-table-square-sam.glb",
+    "metadata": "assets/generated/environment-models/raw/play-table-square-sam-result.json"
+  },
+  {
+    "id": "lamp-warm",
+    "name": "Warm toy lamp",
+    "kind": "lamp",
+    "image": "assets/generated/environment-concepts/individual/lamp-warm.png",
+    "prompt": "small warm yellow table lamp with rounded base and soft shade, cute chibi toy room prop. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, soft rounded forms, clean readable silhouette, textured GLB suitable for a Three.js virtual pet room, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 132,
+      "y_min": 36,
+      "x_max": 984,
+      "y_max": 1328
+    },
+    "affordances": [
+      "inspect",
+      "light",
+      "warm",
+      "gather"
+    ],
+    "tags": [
+      "lamp",
+      "light"
+    ],
+    "output": "assets/generated/environment-models/raw/lamp-warm-sam.glb",
+    "metadata": "assets/generated/environment-models/raw/lamp-warm-sam-result.json"
+  },
+  {
+    "id": "lamp-blue",
+    "name": "Blue reading lamp",
+    "kind": "lamp",
+    "image": "assets/generated/environment-concepts/individual/lamp-blue.png",
+    "prompt": "small blue reading lamp with rounded base and soft shade, cute chibi toy room prop. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, soft rounded forms, clean readable silhouette, textured GLB suitable for a Three.js virtual pet room, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 132,
+      "y_min": 64,
+      "x_max": 990,
+      "y_max": 1336
+    },
+    "affordances": [
+      "inspect",
+      "light",
+      "warm",
+      "gather"
+    ],
+    "tags": [
+      "lamp",
+      "light"
+    ],
+    "output": "assets/generated/environment-models/raw/lamp-blue-sam.glb",
+    "metadata": "assets/generated/environment-models/raw/lamp-blue-sam-result.json"
+  },
+  {
+    "id": "plant-sprout",
+    "name": "Sprout potted plant",
+    "kind": "plant",
+    "image": "assets/generated/environment-concepts/individual/plant-sprout.png",
+    "prompt": "small potted plant with terracotta pot and oversized rounded green leaves, cute chibi toy room prop. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, soft rounded forms, clean readable silhouette, textured GLB suitable for a Three.js virtual pet room, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 180,
+      "y_min": 62,
+      "x_max": 1086,
+      "y_max": 1170
+    },
+    "affordances": [
+      "sniff",
+      "water",
+      "hide",
+      "inspect"
+    ],
+    "tags": [
+      "plant",
+      "calm"
+    ],
+    "output": "assets/generated/environment-models/raw/plant-sprout-sam.glb",
+    "metadata": "assets/generated/environment-models/raw/plant-sprout-sam-result.json"
+  },
+  {
+    "id": "plant-fern",
+    "name": "Fern potted plant",
+    "kind": "plant",
+    "image": "assets/generated/environment-concepts/individual/plant-fern.png",
+    "prompt": "small potted fern with terracotta pot and many soft arcing green fronds, cute chibi toy room prop. Isolated centered subject on a plain light background, single complete object, cute chibi toy proportions, soft rounded forms, clean readable silhouette, textured GLB suitable for a Three.js virtual pet room, no extra objects, no text, no scene.",
+    "box_prompt": {
+      "x_min": 62,
+      "y_min": 40,
+      "x_max": 1186,
+      "y_max": 1178
+    },
+    "affordances": [
+      "sniff",
+      "water",
+      "hide",
+      "inspect"
+    ],
+    "tags": [
+      "plant",
+      "calm"
+    ],
+    "output": "assets/generated/environment-models/raw/plant-fern-sam.glb",
+    "metadata": "assets/generated/environment-models/raw/plant-fern-sam-result.json"
+  }
+]

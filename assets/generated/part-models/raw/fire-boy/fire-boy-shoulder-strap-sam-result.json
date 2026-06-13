@@ -1,0 +1,48 @@
+{
+  "gaussian_splat": {
+    "url": "https://fal.media/files/kangaroo/Gsbw6z0bZi_N-g8oTyQQz_combined_splat.ply",
+    "content_type": "application/octet-stream",
+    "file_name": "combined_splat.ply",
+    "file_size": 9470368
+  },
+  "model_glb": {
+    "url": "https://fal.media/files/zebra/-jj5APUY-jpcZqpTU35xc_combined_scene.glb",
+    "content_type": "model/gltf-binary",
+    "file_name": "combined_scene.glb",
+    "file_size": 1210088
+  },
+  "metadata": [
+    {
+      "object_index": 0,
+      "scale": [
+        [
+          1.3933360576629639,
+          1.3933360576629639,
+          1.3933360576629639
+        ]
+      ],
+      "rotation": [
+        [
+          0.37161576747894287,
+          -0.20985954999923706,
+          -0.5062903165817261,
+          0.7493317723274231
+        ]
+      ],
+      "translation": [
+        [
+          0.07479824125766754,
+          0.07814882695674896,
+          3.4936413764953613
+        ]
+      ],
+      "camera_pose": null
+    }
+  ],
+  "artifacts_zip": {
+    "url": "https://fal.media/files/tiger/XDLHG2qFxanKCeNU2RK9Q_objects_bundle.zip",
+    "content_type": "application/octet-stream",
+    "file_name": "objects_bundle.zip",
+    "file_size": 9302924
+  }
+}

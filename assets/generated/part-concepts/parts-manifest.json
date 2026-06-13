@@ -1,0 +1,199 @@
+{
+  "version": 2,
+  "source": "gpt-image-2 individual object generations, each saved as its own reference image",
+  "contactSheet": "/toy-assets/generated/part-concepts/parts-individual-v2-contact.png",
+  "characters": [
+    {
+      "slug": "squeaky",
+      "name": "Squeaky",
+      "sheet": "/toy-assets/generated/part-concepts/squeaky-individual-v2-contact.png",
+      "legacySheet": "/toy-assets/generated/part-concepts/squeaky-parts-sheet.png",
+      "base": {
+        "id": "squeaky-base-body",
+        "name": "Unclothed plush elephant body",
+        "kind": "base-body",
+        "image": "/toy-assets/generated/part-concepts/individual-v2/squeaky/base-body.png",
+        "attach": "Root",
+        "notes": "Base body should contain ears, trunk, arms, feet, and face only."
+      },
+      "parts": [
+        {
+          "id": "squeaky-bowler-hat",
+          "name": "Bowler hat",
+          "kind": "headwear",
+          "image": "/toy-assets/generated/part-concepts/individual-v2/squeaky/bowler-hat.png",
+          "attach": "Hat",
+          "actionHooks": ["idle_bob", "surprised_tip"]
+        },
+        {
+          "id": "squeaky-book-backpack",
+          "name": "Book backpack",
+          "kind": "backpack",
+          "image": "/toy-assets/generated/part-concepts/individual-v2/squeaky/book-backpack.png",
+          "attach": "Backpack",
+          "actionHooks": ["walk_sway", "open_books"]
+        },
+        {
+          "id": "squeaky-pocket-clock",
+          "name": "Pocket clock",
+          "kind": "handheld-prop",
+          "image": "/toy-assets/generated/part-concepts/individual-v2/squeaky/pocket-clock.png",
+          "attach": "Prop.R",
+          "actionHooks": ["inspect_time", "swing_chain"]
+        }
+      ]
+    },
+    {
+      "slug": "electraica",
+      "name": "Electraica",
+      "sheet": "/toy-assets/generated/part-concepts/electraica-individual-v2-contact.png",
+      "legacySheet": "/toy-assets/generated/part-concepts/electraica-parts-sheet.png",
+      "base": {
+        "id": "electraica-base-body",
+        "name": "Unclothed electric plush body",
+        "kind": "base-body",
+        "image": "/toy-assets/generated/part-concepts/individual-v2/electraica/base-body.png",
+        "attach": "Root",
+        "notes": "Base body excludes bulb, battery, chest plate, nut, and bolt."
+      },
+      "parts": [
+        {
+          "id": "electraica-bulb-head",
+          "name": "Always-on bulb",
+          "kind": "headwear",
+          "image": "/toy-assets/generated/part-concepts/individual-v2/electraica/bulb-head.png",
+          "attach": "Hat",
+          "actionHooks": ["glow", "idea_flash"]
+        },
+        {
+          "id": "electraica-battery-backpack",
+          "name": "Electric battery backpack",
+          "kind": "backpack",
+          "image": "/toy-assets/generated/part-concepts/individual-v2/electraica/battery-backpack.png",
+          "attach": "Backpack",
+          "actionHooks": ["walk_sway", "recharge"]
+        },
+        {
+          "id": "electraica-hex-nut",
+          "name": "Hex nut",
+          "kind": "handheld-prop",
+          "image": "/toy-assets/generated/part-concepts/individual-v2/electraica/hex-nut.png",
+          "attach": "Prop.L",
+          "actionHooks": ["tighten", "show_tool"]
+        },
+        {
+          "id": "electraica-bolt",
+          "name": "Bolt",
+          "kind": "handheld-prop",
+          "image": "/toy-assets/generated/part-concepts/individual-v2/electraica/bolt.png",
+          "attach": "Prop.R",
+          "actionHooks": ["tighten", "spark"]
+        },
+        {
+          "id": "electraica-chest-plate",
+          "name": "Lightning chest plate",
+          "kind": "clothing",
+          "image": "/toy-assets/generated/part-concepts/individual-v2/electraica/chest-plate.png",
+          "attach": "Spine",
+          "actionHooks": ["glow", "power_up"]
+        }
+      ]
+    },
+    {
+      "slug": "fire-boy",
+      "name": "Fire Boy",
+      "sheet": "/toy-assets/generated/part-concepts/fire-boy-individual-v2-contact.png",
+      "legacySheet": "/toy-assets/generated/part-concepts/fire-boy-parts-sheet.png",
+      "base": {
+        "id": "fire-boy-base-body",
+        "name": "Unclothed flame plush body",
+        "kind": "base-body",
+        "image": "/toy-assets/generated/part-concepts/individual-v2/fire-boy/base-body.png",
+        "attach": "Root",
+        "notes": "Base body keeps the flame head and face, but excludes tuxedo, extinguisher, flute, and strap."
+      },
+      "parts": [
+        {
+          "id": "fire-boy-tuxedo",
+          "name": "Tuxedo jacket",
+          "kind": "clothing",
+          "image": "/toy-assets/generated/part-concepts/individual-v2/fire-boy/tuxedo.png",
+          "attach": "Spine",
+          "actionHooks": ["formal_idle", "lapel_pop"]
+        },
+        {
+          "id": "fire-boy-extinguisher-backpack",
+          "name": "Fire extinguisher backpack",
+          "kind": "backpack",
+          "image": "/toy-assets/generated/part-concepts/individual-v2/fire-boy/extinguisher-backpack.png",
+          "attach": "Backpack",
+          "actionHooks": ["walk_sway", "spray"]
+        },
+        {
+          "id": "fire-boy-flute",
+          "name": "Flute",
+          "kind": "handheld-prop",
+          "image": "/toy-assets/generated/part-concepts/individual-v2/fire-boy/flute.png",
+          "attach": "Prop.R",
+          "actionHooks": ["play_music", "raise_to_mouth"]
+        },
+        {
+          "id": "fire-boy-shoulder-strap",
+          "name": "Shoulder strap",
+          "kind": "strap",
+          "image": "/toy-assets/generated/part-concepts/individual-v2/fire-boy/shoulder-strap.png",
+          "attach": "Spine",
+          "actionHooks": ["walk_sway"]
+        }
+      ]
+    },
+    {
+      "slug": "shark-girl",
+      "name": "Shark Girl",
+      "sheet": "/toy-assets/generated/part-concepts/shark-girl-individual-v2-contact.png",
+      "legacySheet": "/toy-assets/generated/part-concepts/shark-girl-parts-sheet.png",
+      "base": {
+        "id": "shark-girl-base-body",
+        "name": "Unclothed shark plush body",
+        "kind": "base-body",
+        "image": "/toy-assets/generated/part-concepts/individual-v2/shark-girl/base-body.png",
+        "attach": "Root",
+        "notes": "Base body keeps shark hood, fins, tail, and face, but excludes tie, starfish, guitar, and strap."
+      },
+      "parts": [
+        {
+          "id": "shark-girl-cream-bowtie",
+          "name": "Cream butler tie",
+          "kind": "clothing",
+          "image": "/toy-assets/generated/part-concepts/individual-v2/shark-girl/cream-bowtie.png",
+          "attach": "Spine",
+          "actionHooks": ["formal_idle", "bow"]
+        },
+        {
+          "id": "shark-girl-starfish-clip",
+          "name": "Starfish clip",
+          "kind": "headwear",
+          "image": "/toy-assets/generated/part-concepts/individual-v2/shark-girl/starfish-clip.png",
+          "attach": "Hat",
+          "actionHooks": ["idle_bob"]
+        },
+        {
+          "id": "shark-girl-guitar",
+          "name": "Guitar",
+          "kind": "handheld-prop",
+          "image": "/toy-assets/generated/part-concepts/individual-v2/shark-girl/guitar.png",
+          "attach": "Prop.R",
+          "actionHooks": ["strum", "raise_to_play"]
+        },
+        {
+          "id": "shark-girl-guitar-strap",
+          "name": "Guitar strap",
+          "kind": "strap",
+          "image": "/toy-assets/generated/part-concepts/individual-v2/shark-girl/guitar-strap.png",
+          "attach": "Spine",
+          "actionHooks": ["walk_sway"]
+        }
+      ]
+    }
+  ]
+}

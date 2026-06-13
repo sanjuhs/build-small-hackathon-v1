@@ -1,0 +1,133 @@
+{
+  "version": 1,
+  "source": "gpt-image-2 isolated room prop references for fal SAM 3D object extraction",
+  "contactSheet": "/toy-assets/generated/environment-concepts/contact-sheet-full.png",
+  "objects": [
+    {
+      "id": "berry-rose",
+      "name": "Rose berry cluster",
+      "kind": "berry",
+      "image": "/toy-assets/generated/environment-concepts/individual/berry-rose.png",
+      "affordances": ["eat", "sniff", "share"],
+      "tags": ["food", "hunger"],
+      "prompt": "rose-pink magical berry cluster with small leaves, cute rounded chibi toy proportions, edible pet-room prop"
+    },
+    {
+      "id": "berry-amber",
+      "name": "Amber berry cluster",
+      "kind": "berry",
+      "image": "/toy-assets/generated/environment-concepts/individual/berry-amber.png",
+      "affordances": ["eat", "sniff", "share"],
+      "tags": ["food", "hunger"],
+      "prompt": "amber-orange magical berry cluster with small leaves and pale speckles, cute rounded chibi toy proportions, edible pet-room prop"
+    },
+    {
+      "id": "berry-moon",
+      "name": "Moon berry cluster",
+      "kind": "berry",
+      "image": "/toy-assets/generated/environment-concepts/individual/berry-moon.png",
+      "affordances": ["eat", "sniff", "share"],
+      "tags": ["food", "hunger"],
+      "prompt": "purple-blue moonberry cluster with crescent markings and small leaves, cute rounded chibi toy proportions, edible pet-room prop"
+    },
+    {
+      "id": "story-book-blue",
+      "name": "Blue closed storybook",
+      "kind": "book",
+      "image": "/toy-assets/generated/environment-concepts/individual/story-book-blue.png",
+      "affordances": ["read", "carry", "stack"],
+      "tags": ["book", "reading"],
+      "prompt": "closed chunky blue storybook with rounded corners and cream pages, cute chibi toy prop, no readable text"
+    },
+    {
+      "id": "story-book-open",
+      "name": "Open storybook",
+      "kind": "book",
+      "image": "/toy-assets/generated/environment-concepts/individual/story-book-open.png",
+      "affordances": ["read", "inspect"],
+      "tags": ["book", "reading"],
+      "prompt": "open chunky storybook with rounded pages and green cover, cute chibi toy prop, no readable text"
+    },
+    {
+      "id": "chair-mint",
+      "name": "Mint toy chair",
+      "kind": "chair",
+      "image": "/toy-assets/generated/environment-concepts/individual/chair-mint.png",
+      "affordances": ["sit", "climb", "gather"],
+      "tags": ["furniture", "social"],
+      "prompt": "small mint-green toy chair with cream cushion, rounded chibi proportions, pet-room furniture prop"
+    },
+    {
+      "id": "chair-coral",
+      "name": "Coral toy chair",
+      "kind": "chair",
+      "image": "/toy-assets/generated/environment-concepts/individual/chair-coral.png",
+      "affordances": ["sit", "climb", "gather"],
+      "tags": ["furniture", "social"],
+      "prompt": "small coral-orange toy chair with cream cushion, rounded chibi proportions, pet-room furniture prop"
+    },
+    {
+      "id": "chair-honey",
+      "name": "Honey toy stool chair",
+      "kind": "chair",
+      "image": "/toy-assets/generated/environment-concepts/individual/chair-honey.png",
+      "affordances": ["sit", "climb", "gather"],
+      "tags": ["furniture", "social"],
+      "prompt": "small honey-yellow stool chair with cream cushion, rounded chibi proportions, pet-room furniture prop"
+    },
+    {
+      "id": "tea-table-round",
+      "name": "Round tea table",
+      "kind": "table",
+      "image": "/toy-assets/generated/environment-concepts/individual/tea-table-round.png",
+      "affordances": ["gather", "place_object", "hide_under"],
+      "tags": ["furniture", "social"],
+      "prompt": "small round honey wood tea table with chunky legs, rounded chibi proportions, pet-room furniture prop"
+    },
+    {
+      "id": "play-table-square",
+      "name": "Square play table",
+      "kind": "table",
+      "image": "/toy-assets/generated/environment-concepts/individual/play-table-square.png",
+      "affordances": ["gather", "place_object", "hide_under"],
+      "tags": ["furniture", "social"],
+      "prompt": "small square cream and mint play table with rounded corners, chibi toy proportions, pet-room furniture prop"
+    },
+    {
+      "id": "lamp-warm",
+      "name": "Warm toy lamp",
+      "kind": "lamp",
+      "image": "/toy-assets/generated/environment-concepts/individual/lamp-warm.png",
+      "affordances": ["inspect", "light", "warm", "gather"],
+      "tags": ["lamp", "light"],
+      "prompt": "small warm yellow table lamp with rounded base and soft shade, cute chibi toy room prop"
+    },
+    {
+      "id": "lamp-blue",
+      "name": "Blue reading lamp",
+      "kind": "lamp",
+      "image": "/toy-assets/generated/environment-concepts/individual/lamp-blue.png",
+      "affordances": ["inspect", "light", "warm", "gather"],
+      "tags": ["lamp", "light"],
+      "prompt": "small blue reading lamp with rounded base and soft shade, cute chibi toy room prop"
+    },
+    {
+      "id": "plant-sprout",
+      "name": "Sprout potted plant",
+      "kind": "plant",
+      "image": "/toy-assets/generated/environment-concepts/individual/plant-sprout.png",
+      "affordances": ["sniff", "water", "hide", "inspect"],
+      "tags": ["plant", "calm"],
+      "prompt": "small potted plant with terracotta pot and oversized rounded green leaves, cute chibi toy room prop"
+    },
+    {
+      "id": "plant-fern",
+      "name": "Fern potted plant",
+      "kind": "plant",
+      "image": "/toy-assets/generated/environment-concepts/individual/plant-fern.png",
+      "affordances": ["sniff", "water", "hide", "inspect"],
+      "tags": ["plant", "calm"],
+      "prompt": "small potted fern with terracotta pot and many soft arcing green fronds, cute chibi toy room prop"
+    }
+  ]
+}

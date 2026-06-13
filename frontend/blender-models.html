@@ -1,0 +1,712 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Tiny Toybox Model Viewer</title>
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+      }
+    }
+  </script>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172121;
+      --muted: #66716d;
+      --paper: #fffaf0;
+      --panel: rgba(255, 250, 240, 0.88);
+      --line: rgba(23, 33, 33, 0.15);
+      --teal: #123238;
+      --aqua: #65cbda;
+      --coral: #f47d58;
+      --amber: #f2c14f;
+      --shadow: 0 18px 54px rgba(18, 50, 56, 0.15);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html,
+    body {
+      min-height: 100%;
+      margin: 0;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        linear-gradient(180deg, #fff8e8 0%, #edf8f6 58%, #fff8e8 100%);
+    }
+
+    button,
+    a {
+      font: inherit;
+    }
+
+    button {
+      color: inherit;
+    }
+
+    .shell {
+      width: min(1440px, calc(100vw - 24px));
+      margin: 0 auto;
+      padding: 12px 0 30px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 10px;
+      z-index: 5;
+      min-height: 50px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      background: rgba(255, 250, 240, 0.9);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .brand {
+      min-width: 0;
+      display: flex;
+      flex-direction: column;
+      gap: 1px;
+    }
+
+    .brand strong {
+      font-size: 14px;
+      line-height: 1.1;
+      font-weight: 880;
+      white-space: nowrap;
+    }
+
+    .brand span {
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .links,
+    .viewer-actions {
+      display: flex;
+      gap: 7px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .link-button,
+    .action-button,
+    .animation-select {
+      min-height: 36px;
+      border: 1px solid rgba(23, 33, 33, 0.13);
+      border-radius: 7px;
+      padding: 8px 11px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      color: var(--ink);
+      background: #ffffff;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 780;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    .animation-select {
+      min-width: 150px;
+      max-width: 220px;
+      appearance: none;
+      background:
+        linear-gradient(45deg, transparent 50%, var(--muted) 50%) calc(100% - 16px) 50% / 6px 6px no-repeat,
+        linear-gradient(135deg, var(--muted) 50%, transparent 50%) calc(100% - 11px) 50% / 6px 6px no-repeat,
+        #ffffff;
+      padding-right: 30px;
+    }
+
+    .animation-select:disabled {
+      color: rgba(23, 33, 33, 0.38);
+      cursor: not-allowed;
+      opacity: 0.68;
+    }
+
+    .label-toggle {
+      min-height: 36px;
+      border: 1px solid rgba(23, 33, 33, 0.13);
+      border-radius: 7px;
+      padding: 8px 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      color: var(--ink);
+      background: #ffffff;
+      font-size: 13px;
+      font-weight: 780;
+      line-height: 1;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .label-toggle input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .label-toggle span:first-of-type {
+      position: relative;
+      width: 16px;
+      height: 16px;
+      border: 1.5px solid rgba(18, 50, 56, 0.45);
+      border-radius: 4px;
+      background: #ffffff;
+      flex: 0 0 auto;
+    }
+
+    .label-toggle span:first-of-type::after {
+      content: "";
+      position: absolute;
+      left: 4px;
+      top: 1px;
+      width: 5px;
+      height: 9px;
+      border: solid #ffffff;
+      border-width: 0 2px 2px 0;
+      opacity: 0;
+      transform: rotate(45deg);
+    }
+
+    .label-toggle input:checked + span:first-of-type {
+      border-color: rgba(18, 50, 56, 0.68);
+      background: var(--teal);
+    }
+
+    .label-toggle input:checked + span:first-of-type::after {
+      opacity: 1;
+    }
+
+    .label-toggle:has(input:disabled) {
+      color: rgba(23, 33, 33, 0.38);
+      cursor: not-allowed;
+      opacity: 0.68;
+    }
+
+    .action-button.active {
+      border-color: rgba(18, 50, 56, 0.35);
+      background: #e9fbfb;
+    }
+
+    .action-button svg {
+      width: 17px;
+      height: 17px;
+      stroke-width: 2.3;
+    }
+
+    .viewer {
+      min-height: calc(100vh - 86px);
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: 250px minmax(0, 1fr) 330px;
+      gap: 12px;
+      align-items: start;
+    }
+
+    .panel,
+    .stage,
+    .render-panel,
+    .contact {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .panel {
+      min-height: 0;
+      max-height: calc(100vh - 86px);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .panel-head {
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .panel-title {
+      font-size: 12px;
+      font-weight: 880;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .asset-list {
+      min-height: 0;
+      padding: 8px;
+      display: grid;
+      gap: 7px;
+      overflow: auto;
+    }
+
+    .asset-button {
+      width: 100%;
+      min-height: 64px;
+      border: 1px solid transparent;
+      border-radius: 7px;
+      padding: 10px;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+      background: transparent;
+      text-align: left;
+      cursor: pointer;
+    }
+
+    .asset-button:hover,
+    .asset-button.active {
+      border-color: rgba(23, 33, 33, 0.14);
+      background: #ffffff;
+    }
+
+    .asset-name,
+    .asset-version {
+      display: block;
+      min-width: 0;
+      overflow-wrap: anywhere;
+    }
+
+    .asset-name {
+      font-size: 14px;
+      font-weight: 860;
+      line-height: 1.15;
+    }
+
+    .asset-version {
+      margin-top: 3px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 680;
+      line-height: 1.25;
+    }
+
+    .asset-badge {
+      border: 1px solid rgba(23, 33, 33, 0.12);
+      border-radius: 999px;
+      padding: 5px 7px;
+      background: #fff7dd;
+      font-size: 11px;
+      font-weight: 830;
+      white-space: nowrap;
+    }
+
+    .stage {
+      position: relative;
+      height: min(720px, calc(100vh - 86px));
+      min-height: 560px;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr);
+      background:
+        linear-gradient(180deg, rgba(255, 250, 240, 0.95), rgba(235, 248, 248, 0.92));
+    }
+
+    .stage-head {
+      min-height: 64px;
+      padding: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .asset-meta {
+      min-width: 0;
+    }
+
+    .asset-meta h1 {
+      margin: 0;
+      font-size: clamp(22px, 3vw, 34px);
+      line-height: 1.02;
+      letter-spacing: 0;
+    }
+
+    .asset-meta p {
+      margin: 5px 0 0;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 720;
+      overflow-wrap: anywhere;
+    }
+
+    .canvas-wrap {
+      position: relative;
+      min-height: 0;
+    }
+
+    .rig-label-layer {
+      position: absolute;
+      inset: 0;
+      z-index: 2;
+      pointer-events: none;
+    }
+
+    .rig-label {
+      padding: 3px 6px;
+      border: 1px solid rgba(23, 33, 33, 0.18);
+      border-radius: 999px;
+      color: var(--ink);
+      background: rgba(255, 255, 255, 0.86);
+      box-shadow: 0 4px 12px rgba(18, 50, 56, 0.13);
+      font-size: 10px;
+      font-weight: 860;
+      line-height: 1;
+      white-space: nowrap;
+      transform: translate(8px, -10px);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+    }
+
+    .rig-label.core {
+      border-color: rgba(242, 193, 79, 0.7);
+      background: rgba(255, 247, 221, 0.9);
+    }
+
+    .rig-label.left {
+      border-color: rgba(101, 203, 218, 0.72);
+      background: rgba(232, 251, 252, 0.9);
+    }
+
+    .rig-label.right {
+      border-color: rgba(244, 125, 88, 0.72);
+      background: rgba(255, 238, 231, 0.9);
+    }
+
+    .rig-label.socket {
+      border-color: rgba(18, 50, 56, 0.24);
+      background: rgba(255, 255, 255, 0.78);
+    }
+
+    #modelCanvas {
+      width: 100%;
+      height: 100%;
+      min-height: 0;
+      display: block;
+      touch-action: none;
+    }
+
+    .viewer-status {
+      position: absolute;
+      left: 14px;
+      bottom: 14px;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 780;
+      pointer-events: none;
+    }
+
+    .render-panel {
+      display: grid;
+      grid-template-rows: auto auto auto minmax(0, 1fr);
+    }
+
+    .download-row {
+      padding: 12px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      align-items: center;
+    }
+
+    .path {
+      min-width: 0;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .stats-grid {
+      padding: 10px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .stat {
+      min-height: 54px;
+      border: 1px solid rgba(23, 33, 33, 0.1);
+      border-radius: 7px;
+      padding: 8px;
+      background: rgba(255, 255, 255, 0.68);
+    }
+
+    .stat span,
+    .preview-label {
+      display: block;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 780;
+      line-height: 1.2;
+    }
+
+    .stat strong {
+      display: block;
+      margin-top: 4px;
+      font-size: 16px;
+      font-weight: 880;
+      line-height: 1.1;
+      overflow-wrap: anywhere;
+    }
+
+    .preview-main {
+      padding: 10px;
+      border-bottom: 1px solid var(--line);
+    }
+
+    .preview-frame {
+      aspect-ratio: 1 / 1;
+      border: 1px solid rgba(23, 33, 33, 0.1);
+      border-radius: 7px;
+      overflow: hidden;
+      background: #2f302f;
+    }
+
+    .preview-frame img {
+      width: 100%;
+      height: 100%;
+      display: block;
+      object-fit: contain;
+    }
+
+    .preview-label {
+      margin-top: 8px;
+    }
+
+    .render-strip {
+      padding: 10px;
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 8px;
+      align-content: start;
+      overflow: auto;
+    }
+
+    .preview-thumb {
+      min-width: 0;
+      border: 1px solid rgba(23, 33, 33, 0.11);
+      border-radius: 7px;
+      padding: 0;
+      overflow: hidden;
+      background: #ffffff;
+      cursor: pointer;
+    }
+
+    .preview-thumb.active {
+      outline: 2px solid var(--aqua);
+      outline-offset: -2px;
+    }
+
+    .preview-thumb img {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      display: block;
+      object-fit: cover;
+      background: #303030;
+    }
+
+    .preview-thumb span {
+      display: block;
+      padding: 6px;
+      color: var(--muted);
+      font-size: 11px;
+      font-weight: 780;
+      text-align: center;
+      line-height: 1.15;
+    }
+
+    .contact {
+      margin-top: 12px;
+      background: rgba(255, 250, 240, 0.72);
+    }
+
+    .contact img {
+      width: 100%;
+      display: block;
+    }
+
+    @media (max-width: 1120px) {
+      .viewer {
+        grid-template-columns: 220px minmax(0, 1fr);
+      }
+
+      .render-panel {
+        grid-column: 1 / -1;
+        grid-template-columns: 320px minmax(0, 1fr);
+        grid-template-rows: auto auto;
+      }
+
+      .download-row,
+      .stats-grid {
+        grid-column: 1;
+      }
+
+      .preview-main,
+      .render-strip {
+        grid-column: 2;
+      }
+
+      .preview-main {
+        grid-row: 1 / 3;
+        border-bottom: 0;
+        border-left: 1px solid var(--line);
+      }
+
+      .render-strip {
+        grid-row: 3;
+      }
+    }
+
+    @media (max-width: 760px) {
+      .shell {
+        width: min(100vw - 16px, 620px);
+      }
+
+      .topbar,
+      .stage-head {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .links,
+      .viewer-actions {
+        justify-content: flex-start;
+      }
+
+      .viewer {
+        grid-template-columns: 1fr;
+      }
+
+      .stage {
+        height: 560px;
+        min-height: 520px;
+      }
+
+      #modelCanvas {
+        min-height: 0;
+      }
+
+      .render-panel {
+        grid-template-columns: 1fr;
+      }
+
+      .download-row,
+      .stats-grid,
+      .preview-main,
+      .render-strip {
+        grid-column: auto;
+        grid-row: auto;
+      }
+
+      .preview-main {
+        border-left: 0;
+        border-bottom: 1px solid var(--line);
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <nav class="topbar">
+      <div class="brand">
+        <strong>Tiny Toybox Model Viewer</strong>
+        <span>Character assets</span>
+      </div>
+      <div class="links">
+        <a class="link-button" href="/pages">Pages</a>
+        <a class="link-button" href="/fireboy-rigged">Fire Boy Rigged</a>
+        <a class="link-button" href="/parts-lab">Parts Lab</a>
+        <a class="link-button" href="/toy">Toy Room</a>
+        <a class="link-button" href="/models">Model Lab</a>
+      </div>
+    </nav>
+
+    <section class="viewer" aria-label="Character GLB viewer">
+      <aside class="panel">
+        <div class="panel-head">
+          <div class="panel-title">Versions</div>
+        </div>
+        <div id="assetList" class="asset-list"></div>
+      </aside>
+
+      <section class="stage">
+        <div class="stage-head">
+          <div class="asset-meta">
+            <h1 id="assetTitle">Character</h1>
+            <p><span id="assetVersion">Version</span></p>
+          </div>
+          <div class="viewer-actions">
+            <button id="resetView" class="action-button" type="button" title="Reset view" aria-label="Reset view"><i data-lucide="rotate-ccw"></i>Reset</button>
+            <button id="rotateToggle" class="action-button" type="button">Auto rotate</button>
+            <button id="wireToggle" class="action-button" type="button">Wireframe</button>
+            <button id="rigToggle" class="action-button" type="button"><i data-lucide="bone"></i>Rig</button>
+            <label class="label-toggle" title="Show rig labels">
+              <input id="labelToggle" type="checkbox" />
+              <span aria-hidden="true"></span>
+              <span>Labels</span>
+            </label>
+            <select id="animationSelect" class="animation-select" aria-label="Animation">
+              <option value="">No animations</option>
+            </select>
+          </div>
+        </div>
+        <div class="canvas-wrap">
+          <canvas id="modelCanvas"></canvas>
+          <div id="viewerStatus" class="viewer-status"></div>
+        </div>
+      </section>
+
+      <aside class="render-panel">
+        <div class="download-row">
+          <div id="assetPath" class="path"></div>
+          <a id="downloadLink" class="action-button" href="#" download><i data-lucide="download"></i>GLB</a>
+        </div>
+        <div id="statsGrid" class="stats-grid"></div>
+        <div class="preview-main">
+          <div class="preview-frame">
+            <img id="previewImage" alt="" />
+          </div>
+          <span id="previewLabel" class="preview-label"></span>
+        </div>
+        <div id="renderStrip" class="render-strip"></div>
+      </aside>
+    </section>
+
+    <section class="contact" aria-label="Blender render contact sheet">
+      <img src="/toy-assets/generated/previews/contact-sheet.png" alt="Contact sheet of Blender character renders and object lineups" />
+    </section>
+
+    <section class="contact" aria-label="SAM render contact sheet">
+      <img src="/toy-assets/generated/previews/sam-contact-sheet.png" alt="Contact sheet of SAM cleaned, standing rigged, and rig preview renders" />
+    </section>
+  </main>
+
+  <script type="module" src="/frontend/toybox/blender_models.js?v=mixamo-retarget-v1"></script>
+</body>
+</html>
