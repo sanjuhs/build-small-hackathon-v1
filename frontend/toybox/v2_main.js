@@ -89,7 +89,14 @@ const ABILITY_SETS = {
     { power: "clock_bubble", label: "Bubble", icon: "sparkles", prompt: "Use power: clock_bubble. Push the nearby toys into a round second." },
   ],
   fire_boy: [
+    ...(IS_V3_MODE ? [
+      { power: "pick_box", label: "Pick Box", icon: "package", prompt: "Fire Boy, pick up the box." },
+      { power: "run_loop", label: "Run", icon: "route", prompt: "Fire Boy, run around the toy room." },
+    ] : []),
     { power: "fireball", label: "Fireball", icon: "flame", prompt: "Use power: fireball. Send a supervised warm comet at the nearest toy." },
+    ...(IS_V3_MODE ? [
+      { power: "baby_talk", label: "Talk", icon: "message-circle", prompt: "Fire Boy, say hello to the judges in your tiny baby voice." },
+    ] : []),
     { power: "ember_jump", label: "Ember Jump", icon: "move-up", prompt: "Use power: ember_jump. Hop upward with a safe ember flourish." },
     { power: "smoke_poof", label: "Smoke", icon: "cloud", prompt: "Use power: smoke_poof. Make a soft smoke curtain around yourself." },
   ],
