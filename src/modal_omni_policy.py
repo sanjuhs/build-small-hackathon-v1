@@ -50,13 +50,13 @@ def try_modal_omni_policy(payload: dict[str, Any]) -> dict[str, Any] | None:
     try:
         with connect(
             ws_url,
-            open_timeout=float(os.getenv("TOYBOX_MODAL_OMNI_CONNECT_TIMEOUT", "12")),
+            open_timeout=float(os.getenv("TOYBOX_MODAL_OMNI_CONNECT_TIMEOUT", "45")),
             close_timeout=2,
             compression=None,
             user_agent_header="Codex-Toy-Room/3 Modal-MiniCPM",
         ) as websocket:
             websocket.send(json.dumps(modal_chat_payload(content, pet)))
-            deadline = time.monotonic() + float(os.getenv("TOYBOX_MODAL_OMNI_TIMEOUT", "75"))
+            deadline = time.monotonic() + float(os.getenv("TOYBOX_MODAL_OMNI_TIMEOUT", "120"))
             while True:
                 remaining = deadline - time.monotonic()
                 if remaining <= 0:
