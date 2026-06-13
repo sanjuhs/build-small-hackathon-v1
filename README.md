@@ -77,6 +77,7 @@ The repository includes a 30-second MP4 capture for the Best Demo package:
 
 - [`demo/fire-boy-v3-demo.mp4`](demo/fire-boy-v3-demo.mp4)
 - [`demo/fire-boy-v3-demo-thumbnail.png`](demo/fire-boy-v3-demo-thumbnail.png)
+- Direct Space MP4: `https://huggingface.co/spaces/build-small-hackathon/toy-room-v3/resolve/main/demo/fire-boy-v3-demo.mp4`
 
 The video shows the actual `/toy-v3` UI: Fire Boy's rig, quick action buttons, pickup, fireball, run-around behavior, baby-voice talkback, and live loop/status metrics.
 

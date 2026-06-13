@@ -29,7 +29,7 @@ Links:
 
 - Space: `https://build-small-hackathon-toy-room-v3.hf.space/toy-v3`
 - GitHub: `https://github.com/sanjuhs/build-small-hackathon-v1`
-- Demo MP4: `demo/fire-boy-v3-demo.mp4`
+- Demo MP4: `https://huggingface.co/spaces/build-small-hackathon/toy-room-v3/resolve/main/demo/fire-boy-v3-demo.mp4`
 - Architecture notes: `docs/virtual-toy-v3-architecture.md`
 - Prize evidence: `docs/prize-qualification.md`
 

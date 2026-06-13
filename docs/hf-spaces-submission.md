@@ -129,6 +129,12 @@ Local output path:
 demo/fire-boy-v3-demo.mp4
 ```
 
+Hosted file:
+
+```text
+https://huggingface.co/spaces/build-small-hackathon/toy-room-v3/resolve/main/demo/fire-boy-v3-demo.mp4
+```
+
 Recommended demo beats:
 
 - Open `/toy-v3` and show the Fire Boy rig loaded.
