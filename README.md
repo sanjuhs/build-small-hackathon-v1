@@ -4,6 +4,20 @@ sdk: docker
 app_port: 7860
 pinned: false
 short_description: Fire Boy MiniCPM virtual pet toy room.
+tags:
+  - build-small-hackathon
+  - thousand-token-wood
+  - minicpm
+  - minicpm-v
+  - minicpm-o
+  - modal
+  - codex
+  - agents
+  - gradio
+  - custom-ui
+models:
+  - openbmb/MiniCPM-o-4_5
+  - ggml-org/MiniCPM-V-4.6-GGUF
 ---
 
 # Tiny Toybox
@@ -23,11 +37,14 @@ Hosted Space:
 
 - v3 target: `https://build-small-hackathon-toy-room-v3.hf.space/toy-v3`
 - previous v2 build: `https://build-small-hackathon-toy-room-v2.hf.space/toy-v2`
+- demo video: [`demo/fire-boy-v3-demo.mp4`](demo/fire-boy-v3-demo.mp4)
+- demo thumbnail: [`demo/fire-boy-v3-demo-thumbnail.png`](demo/fire-boy-v3-demo-thumbnail.png)
 
 Key docs:
 
 - [Toy Room v3 architecture](docs/virtual-toy-v3-architecture.md)
 - [Hugging Face Spaces and submission notes](docs/hf-spaces-submission.md)
+- [Prize qualification evidence](docs/prize-qualification.md)
 - [Discord submission draft](docs/discord-submission-post.md)
 
 ## Toy Room v3
@@ -54,12 +71,38 @@ Fire Boy, fireball the cube
 Fire Boy, run around the toy room
 ```
 
+## Demo Video
+
+The repository includes a 30-second MP4 capture for the Best Demo package:
+
+- [`demo/fire-boy-v3-demo.mp4`](demo/fire-boy-v3-demo.mp4)
+- [`demo/fire-boy-v3-demo-thumbnail.png`](demo/fire-boy-v3-demo-thumbnail.png)
+
+The video shows the actual `/toy-v3` UI: Fire Boy's rig, quick action buttons, pickup, fireball, run-around behavior, baby-voice talkback, and live loop/status metrics.
+
 Current local model status for this commit:
 
 - The live demo runs in `trace_retrieval+heuristic` mode unless you configure `TOYBOX_LLM_ENDPOINT`.
 - MiniCPM-V is wired through `TOYBOX_VISION_ENDPOINT` and `TOYBOX_VISION_MODEL`, but it is not active unless those variables are set.
-- Modal currently hosts the separate `minicpm-omni-45` MiniCPM-o 4.5 demo. It needs a JSON action adapter before Toy Room v3 can use it as the live control brain.
-- Measured local fallback `/api/pet-action` latency was about `143 ms` median across 5 samples. Token/sec is blank in fallback mode because no LLM tokens are generated.
+- Modal is used by the deployed `minicpm-omni-45` MiniCPM-o 4.5 runtime/demo in `modal-minicpm-omni/`. That Modal app runs the official MiniCPM-o stack on an L40S GPU and is the heavier multimodal companion path for the submission.
+- Toy Room v3's public pet loop is intentionally reliable first: it can run without secrets through trace retrieval plus deterministic bounded actions, and the same PET action contract can be backed by MiniCPM5, MiniCPM-V, RunPod, Hugging Face, OpenAI-compatible servers, or a future Modal JSON adapter.
+- Measured local fallback `/api/pet-action` latency was about `322.5 ms` median across 5 samples after the latest restart. Token/sec is blank in fallback mode because no LLM tokens are generated.
+
+## Prize Qualification Map
+
+The Build Small Hackathon prize page asks entrants to make prize usage explicit in the Space README. This entry targets:
+
+| Track or prize | Evidence in this repo and Space |
+| --- | --- |
+| Thousand Token Wood | A tiny-world virtual pet where Fire Boy observes objects, reacts to commands, moves, carries toys, speaks, and fires visible powers inside a toy room. |
+| Best MiniCPM Build | MiniCPM-V visual cortex hook in `src/vision_policy.py`, ModelBest/OpenBMB MiniCPM-V serverless helper in `minicpm-v-serverless/`, MiniCPM5 local action-brain path, and deployed Modal MiniCPM-o 4.5 demo in `modal-minicpm-omni/`. |
+| Best Use of Modal | `modal-minicpm-omni/modal_minicpm_omni.py` deploys `openbmb/MiniCPM-o-4_5` to Modal with an L40S GPU, a Modal Volume for model cache, and a Modal Secret for Hugging Face access. |
+| Best Use of Codex | The GitHub repo has Codex-attributed implementation and documentation commits for v3, Fire Boy command control, MiniCPM-V helper, and submission docs. |
+| Best Agent | Commands become strict PET action JSON, then execute as animations, speech, powers, particles, object pickup/carry, and physics operations. |
+| Off Brand / custom UI | The user-facing app is a custom Three.js toy room inside a Gradio-compatible Space, not a default Gradio chat screen. |
+| Best Demo | A short MP4 is kept at `demo/fire-boy-v3-demo.mp4` and shows pickup, fireball, run-around, speech, loop metrics, and the live toy controls. |
+
+This entry does **not** claim the Nemotron hardware prize because no Nemotron model is currently in the runtime. It also does not claim Tiny Titan for the MiniCPM-o Modal path, because MiniCPM-o 4.5 is larger than a tiny 4B-or-under target; the smaller MiniCPM-V/MiniCPM5 routes remain documented and configurable.
 
 ## Toy Room v2
 
@@ -295,11 +338,16 @@ If no endpoint is configured, the public build uses a deterministic heuristic fa
 
 The current OpenBMB/MiniCPM path is local-first through Ollama because the public HF router metadata did not expose provider-backed OpenBMB MiniCPM chat models during this build. The game still uses the same action JSON contract, so a hosted MiniCPM endpoint can be connected by setting `TOYBOX_LLM_ENDPOINT`, `TOYBOX_LLM_MODEL`, and a secret token.
 
-Check Modal remote execution:
+Check Modal remote execution and the deployed MiniCPM-o app:
 
 ```bash
 uv run --with modal modal run scripts/modal_square_smoke.py
+modal app list
+modal app logs minicpm-omni-45
+curl https://sanjuhs123--minicpm-omni-demo.modal.run/health
 ```
+
+The Modal app is intentionally kept separate from Toy Room v3's fast action loop. The app qualifies the submission for Modal usage because it is a real Modal runtime experiment for the MiniCPM-o multimodal model and is documented here, while Toy Room v3 stays responsive for judges even when no secret-backed model endpoint is configured.
 
 Measure the current local runtime:
 

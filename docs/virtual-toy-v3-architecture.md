@@ -160,7 +160,15 @@ The current server is not configured with either path, so the runtime chip corre
 
 The existing Modal app is `minicpm-omni-45`, serving `openbmb/MiniCPM-o-4_5` through the official MiniCPM-o demo stack.
 
-That is valuable, but it is not a direct plug-in for Toy Room v3 yet:
+This is a real Modal runtime component for the submission:
+
+- The app is deployed as `minicpm-omni-45`.
+- It uses an `L40S` GPU container.
+- It stores downloaded model weights in the Modal Volume `minicpm-omni-cache`.
+- It uses the Modal Secret `huggingface-token` for Hugging Face model access.
+- The public Modal endpoint is `https://sanjuhs123--minicpm-omni-demo.modal.run`.
+
+The current limitation is contract shape, not model availability. The Modal app is valuable, but it is not a direct plug-in for Toy Room v3 yet:
 
 - It exposes the official demo gateway/worker flow.
 - It is intended for multimodal demo traffic and WebSocket/browser use.
@@ -185,6 +193,8 @@ The clean next step is a thin Modal adapter:
 
 Until that adapter exists, the Modal demo should be listed as a supporting experiment, not the live Toy Room brain.
 
+For prize/readme purposes, Modal is still being used: it hosts the heavier MiniCPM-o multimodal runtime while Toy Room v3 uses a reliable action contract that can later point at a Modal JSON adapter.
+
 ## Timing And Function Calls
 
 The app records timing in two places:
@@ -201,8 +211,8 @@ The runtime panel exposes:
 
 Current measured local fallback performance:
 
-- `/api/pet-action` median latency: about `143 ms` across 5 local samples.
-- Mean latency: about `150 ms`.
+- `/api/pet-action` median latency: about `322.5 ms` across 5 local samples after the latest restart.
+- Mean latency: about `330.5 ms`.
 - No live token/sec number is available because the local run is not using an LLM endpoint.
 - `ollama ps` shows no model loaded.
 

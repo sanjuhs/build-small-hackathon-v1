@@ -21,10 +21,10 @@ uv run python -m unittest discover -s tests
 uv run python scripts/measure_runtime.py --base-url http://127.0.0.1:65372 --samples 5
 ```
 
-Current measured fallback policy speed:
+Current measured fallback policy speed after the latest restart:
 
-- Median `/api/pet-action` latency: about `143 ms`
-- Mean `/api/pet-action` latency: about `150 ms`
+- Median `/api/pet-action` latency: about `322.5 ms`
+- Mean `/api/pet-action` latency: about `330.5 ms`
 - Ollama running, but `ollama ps` reports no loaded model
 - Token/sec: not available unless a live LLM endpoint is configured
 
@@ -107,15 +107,35 @@ minicpm-omni-45
 https://sanjuhs123--minicpm-omni-demo.modal.run
 ```
 
-It is the official MiniCPM-o 4.5 demo, not the Toy Room action-brain endpoint. It can be shown as supporting work, but Toy Room v3 needs an adapter before it can use that Modal deployment as the live control brain.
+It is the official MiniCPM-o 4.5 demo running on Modal. Modal logs confirm the worker loads `openbmb/MiniCPM-o-4_5`, places the LLM, vision, audio, and TTS components on `cuda:0`, and serves a healthy gateway after cold start.
+
+This qualifies the project for Modal usage because Modal is used as a real multimodal MiniCPM runtime/development component and is called out in the Space README. Toy Room v3 itself still needs a JSON action adapter before it can use that Modal deployment as the live control brain.
 
 Useful Modal commands:
 
 ```bash
 modal app list
+modal container list --json
 modal app logs minicpm-omni-45 --since 15m
+curl --max-time 45 https://sanjuhs123--minicpm-omni-demo.modal.run/health
 modal deploy modal-minicpm-omni/modal_minicpm_omni.py
 ```
+
+## Demo Video
+
+Local output path:
+
+```text
+demo/fire-boy-v3-demo.mp4
+```
+
+Recommended demo beats:
+
+- Open `/toy-v3` and show the Fire Boy rig loaded.
+- Command "Fire Boy, pick up the box."
+- Command "Fire Boy, fireball the cube."
+- Command "Fire Boy, run around the toy room."
+- End with the runtime panel showing loop metrics and model-status truth.
 
 ## Submission Checklist
 
@@ -127,5 +147,5 @@ modal deploy modal-minicpm-omni/modal_minicpm_omni.py
   - "fireball the cube"
   - "run around"
 - Runtime panel shows honest model status.
-- README links to the architecture doc.
-- Discord post includes Space URL, GitHub URL, demo commands, and model-status caveat.
+- README has Build Small tags, MiniCPM/Modal/Codex evidence, architecture link, prize evidence link, and demo video path.
+- Discord post includes Space URL, GitHub URL, demo MP4, demo commands, and model-status caveat.
