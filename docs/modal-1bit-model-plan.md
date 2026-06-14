@@ -23,7 +23,7 @@ The cleanest 1-bit lesson from Bonsai/BitNet is: train or adapt for the low-bit 
 
 ### Vision model
 
-- First choice: `openbmb/minicpm-v4.6` or `openbmb/MiniCPM-V-4.6-gguf:Q4_K_M`
+- First choice: `minicpm-v4.6` through the official Ollama library model
 - Why: MiniCPM-V 4.6 is the smallest current MiniCPM-V route for image/video understanding. It uses SigLIP2-400M plus Qwen3.5-0.8B and is designed for edge deployment.
 - Role: reads a canvas frame every 1-3 seconds or after important events, then returns perception and blendshape hints.
 

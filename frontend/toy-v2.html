@@ -129,6 +129,7 @@
 
     .model-pill,
     .route-link,
+    .brain-mode-button,
     .icon-button,
     .agent-button,
     .ability-button,
@@ -152,6 +153,42 @@
       font-size: 12px;
       text-decoration: none;
       white-space: nowrap;
+    }
+
+    .brain-mode-control {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      min-height: 38px;
+      padding: 3px;
+    }
+
+    .brain-mode-button {
+      min-height: 30px;
+      padding: 0 9px;
+      border-color: transparent;
+      background: transparent;
+      font-size: 11px;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: background 150ms ease, border-color 150ms ease, color 150ms ease;
+    }
+
+    .brain-mode-button:hover {
+      border-color: rgba(18, 50, 56, 0.2);
+      background: rgba(255, 255, 255, 0.72);
+    }
+
+    .brain-mode-button.active {
+      border-color: rgba(18, 50, 56, 0.22);
+      background: #fff;
+      color: var(--teal);
+      box-shadow: 0 6px 14px rgba(18, 50, 56, 0.1);
+    }
+
+    .brain-mode-button.warn:not(.active) {
+      color: #8e2f1c;
+      background: rgba(255, 226, 214, 0.58);
     }
 
     .model-pill.active {
@@ -1097,6 +1134,11 @@
         <span>MiniCPM vision-action toybox</span>
       </div>
       <div class="top-actions">
+        <div id="brainModeControl" class="brain-mode-control glass" role="group" aria-label="Brain backend">
+          <button class="brain-mode-button active" type="button" data-brain-mode="modal" title="Use Modal MiniCPM-o">Modal</button>
+          <button class="brain-mode-button" type="button" data-brain-mode="ollama-vision" title="Use local Ollama MiniCPM-V">Ollama V</button>
+          <button class="brain-mode-button" type="button" data-brain-mode="ollama-text" title="Use local Ollama MiniCPM5 1B">Ollama 1B</button>
+        </div>
         <span id="modelStatus" class="model-pill glass">PET LLM: checking</span>
         <button id="gravityButton" class="icon-button glass" type="button" title="Flip gravity">
           <i data-lucide="flip-vertical-2"></i>
@@ -1219,6 +1261,6 @@
     </form>
   </main>
 
-  <script type="module" src="/frontend/toybox/v2_main.js?v=20260613-ai-evidence"></script>
+  <script type="module" src="/frontend/toybox/v2_main.js?v=20260614-brain-mode"></script>
 </body>
 </html>

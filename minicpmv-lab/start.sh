@@ -3,7 +3,7 @@ set -euo pipefail
 
 cd "$(dirname "$0")"
 
-export MINICPMV_MODEL="${MINICPMV_MODEL:-hf.co/ggml-org/MiniCPM-V-4.6-GGUF:Q4_K_M}"
+export MINICPMV_MODEL="${MINICPMV_MODEL:-minicpm-v4.6}"
 export MINICPMV_OLLAMA_URL="${MINICPMV_OLLAMA_URL:-http://127.0.0.1:11434}"
 export MINICPMV_PORT="${MINICPMV_PORT:-65446}"
 
@@ -31,4 +31,3 @@ uv run \
   --with pymupdf \
   --with pillow \
   python server.py
-

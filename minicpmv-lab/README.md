@@ -8,7 +8,7 @@ Local MiniCPM-V 4.6 playground for image chat, PDF transcription, and timing mea
 - MiniCPM-V 4.6 GGUF pulled locally:
 
 ```bash
-ollama pull hf.co/ggml-org/MiniCPM-V-4.6-GGUF:Q4_K_M
+ollama pull minicpm-v4.6
 ```
 
 ## Run
@@ -43,4 +43,3 @@ For PDFs, timings are captured per page and for the whole document.
 ## Notes
 
 MiniCPM-V can transcribe and describe handwriting, stamps, signatures, page numbers, and layout, but no OCR model can guarantee complete accuracy on all documents. The default prompt asks the model to mark uncertain text with `[unclear]` instead of inventing content.
-

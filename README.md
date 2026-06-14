@@ -17,7 +17,7 @@ tags:
   - custom-ui
 models:
   - openbmb/MiniCPM-o-4_5
-  - ggml-org/MiniCPM-V-4.6-GGUF
+  - minicpm-v4.6
 ---
 
 # Tiny Toybox
@@ -302,6 +302,21 @@ Check the model endpoint:
 uv run python scripts/check_pet_llm.py
 ```
 
+Toy Room v3 also has a topbar brain selector:
+
+- `Modal` sends `brainMode=modal` and uses the configured Modal MiniCPM-o gateway.
+- `Ollama V` sends `brainMode=ollama-vision` and uses local Ollama `minicpm-v4.6` as the direct vision-action brain.
+- `Ollama 1B` sends `brainMode=ollama-text` and uses local Ollama `hf.co/openbmb/MiniCPM5-1B-GGUF:Q4_K_M` as a text-only action brain.
+
+Local MiniCPM-V setup:
+
+```bash
+ollama pull minicpm-v4.6
+./start.sh
+```
+
+The backend reports local availability in `/api/model-status` as `localOllamaAvailable`, `localOllamaVisionModel`, and `localOllamaVisionInstalled`. Action rows in `/api/pet-action-events` include provider/model, prompt tokens, completion tokens, latency, and tokens/sec.
+
 ## Optional Hosted Model Hook
 
 The hosted Space can call any OpenAI-compatible chat-completions endpoint. For Hugging Face Inference Providers, set these Space variables/secrets:
@@ -413,7 +428,7 @@ scripts/start_with_minicpmv46_vision.sh
 That script uses Ollama models:
 
 - `hf.co/openbmb/MiniCPM5-1B-GGUF:Q4_K_M` for PET-LLM actions
-- `openbmb/minicpm-v4.6` for vision perception
+- `minicpm-v4.6` for vision perception
 
 MiniCPM-V 4.6 local vision currently needs Ollama `0.30.0` or newer. The script checks this before pulling the vision model.
 
@@ -421,7 +436,7 @@ Check only the vision endpoint:
 
 ```bash
 TOYBOX_VISION_ENDPOINT=http://127.0.0.1:11434/api/chat \
-TOYBOX_VISION_MODEL=openbmb/minicpm-v4.6 \
+TOYBOX_VISION_MODEL=minicpm-v4.6 \
 uv run python scripts/check_vision_endpoint.py
 ```
 

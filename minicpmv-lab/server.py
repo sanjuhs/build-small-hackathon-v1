@@ -21,7 +21,7 @@ from PIL import Image
 ROOT = Path(__file__).resolve().parent
 STATIC = ROOT / "static"
 OLLAMA_URL = os.getenv("MINICPMV_OLLAMA_URL", "http://127.0.0.1:11434").rstrip("/")
-DEFAULT_MODEL = os.getenv("MINICPMV_MODEL", "hf.co/ggml-org/MiniCPM-V-4.6-GGUF:Q4_K_M")
+DEFAULT_MODEL = os.getenv("MINICPMV_MODEL", "minicpm-v4.6")
 PORT = int(os.getenv("MINICPMV_PORT", "65446"))
 
 app = FastAPI(title="MiniCPM-V Lab")
@@ -343,4 +343,3 @@ if __name__ == "__main__":
     import uvicorn
 
     uvicorn.run("server:app", host="127.0.0.1", port=PORT, reload=False)
-

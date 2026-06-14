@@ -5,6 +5,7 @@ import os
 import time
 from typing import Any
 
+from src.command_coercion import coerce_fireboy_command_action
 from src.model_policy import (
     attach_model_debug,
     auth_headers,
@@ -21,9 +22,13 @@ from src.pet_profiles import PET_PROFILES, normalize_pet
 from src.vision_policy import image_base64
 
 
-def try_vision_action_policy(payload: dict[str, Any]) -> dict[str, Any] | None:
-    endpoint = os.getenv("TOYBOX_VISION_ENDPOINT", "").strip()
-    model = os.getenv("TOYBOX_VISION_MODEL", "").strip()
+def try_vision_action_policy(
+    payload: dict[str, Any],
+    endpoint_override: str | None = None,
+    model_override: str | None = None,
+) -> dict[str, Any] | None:
+    endpoint = endpoint_override or os.getenv("TOYBOX_VISION_ENDPOINT", "").strip()
+    model = model_override or os.getenv("TOYBOX_VISION_MODEL", "").strip()
     camera_frame = payload.get("cameraFrame")
     if not endpoint or not model or not isinstance(camera_frame, str) or not camera_frame.startswith("data:image/"):
         return None
@@ -52,6 +57,7 @@ def try_vision_action_policy(payload: dict[str, Any]) -> dict[str, Any] | None:
             mode = endpoint_mode(endpoint)
             provider = endpoint_provider(endpoint) or mode
         action = validate_action(extract_json(content), payload)
+        coerce_fireboy_command_action(action, payload)
         debugged = attach_model_debug(action, model, provider=provider, latency_ms=elapsed_ms(started), usage=usage)
         debugged.setdefault("debug", {})["policy"] = "minicpm_v_action"
         debugged["debug"]["visionAction"] = True
@@ -130,10 +136,15 @@ def post_ollama_vision_action(
     )
     response.raise_for_status()
     data = response.json()
+    eval_count = data.get("eval_count")
+    eval_duration = data.get("eval_duration")
     usage = {
-        "completion_tokens": data.get("eval_count"),
+        "completion_tokens": eval_count,
         "prompt_tokens": data.get("prompt_eval_count"),
     }
+    if eval_count and eval_duration:
+        duration_seconds = float(eval_duration) / 1_000_000_000
+        usage["tokensPerSecond"] = round(float(eval_count) / max(duration_seconds, 0.001), 2)
     return data["message"]["content"], usage
 
 

@@ -153,7 +153,7 @@ For local Ollama-style vision, the endpoint can be:
 
 ```bash
 TOYBOX_VISION_ENDPOINT=http://127.0.0.1:11434/api/chat
-TOYBOX_VISION_MODEL=openbmb/minicpm-v4.6
+TOYBOX_VISION_MODEL=minicpm-v4.6
 ```
 
 The current server is not configured with either path, so the runtime chip correctly says `Vision: camera frame`, not `MiniCPM-V`.

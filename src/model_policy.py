@@ -6,20 +6,28 @@ import re
 import time
 from typing import Any
 from urllib.parse import urlparse, urlunparse
+from urllib.request import urlopen
 
+from src.command_coercion import coerce_fireboy_command_action
 from src.pet_actions import action_schema, validate_action
 from src.pet_memory import memory_path
 from src.pet_payload import compact_payload, target_from_payload, target_ids_from_payload
 from src.pet_profiles import PET_PROFILES, VALID_EMOTIONS, normalize_pet
 
 
-def try_model_policy(endpoint: str, payload: dict[str, Any]) -> dict[str, Any] | None:
+DEFAULT_OLLAMA_BASE_URL = "http://127.0.0.1:11434"
+DEFAULT_OLLAMA_TEXT_MODEL = "hf.co/openbmb/MiniCPM5-1B-GGUF:Q4_K_M"
+DEFAULT_OLLAMA_VISION_MODEL = "minicpm-v4.6"
+_OLLAMA_STATUS_CACHE: tuple[float, dict[str, Any]] | None = None
+
+
+def try_model_policy(endpoint: str, payload: dict[str, Any], model_override: str | None = None) -> dict[str, Any] | None:
     try:
         import httpx
     except Exception:
         return None
 
-    model = os.getenv("TOYBOX_LLM_MODEL", "local-small-model")
+    model = model_override or os.getenv("TOYBOX_LLM_MODEL", "local-small-model")
     prompt_payload = compact_payload(payload)
     ollama_endpoint = ollama_chat_endpoint(endpoint)
 
@@ -27,6 +35,7 @@ def try_model_policy(endpoint: str, payload: dict[str, Any]) -> dict[str, Any] |
         started = time.perf_counter()
         action = try_ollama_structured_policy(httpx, ollama_endpoint, model, prompt_payload, payload)
         if action:
+            coerce_fireboy_command_action(action, payload)
             return attach_model_debug(action, model, provider="ollama", latency_ms=elapsed_ms(started))
 
     if not can_call_endpoint(endpoint, "TOYBOX_LLM"):
@@ -56,8 +65,10 @@ def try_model_policy(endpoint: str, payload: dict[str, Any]) -> dict[str, Any] |
         response.raise_for_status()
         data = response.json()
         parsed = extract_json(data["choices"][0]["message"]["content"])
+        action = validate_action(parsed, payload)
+        coerce_fireboy_command_action(action, payload)
         return attach_model_debug(
-            validate_action(parsed, payload),
+            action,
             model,
             provider=endpoint_provider(endpoint) or endpoint_mode(endpoint),
             latency_ms=elapsed_ms(started),
@@ -67,11 +78,55 @@ def try_model_policy(endpoint: str, payload: dict[str, Any]) -> dict[str, Any] |
         return None
 
 
+def local_ollama_base_url() -> str:
+    endpoint = os.getenv("TOYBOX_OLLAMA_BASE_URL", "").strip() or os.getenv("OLLAMA_HOST", "").strip()
+    if not endpoint:
+        return DEFAULT_OLLAMA_BASE_URL
+    if "://" not in endpoint:
+        endpoint = f"http://{endpoint}"
+    return endpoint.rstrip("/")
+
+
+def local_ollama_chat_endpoint() -> str:
+    return f"{local_ollama_base_url()}/api/chat"
+
+
+def local_ollama_text_model() -> str:
+    return os.getenv("TOYBOX_OLLAMA_TEXT_MODEL", DEFAULT_OLLAMA_TEXT_MODEL).strip() or DEFAULT_OLLAMA_TEXT_MODEL
+
+
+def local_ollama_vision_model() -> str:
+    return os.getenv("TOYBOX_OLLAMA_VISION_MODEL", DEFAULT_OLLAMA_VISION_MODEL).strip() or DEFAULT_OLLAMA_VISION_MODEL
+
+
+def local_ollama_status() -> dict[str, Any]:
+    global _OLLAMA_STATUS_CACHE
+    now = time.perf_counter()
+    if _OLLAMA_STATUS_CACHE and now - _OLLAMA_STATUS_CACHE[0] < 5:
+        return dict(_OLLAMA_STATUS_CACHE[1])
+
+    timeout = float(os.getenv("TOYBOX_OLLAMA_STATUS_TIMEOUT", "0.45"))
+    status: dict[str, Any] = {"available": False, "models": [], "error": ""}
+    try:
+        with urlopen(f"{local_ollama_base_url()}/api/tags", timeout=timeout) as response:
+            data = json.loads(response.read().decode("utf-8"))
+        models = [str(item.get("name") or "") for item in data.get("models", []) if item.get("name")]
+        status = {"available": True, "models": models[:32], "error": ""}
+    except Exception as exc:
+        status = {"available": False, "models": [], "error": f"{type(exc).__name__}: {str(exc)[:120]}"}
+    _OLLAMA_STATUS_CACHE = (now, status)
+    return dict(status)
+
+
 def model_status() -> dict[str, Any]:
     endpoint = os.getenv("TOYBOX_LLM_ENDPOINT", "").strip()
     model = os.getenv("TOYBOX_LLM_MODEL", "").strip()
     vision_endpoint = os.getenv("TOYBOX_VISION_ENDPOINT", "").strip()
     vision_model = os.getenv("TOYBOX_VISION_MODEL", "").strip()
+    ollama_status = local_ollama_status()
+    ollama_models = ollama_status.get("models") if isinstance(ollama_status.get("models"), list) else []
+    ollama_text_model = local_ollama_text_model()
+    ollama_vision_model = local_ollama_vision_model()
     modal_requested = modal_omni_action_enabled()
     modal_url = os.getenv("TOYBOX_MODAL_OMNI_URL", "").strip().rstrip("/")
     modal_model = os.getenv("TOYBOX_MODAL_OMNI_MODEL", "openbmb/MiniCPM-o-4_5").strip() or "openbmb/MiniCPM-o-4_5"
@@ -126,6 +181,14 @@ def model_status() -> dict[str, Any]:
         "modalOmniModel": modal_model,
         "modalOmniImageMode": os.getenv("TOYBOX_MODAL_OMNI_SEND_IMAGE", "auto").strip() or "auto",
         "modalOmniWsPath": "/ws/chat",
+        "localOllamaEndpoint": local_ollama_base_url(),
+        "localOllamaAvailable": bool(ollama_status.get("available")),
+        "localOllamaError": str(ollama_status.get("error") or ""),
+        "localOllamaModels": ollama_models,
+        "localOllamaTextModel": ollama_text_model,
+        "localOllamaVisionModel": ollama_vision_model,
+        "localOllamaTextInstalled": ollama_model_installed(ollama_text_model, ollama_models),
+        "localOllamaVisionInstalled": ollama_model_installed(ollama_vision_model, ollama_models),
         "visionConfigured": vision_configured,
         "visionEnabled": vision_configured and (not vision_auth_required or vision_auth_configured),
         "visionActionConfigured": vision_action_configured,
@@ -146,6 +209,14 @@ def model_status() -> dict[str, Any]:
 
 def allow_heuristic_fallback() -> bool:
     return os.getenv("TOYBOX_ALLOW_HEURISTIC_FALLBACK", "").lower() in {"1", "true", "yes"}
+
+
+def ollama_model_installed(model: str, models: list[str]) -> bool:
+    if model in models:
+        return True
+    if ":" not in model and f"{model}:latest" in models:
+        return True
+    return False
 
 
 def vision_model_action_enabled() -> bool:
@@ -399,7 +470,7 @@ def text_policy_system_prompt() -> str:
         '"soundRecipe": {"label": string, "gain": number, "tones": [{"frequency": number, "offsetMs": integer, '
         '"durationMs": integer, "gain": number, "wave": string}]} or null}. '
         f"emotion must be one of {VALID_EMOTIONS}. "
-        "interaction.verb must be one of none, eat, read, sit, gather, sniff, inspect, water, share, clean, recycle, play, comfort, talk, pickup, carry, bring, run. "
+        "interaction.verb must be one of none, eat, read, sit, gather, sniff, inspect, water, share, clean, recycle, play, comfort, talk, pickup, carry, bring, walk, run. "
         "Blendshape may include numeric eye, smile, mouth, brow, cheek, squash, tilt, sparkle. "
         "Spell ops must use only impulse, freeze, scale, attract, spawn_particle, set_light, or nudge_pet. "
         "Spell targetId must be a listed object id, self, all-moving, all-toys, or all-agents. "
@@ -567,13 +638,16 @@ def attach_model_debug(
         completion_tokens = usage.get("completion_tokens") or usage.get("completionTokens")
         prompt_tokens = usage.get("prompt_tokens") or usage.get("promptTokens")
         total_tokens = usage.get("total_tokens") or usage.get("totalTokens")
+        tokens_per_second = usage.get("tokens_per_second") or usage.get("tokensPerSecond")
         if completion_tokens is not None:
             debug["completionTokens"] = completion_tokens
         if prompt_tokens is not None:
             debug["promptTokens"] = prompt_tokens
         if total_tokens is not None:
             debug["totalTokens"] = total_tokens
-        if latency_ms and completion_tokens:
+        if tokens_per_second is not None:
+            debug["tokensPerSecond"] = round(float(tokens_per_second), 2)
+        elif latency_ms and completion_tokens:
             debug["tokensPerSecond"] = round(float(completion_tokens) / max(latency_ms / 1000, 0.001), 2)
     action["debug"] = debug
     return action

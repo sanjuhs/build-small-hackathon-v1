@@ -14,10 +14,13 @@ import {
   Mic,
   MicOff,
   Minimize2,
+  MessageCircle,
   MoveUp,
+  Package,
   Play,
   RotateCcw,
   RotateCw,
+  Route,
   Send,
   Sparkles,
   Volume2,
@@ -46,10 +49,13 @@ const LUCIDE_ICONS = {
   Mic,
   MicOff,
   Minimize2,
+  MessageCircle,
   MoveUp,
+  Package,
   Play,
   RotateCcw,
   RotateCw,
+  Route,
   Send,
   Sparkles,
   Volume2,
@@ -63,6 +69,12 @@ createIcons({ icons: LUCIDE_ICONS });
 const TOYBOX_VERSION = document.body.dataset.toyboxVersion || "v2";
 const IS_V3_MODE = TOYBOX_VERSION === "v3";
 const DEFAULT_AGENT_KIND = IS_V3_MODE ? "fire_boy" : "squeaky";
+const BRAIN_MODE_STORAGE_KEY = "toybox-v3-brain-mode";
+const BRAIN_MODE_LABELS = {
+  modal: "Modal",
+  "ollama-vision": "Ollama V",
+  "ollama-text": "Ollama 1B",
+};
 
 function mountV3ViewDock() {
   if (!IS_V3_MODE || document.querySelector(".v3-view-dock")) return;
@@ -153,6 +165,7 @@ const dom = {
   rigButton: document.getElementById("rigButton"),
   gravityButton: document.getElementById("gravityButton"),
   modeButton: document.getElementById("modeButton"),
+  brainModeControl: document.getElementById("brainModeControl"),
   effectFlash: document.getElementById("effectFlash"),
   perceptionTitle: document.getElementById("perceptionTitle"),
   perceptionReadout: document.getElementById("perceptionReadout"),
@@ -246,6 +259,81 @@ let aiEvidence = { checks: [], score: { ok: 0, warn: 0, total: 0, requiredOk: 0,
 let lastLoopMetric = { label: "idle", state: "warn" };
 let actionSequence = 0;
 let demoRunning = false;
+let brainModePinned = false;
+let selectedBrainMode = loadBrainMode();
+
+function loadBrainMode() {
+  try {
+    const stored = localStorage.getItem(BRAIN_MODE_STORAGE_KEY);
+    if (stored && Object.hasOwn(BRAIN_MODE_LABELS, stored)) {
+      brainModePinned = true;
+      return stored;
+    }
+  } catch {}
+  return "modal";
+}
+
+function setBrainMode(mode) {
+  if (!Object.hasOwn(BRAIN_MODE_LABELS, mode)) return;
+  selectedBrainMode = mode;
+  brainModePinned = true;
+  try {
+    localStorage.setItem(BRAIN_MODE_STORAGE_KEY, mode);
+  } catch {}
+  renderBrainModeControl();
+  updateAgentPanel();
+  showToast(`Brain: ${BRAIN_MODE_LABELS[mode]}.`);
+}
+
+function brainModeAvailable(mode) {
+  if (mode === "modal") return Boolean(modelStatus.modalOmniEnabled || modelStatus.modalOmniConfigured);
+  if (mode === "ollama-vision") {
+    return Boolean(modelStatus.localOllamaAvailable && modelStatus.localOllamaVisionInstalled);
+  }
+  if (mode === "ollama-text") {
+    return Boolean(modelStatus.localOllamaAvailable && modelStatus.localOllamaTextInstalled);
+  }
+  return false;
+}
+
+function brainModeTitle(mode) {
+  if (mode === "modal") return modelStatus.modalOmniConfigured ? "Use Modal MiniCPM-o" : "Modal endpoint is not configured";
+  if (mode === "ollama-vision") {
+    if (!modelStatus.localOllamaAvailable) return `Ollama offline at ${modelStatus.localOllamaEndpoint || "localhost"}`;
+    if (!modelStatus.localOllamaVisionInstalled) return `Pull ${modelStatus.localOllamaVisionModel || "MiniCPM-V"}`;
+    return `Use ${modelStatus.localOllamaVisionModel}`;
+  }
+  if (mode === "ollama-text") {
+    if (!modelStatus.localOllamaAvailable) return `Ollama offline at ${modelStatus.localOllamaEndpoint || "localhost"}`;
+    if (!modelStatus.localOllamaTextInstalled) return `Pull ${modelStatus.localOllamaTextModel || "MiniCPM5"}`;
+    return `Use ${modelStatus.localOllamaTextModel}`;
+  }
+  return "";
+}
+
+function renderBrainModeControl() {
+  if (!dom.brainModeControl) return;
+  for (const button of dom.brainModeControl.querySelectorAll("[data-brain-mode]")) {
+    const mode = button.dataset.brainMode || "modal";
+    const active = mode === selectedBrainMode;
+    const available = brainModeAvailable(mode);
+    button.classList.toggle("active", active);
+    button.classList.toggle("warn", !available);
+    button.setAttribute("aria-pressed", String(active));
+    button.title = brainModeTitle(mode);
+  }
+  document.body.dataset.selectedBrainMode = selectedBrainMode;
+}
+
+function chooseInitialBrainMode() {
+  if (brainModePinned) return;
+  if (brainModeAvailable(selectedBrainMode)) return;
+  if (brainModeAvailable("ollama-vision")) {
+    selectedBrainMode = "ollama-vision";
+  } else if (brainModeAvailable("ollama-text")) {
+    selectedBrainMode = "ollama-text";
+  }
+}
 
 for (const spec of AGENT_SPECS) {
   const pet = createPet(spec.kind, scene);
@@ -889,6 +977,7 @@ async function requestAction(agent, message = "") {
   const payload = {
     pet: agent.kind,
     message,
+    brainMode: selectedBrainMode,
     scene: collectSceneState(agent),
     memories: agent.memories,
     forces: forceEvents.slice(-12),
@@ -1426,6 +1515,7 @@ function compactBrainTrace(payload, action, policy) {
   return {
     at: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit", second: "2-digit" }),
     policy: policy || action?.debug?.policy || "unknown",
+    brain: summarizeTraceBrain(payload, action),
     text: shortTraceText(payload.message || "ambient room loop", 88),
     vision: summarizeTraceVision(payload.cameraFrameSource, detected),
     sound: summarizeTraceAudio(payload.audio),
@@ -1449,6 +1539,12 @@ function summarizeTraceModel(action) {
     debug.modalLastError ? `error:${shortTraceText(debug.modalLastError, 92)}` : "",
   ];
   return pieces.filter(Boolean).join(" | ") || "none";
+}
+
+function summarizeTraceBrain(payload, action) {
+  const requested = action?.debug?.requestedBrainMode || payload.brainMode || selectedBrainMode || "auto";
+  const actual = action?.debug?.provider || action?.debug?.policy || "pending";
+  return `${BRAIN_MODE_LABELS[requested] || requested} -> ${actual}`;
 }
 
 function summarizeTraceVision(source, detected) {
@@ -1511,6 +1607,7 @@ function traceActionJson(action, policy) {
   return JSON.stringify({
     policy: action.debug?.policy || policy || "unknown",
     provider: action.debug?.provider || null,
+    requestedBrainMode: action.debug?.requestedBrainMode || null,
     speech: shortTraceText(action.speech || "", 64),
     interaction: action.interaction?.verb || null,
     spell: action.spell?.spellName || action.power?.name || null,
@@ -1653,6 +1750,17 @@ function renderRuntimeStack(agent = activeAgent()) {
 }
 
 function brainRuntimeState() {
+  if (selectedBrainMode === "ollama-vision") {
+    const label = `Ollama MiniCPM-V ${modelStatus.localOllamaVisionModel || ""}`;
+    return { label: shortRuntimeLabel(label), state: brainModeAvailable("ollama-vision") ? "ok" : "warn" };
+  }
+  if (selectedBrainMode === "ollama-text") {
+    const label = `Ollama MiniCPM5 ${modelStatus.localOllamaTextModel || ""}`;
+    return { label: shortRuntimeLabel(label), state: brainModeAvailable("ollama-text") ? "ok" : "warn" };
+  }
+  if (selectedBrainMode === "modal" && !brainModeAvailable("modal")) {
+    return { label: "Modal unavailable", state: "warn" };
+  }
   if (modelStatus.modalOmniEnabled) {
     return { label: shortRuntimeLabel(`Modal MiniCPM-o ${modelStatus.modalOmniModel || modelStatus.model || ""}`), state: "ok" };
   }
@@ -2073,6 +2181,7 @@ function renderBrainTrace(agent) {
   }
   const rows = [
     ["when", `${trace.at} / ${trace.policy}`],
+    ["brain", trace.brain],
     ["text", trace.text],
     ["vision", trace.vision],
     ["model", trace.model],
@@ -2113,6 +2222,7 @@ function brainTraceCopyText(agent) {
   if (!trace) return "Brain Trace: waiting for first action";
   return [
     `when: ${trace.at} / ${trace.policy}`,
+    `brain: ${trace.brain}`,
     `text: ${trace.text}`,
     `vision: ${trace.vision}`,
     `model: ${trace.model}`,
@@ -2163,26 +2273,35 @@ async function refreshModelStatus() {
   try {
     const response = await fetch("/api/model-status");
     modelStatus = await response.json();
-    const brain = modelStatus.modalOmniEnabled
+    chooseInitialBrainMode();
+    renderBrainModeControl();
+    const defaultBrain = modelStatus.modalOmniEnabled
       ? `Modal MiniCPM-o action: ${modelStatus.modalOmniModel || modelStatus.model}`
       : modelStatus.modalOmniRequested && !modelStatus.modalOmniConfigured
         ? "Modal URL missing"
         : modelStatus.visionActionEnabled
       ? `MiniCPM-V action: ${modelStatus.visionModel || modelStatus.model}`
       : (modelStatus.enabled ? `${providerPrefix()}${modelStatus.model}` : policyFallbackLabel());
+    const brain = selectedBrainMode === "ollama-vision"
+      ? `Ollama MiniCPM-V: ${modelStatus.localOllamaVisionModel || "local vision"}`
+      : selectedBrainMode === "ollama-text"
+        ? `Ollama MiniCPM5: ${modelStatus.localOllamaTextModel || "local text"}`
+        : defaultBrain;
     const vision = modelStatus.visionEnabled ? ` + vision: ${modelStatus.visionModel}` : "";
     dom.modelStatus.textContent = `MiniCPM: ${brain}${modelStatus.visionActionEnabled || modelStatus.modalOmniEnabled ? "" : vision}`;
-    const active = Boolean(modelStatus.enabled || modelStatus.visionEnabled || modelStatus.visionActionEnabled || modelStatus.modalOmniEnabled);
+    const active = brainModeAvailable(selectedBrainMode);
     const warn = Boolean(
       (modelStatus.configured && !modelStatus.enabled)
       || (modelStatus.visionActionConfigured && !modelStatus.visionActionEnabled)
       || (modelStatus.modalOmniRequested && !modelStatus.modalOmniEnabled)
+      || !brainModeAvailable(selectedBrainMode)
     );
     dom.modelStatus.classList.toggle("active", active);
     dom.modelStatus.classList.toggle("warn", warn && !active);
     document.body.dataset.llmMode = modelStatus.mode || "fallback";
     document.body.dataset.llmProvider = modelStatus.provider || "";
     document.body.dataset.modalOmniEnabled = String(Boolean(modelStatus.modalOmniEnabled));
+    document.body.dataset.localOllamaAvailable = String(Boolean(modelStatus.localOllamaAvailable));
     document.body.dataset.visionMode = modelStatus.visionMode || "none";
     document.body.dataset.visionActionEnabled = String(Boolean(modelStatus.visionActionEnabled));
     document.body.dataset.modelConfigured = String(Boolean(modelStatus.configured || modelStatus.visionConfigured));
@@ -3071,6 +3190,15 @@ if (dom.copyBrainTraceButton) {
   dom.copyBrainTraceButton.addEventListener("click", () => {
     copyBrainTrace();
   });
+}
+
+if (dom.brainModeControl) {
+  dom.brainModeControl.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-brain-mode]");
+    if (!button) return;
+    setBrainMode(button.dataset.brainMode || "modal");
+  });
+  renderBrainModeControl();
 }
 
 if (dom.demoButton) {

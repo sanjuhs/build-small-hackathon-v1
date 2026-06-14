@@ -4,7 +4,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 
 TEXT_MODEL="${TOYBOX_LLM_MODEL:-hf.co/openbmb/MiniCPM5-1B-GGUF:Q4_K_M}"
-VISION_MODEL="${TOYBOX_VISION_MODEL:-hf.co/ggml-org/MiniCPM-V-4.6-GGUF:Q4_K_M}"
+VISION_MODEL="${TOYBOX_VISION_MODEL:-minicpm-v4.6}"
 OLLAMA_ENDPOINT="${OLLAMA_ENDPOINT:-http://127.0.0.1:11434}"
 MIN_OLLAMA_VERSION="${MIN_OLLAMA_VERSION:-0.30.0}"
 
