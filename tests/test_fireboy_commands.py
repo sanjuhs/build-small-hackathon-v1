@@ -3,6 +3,7 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
+from src.command_coercion import coerce_fireboy_command_action
 from src.modal_omni_policy import coerce_modal_command_action, should_send_modal_image
 from src.model_policy import model_status
 from src.pet_actions import action_schema, fallback_policy
@@ -53,6 +54,26 @@ class FireBoyCommandPolicyTest(unittest.TestCase):
         self.assertEqual(action["interaction"]["verb"], "pickup")
         self.assertEqual(action["interaction"]["targetId"], "cube-blue")
         self.assertEqual(action["power"]["targetId"], "cube-blue")
+
+    def test_pick_up_yellow_ball_targets_soft_ball(self) -> None:
+        action = fallback_policy(fireboy_payload("Fire Boy, pick up the yellow ball"))
+
+        self.assertEqual(action["interaction"]["verb"], "pickup")
+        self.assertEqual(action["interaction"]["targetId"], "soft-ball")
+        self.assertEqual(action["power"]["targetId"], "soft-ball")
+        self.assertEqual(action["spell"]["spellName"], "pickup marker")
+
+    def test_command_coercion_grounds_yellow_ball_after_model(self) -> None:
+        payload = fireboy_payload("pick up yellow ball")
+        action = fallback_policy(fireboy_payload("hello"))
+        action["interaction"]["targetId"] = "cube-blue"
+
+        coerce_fireboy_command_action(action, payload)
+
+        self.assertEqual(action["interaction"]["verb"], "pickup")
+        self.assertEqual(action["interaction"]["targetId"], "soft-ball")
+        self.assertEqual(action["debug"]["commandCoercion"], "pickup")
+        self.assertEqual(action["debug"]["groundedTargetId"], "soft-ball")
 
     def test_fireball_targets_named_cube(self) -> None:
         action = fallback_policy(fireboy_payload("Fire Boy, fireball the blue cube"))

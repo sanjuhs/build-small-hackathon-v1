@@ -34,7 +34,7 @@ import { ToyAudio } from "./audio.js?v=20260613-sound-recipes";
 import { ToyEffects } from "./effects.js";
 import { applyPetBlendshape, createPet, petPointerReaction, setPetEmotion, updatePet } from "./pet.js?v=20260614-locomotion";
 import { createPetBalanceRig } from "./pet_balance.js?v=20260614-locomotion4";
-import { createPhysicsWorld, createToyRoom } from "./room.js?v=20260613-generated-objects";
+import { createPhysicsWorld, createToyRoom } from "./room.js?v=20260614-grounded-targets";
 import { captureCameraFrame } from "./sensing.js";
 import { createSenseFeeds } from "./senses.js?v=20260614-forward-view";
 
@@ -688,7 +688,7 @@ function resolveRigClip(agent, requestedName) {
     ["ember", "Jump"],
     ["walk", "Walk"],
     ["run", "Run"],
-    ["pickup", "Throw"],
+    ["pickup", "Cheer"],
     ["carry", "Walk"],
     ["bring", "Walk"],
     ["throw", "Throw"],
@@ -1053,7 +1053,8 @@ function applyAgentAction(agent, action) {
   executeInteraction(agent, action.interaction || {});
   applyObjectRecipe(agent, action.objectRecipe);
   const projectileLaunched = maybeLaunchFireball(agent, action);
-  applySpell(agent, action.spell || spellFromPower(action.power, agent));
+  const executableSpell = executableSpellForAction(action, action.spell || spellFromPower(action.power, agent), { projectileLaunched });
+  if (executableSpell) applySpell(agent, executableSpell);
   recordActionLoopMetrics(agent, action, { projectileLaunched });
   if (action.debug?.memoryApplied || action.intent === "memory_transfer") {
     document.body.dataset.memoryApplied = action.debug?.memoryApplied || action.intent || "memory";
@@ -1074,6 +1075,16 @@ function applyAgentAction(agent, action) {
   updateAgentPanel();
   refreshTrainingStatus();
   refreshAiEvidence();
+}
+
+function executableSpellForAction(action = {}, spell = {}, options = {}) {
+  if (!spell || !Array.isArray(spell.ops)) return null;
+  if (options.projectileLaunched) return null;
+  const verb = action.interaction?.verb || "none";
+  if (!["walk", "run", "pickup", "carry", "bring"].includes(verb)) return spell;
+  const ops = spell.ops.filter((op) => ["spawn_particle", "set_light"].includes(op?.op));
+  if (!ops.length) return null;
+  return { ...spell, ops };
 }
 
 function spokenLineForAgent(agent, text, action = {}) {
@@ -1203,7 +1214,7 @@ function pickUpObject(agent, target, verb, durationMs = 2400) {
   effects.stars(bodyToVector(target.body.position), holdColor, 12);
   document.body.dataset.lastPickupTarget = target.id;
   document.body.dataset.lastInteractionVerb = verb;
-  playRigMotion(agent, verb === "pickup" ? "Throw" : "Walk");
+  playRigMotion(agent, verb === "pickup" ? "Cheer" : "Walk");
   if (verb === "carry" || verb === "bring") {
     const forward = agentForwardVector(agent);
     const side = new THREE.Vector3(forward.z, 0, -forward.x);
@@ -1265,6 +1276,9 @@ function startAgentLocomotion(agent, route, durationMs = 2400, options = {}) {
     loop: Boolean(options.loop),
     stopAtEnd: options.stopAtEnd !== false,
     lastStepAt: 0,
+    lastProgressAt: now,
+    lastDistance: Number.POSITIVE_INFINITY,
+    stuckSkips: 0,
   };
   agent.pet.animation = walk ? "walk" : "run";
   agent.pet.actionUntil = Math.max(agent.pet.actionUntil, now + duration);
@@ -1299,6 +1313,20 @@ function updateAgentLocomotion(agent, now, dt) {
     toWaypoint.y = 0;
   }
   const distance = Math.max(0.001, toWaypoint.length());
+  if (distance < locomotion.lastDistance - 0.08) {
+    locomotion.lastDistance = distance;
+    locomotion.lastProgressAt = now;
+  } else if (now - locomotion.lastProgressAt > 900) {
+    locomotion.stuckSkips += 1;
+    locomotion.index = (locomotion.index + 1) % locomotion.route.length;
+    locomotion.lastDistance = Number.POSITIVE_INFINITY;
+    locomotion.lastProgressAt = now;
+    document.body.dataset.lastLocomotionStuckSkips = String(locomotion.stuckSkips);
+    if (!locomotion.loop && locomotion.stuckSkips > 1) {
+      stopAgentLocomotion(agent, current);
+    }
+    return;
+  }
   const direction = toWaypoint.multiplyScalar(1 / distance);
   const leadDistance = locomotion.walk ? 1.12 : 1.62;
   const lead = clampAgentPosition(current.clone().add(direction.clone().multiplyScalar(Math.min(distance, leadDistance))));
@@ -1799,6 +1827,7 @@ function summarizeTraceAction(action) {
   const soundName = action.soundRecipe?.label || action.sound || "";
   return [
     action.intent || action.emotion || "",
+    action.interaction?.targetId ? `target:${action.interaction.targetId}` : "",
     spell ? `spell:${spell}` : "",
     ops ? `ops:${ops}` : "",
     objectName ? `object:${objectName}` : "",
@@ -1814,6 +1843,9 @@ function traceActionJson(action, policy) {
     requestedBrainMode: action.debug?.requestedBrainMode || null,
     speech: shortTraceText(action.speech || "", 64),
     interaction: action.interaction?.verb || null,
+    targetId: action.interaction?.targetId || action.power?.targetId || null,
+    power: action.power?.name || null,
+    animation: action.animation || null,
     spell: action.spell?.spellName || action.power?.name || null,
     ops: Array.isArray(action.spell?.ops) ? action.spell.ops.slice(0, 4).map((op) => op.op || "op") : [],
     objectRecipe: action.objectRecipe?.name || null,
@@ -1837,6 +1869,8 @@ function traceActionJson(action, policy) {
     tokensPerSecond: action.debug?.tokensPerSecond || null,
     functionCalls: action.debug?.functionCalls || null,
     stateUpdatesRequested: action.debug?.stateUpdatesRequested || null,
+    commandCoercion: action.debug?.commandCoercion || null,
+    groundedTargetId: action.debug?.groundedTargetId || null,
     modalEvents: action.debug?.modalEvents || null,
   }, null, 2);
 }

@@ -172,7 +172,7 @@ export function createToyRoom({ scene, world, ui, recordForce, variant = "v1" })
   function resetRoomV2() {
     createBox("cube-blue", "cube", new THREE.Vector3(0.72, 0.72, 0.72), new THREE.Vector3(-2.1, 1.1, 0.3), palette.cubeBlue, 1.25, { affordances: ["stack", "boop"], tags: ["block", "blue"] });
     createBox("cube-coral", "cube", new THREE.Vector3(0.62, 0.62, 0.62), new THREE.Vector3(1.8, 1.2, -0.4), palette.cubeCoral, 1.0, { affordances: ["stack", "pretend"], tags: ["block", "coral"] });
-    createBall("soft-ball", "ball", 0.38, new THREE.Vector3(0.4, 1.0, 1.55), palette.cubeAmber, 0.76, { affordances: ["boop", "throw", "play"], tags: ["ball", "soft"] });
+    createBall("soft-ball", "ball", 0.38, new THREE.Vector3(0.4, 1.0, 1.55), palette.cubeAmber, 0.76, { affordances: ["boop", "throw", "play"], tags: ["ball", "soft", "yellow", "amber"] });
     createBall("moon-ball", "ball", 0.3, new THREE.Vector3(-3.1, 1.0, 1.9), makeMat(0xd7eee8), 0.62, { affordances: ["lift", "roll", "play"], tags: ["moon", "ball"] });
     createBall("beach-orb", "ball", 0.42, new THREE.Vector3(3.4, 1.0, 1.55), makeMat(0xf5f7ff), 0.58, { affordances: ["play", "roll", "bounce"], tags: ["beach", "ball"] });
     for (let i = 0; i < 8; i += 1) {
@@ -205,7 +205,7 @@ export function createToyRoom({ scene, world, ui, recordForce, variant = "v1" })
     createBox("cube-blue", "cube", new THREE.Vector3(0.72, 0.72, 0.72), new THREE.Vector3(-2.45, 1.08, 0.45), palette.cubeBlue, 1.25, { affordances: ["stack", "boop", "push"], tags: ["block", "blue"] });
     createBox("cube-coral", "cube", new THREE.Vector3(0.62, 0.62, 0.62), new THREE.Vector3(1.82, 1.1, -0.44), palette.cubeCoral, 1.0, { affordances: ["stack", "pretend", "push"], tags: ["block", "coral"] });
     createBox("ember-block", "cube", new THREE.Vector3(0.48, 0.48, 0.48), new THREE.Vector3(-0.1, 1.0, -1.25), makeMat(0xff8a4a, { roughness: 0.62, emissive: 0xff704d, emissiveIntensity: 0.06 }), 0.8, { affordances: ["warm", "stack", "inspect"], tags: ["fire-boy", "block"] });
-    createBall("soft-ball", "ball", 0.38, new THREE.Vector3(0.72, 1.0, 1.95), palette.cubeAmber, 0.76, { affordances: ["boop", "throw", "play"], tags: ["ball", "soft"] });
+    createBall("soft-ball", "ball", 0.38, new THREE.Vector3(0.72, 1.0, 1.95), palette.cubeAmber, 0.76, { affordances: ["boop", "throw", "play"], tags: ["ball", "soft", "yellow", "amber"] });
     createBall("moon-ball", "ball", 0.3, new THREE.Vector3(-2.9, 0.95, 2.0), makeMat(0xd7eee8), 0.62, { affordances: ["lift", "roll", "play"], tags: ["moon", "ball"] });
     createBall("beach-orb", "ball", 0.42, new THREE.Vector3(3.3, 0.95, 1.65), makeMat(0xf5f7ff), 0.58, { affordances: ["play", "roll", "bounce"], tags: ["beach", "ball"] });
     for (let i = 0; i < 7; i += 1) {

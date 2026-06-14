@@ -392,11 +392,8 @@ def fallback_policy(payload: dict[str, Any]) -> dict[str, Any]:
         label = object_label(target or {"id": target_id})
         speech_override = f"Me hold {shorten(label, 18)}." if pet == "fire_boy" else f"I picked up {shorten(label, 22)}."
         spell_override = {
-            "spellName": "warm little pickup",
-            "ops": [
-                {"op": "spawn_particle", "targetId": target_id, "durationMs": 900, "color": "#ffd75a"},
-                {"op": "set_light", "targetId": target_id, "intensity": 54, "durationMs": 220, "color": "#ffd75a"},
-            ],
+            "spellName": "pickup marker",
+            "ops": [{"op": "spawn_particle", "targetId": target_id, "durationMs": 700, "color": "#ffd75a"}],
         }
     elif requested_power and not (social_partner and agent_social_request):
         power_name = requested_power
@@ -992,6 +989,7 @@ def object_from_message(
             str(item.get("name") or ""),
             " ".join(str(value) for value in item.get("tags", []) if value),
             " ".join(str(value) for value in item.get("affordances", []) if value),
+            object_alias_text(item),
         ]
         normalized = " ".join(fields).lower().replace("-", " ")
         score = 0
@@ -1007,6 +1005,16 @@ def object_from_message(
         if best is None or candidate[:2] > best[:2]:
             best = candidate
     return best[2] if best else None
+
+
+def object_alias_text(item: dict[str, Any]) -> str:
+    object_id = str(item.get("id") or "").lower()
+    aliases = {
+        "soft-ball": "yellow amber gold golden soft ball",
+        "moon-ball": "moon pale mint ball",
+        "beach-orb": "beach white orb ball",
+    }
+    return aliases.get(object_id, "")
 
 
 def nearest_object_by_kind(objects: list[dict[str, Any]], kind: str) -> dict[str, Any] | None:

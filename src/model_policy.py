@@ -627,7 +627,9 @@ def attach_model_debug(
     usage: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     metrics = action.pop("_modelMetrics", {})
-    debug: dict[str, Any] = {"policy": "model", "model": model}
+    existing_debug = action.get("debug") if isinstance(action.get("debug"), dict) else {}
+    debug: dict[str, Any] = dict(existing_debug)
+    debug.update({"policy": "model", "model": model})
     if provider:
         debug["provider"] = provider
     if latency_ms is not None:
