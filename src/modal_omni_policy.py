@@ -14,6 +14,7 @@ from src.vision_policy import image_base64
 
 
 DEFAULT_MODAL_MODEL = "openbmb/MiniCPM-o-4_5"
+_LAST_MODAL_ERROR: dict[str, Any] = {}
 
 
 def modal_omni_action_configured() -> bool:
@@ -28,7 +29,29 @@ def modal_omni_model() -> str:
     return os.getenv("TOYBOX_MODAL_OMNI_MODEL", DEFAULT_MODAL_MODEL).strip() or DEFAULT_MODAL_MODEL
 
 
+def warm_modal_omni_health() -> dict[str, Any] | None:
+    base_url = modal_omni_base_url()
+    if not modal_omni_action_configured() or not base_url:
+        return None
+    try:
+        import httpx
+
+        started = time.perf_counter()
+        response = httpx.get(
+            f"{base_url}/health",
+            timeout=float(os.getenv("TOYBOX_MODAL_OMNI_WARMUP_TIMEOUT", "45")),
+        )
+        return {"ok": response.is_success, "statusCode": response.status_code, "latencyMs": elapsed_ms(started)}
+    except Exception as exc:
+        return {"ok": False, "errorType": type(exc).__name__, "error": str(exc)[:180]}
+
+
+def modal_omni_last_error() -> dict[str, Any]:
+    return dict(_LAST_MODAL_ERROR)
+
+
 def try_modal_omni_policy(payload: dict[str, Any]) -> dict[str, Any] | None:
+    global _LAST_MODAL_ERROR
     base_url = modal_omni_base_url()
     if not modal_omni_action_configured() or not base_url:
         return None
@@ -42,10 +65,11 @@ def try_modal_omni_policy(payload: dict[str, Any]) -> dict[str, Any] | None:
     ws_url = modal_omni_ws_url(base_url)
     prompt_payload = compact_payload(payload)
     pet = normalize_pet(prompt_payload.get("pet"))
-    content = modal_user_content(prompt_payload, payload)
+    content, image_sent = modal_user_content(prompt_payload, payload)
     response_text = ""
     usage: dict[str, Any] = {}
     event_count = 0
+    _LAST_MODAL_ERROR = {}
 
     try:
         with connect(
@@ -95,6 +119,7 @@ def try_modal_omni_policy(payload: dict[str, Any]) -> dict[str, Any] | None:
             debug["modalOmni"] = True
             debug["modalBaseUrl"] = base_url
             debug["modalWsPath"] = "/ws/chat"
+            debug["modalImageSent"] = image_sent
             debug["modalEvents"] = event_count
             debug["functionCalls"] = 1
             debug["stateUpdatesRequested"] = 1
@@ -102,6 +127,14 @@ def try_modal_omni_policy(payload: dict[str, Any]) -> dict[str, Any] | None:
                 debug["modalRecordingSessionId"] = usage["modalRecordingSessionId"]
         return debugged
     except Exception as exc:
+        _LAST_MODAL_ERROR = {
+            "type": type(exc).__name__,
+            "message": str(exc)[:360],
+            "elapsedMs": elapsed_ms(started),
+            "baseUrl": base_url,
+            "wsPath": "/ws/chat",
+            "imageSent": image_sent,
+        }
         if os.getenv("TOYBOX_MODAL_OMNI_DEBUG", "").lower() in {"1", "true", "yes"}:
             print(f"Modal MiniCPM-o action policy failed: {str(exc)[:360]}", flush=True)
         return None
@@ -132,16 +165,39 @@ def modal_chat_payload(content: str | list[dict[str, Any]], pet: str) -> dict[st
     }
 
 
-def modal_user_content(prompt_payload: dict[str, Any], payload: dict[str, Any]) -> str | list[dict[str, Any]]:
+def modal_user_content(prompt_payload: dict[str, Any], payload: dict[str, Any]) -> tuple[str | list[dict[str, Any]], bool]:
     text = modal_action_prompt(prompt_payload, payload)
     camera_frame = payload.get("cameraFrame")
-    send_image = os.getenv("TOYBOX_MODAL_OMNI_SEND_IMAGE", "1").lower() not in {"0", "false", "no"}
+    send_image = should_send_modal_image(payload)
     if send_image and isinstance(camera_frame, str) and camera_frame.startswith("data:image/"):
         return [
             {"type": "text", "text": text},
             {"type": "image", "data": image_base64(camera_frame)},
-        ]
-    return text
+        ], True
+    return text, False
+
+
+def should_send_modal_image(payload: dict[str, Any]) -> bool:
+    mode = os.getenv("TOYBOX_MODAL_OMNI_SEND_IMAGE", "auto").strip().lower()
+    if mode in {"1", "true", "yes", "always"}:
+        return True
+    if mode in {"0", "false", "no", "never"}:
+        return False
+    message = str(payload.get("message") or "").lower()
+    visual_words = [
+        "see",
+        "look",
+        "vision",
+        "camera",
+        "inspect",
+        "closest",
+        "nearby",
+        "what is",
+        "what's",
+        "where",
+        "show",
+    ]
+    return any(word in message for word in visual_words)
 
 
 def modal_system_prompt(pet: str) -> str:
@@ -267,6 +323,43 @@ def coerce_modal_command_action(action: dict[str, Any], payload: dict[str, Any])
             ],
         }
         action["speech"] = "Me make warm sparkle."
+    elif is_generic_chat_message(message):
+        target_id = command_target_id(payload)
+        action["animation"] = "bounce"
+        action["power"] = {"name": "ember_jump", "targetId": target_id, "strength": 0.25, "durationMs": 700}
+        action["interaction"] = {"verb": "talk", "targetId": target_id, "partnerPet": "", "durationMs": 1400}
+        action["spell"] = {
+            "spellName": "tiny hello",
+            "ops": [{"op": "spawn_particle", "targetId": "self", "durationMs": 700, "color": "#ffb347"}],
+        }
+        action["speech"] = "Me here, hehe."
+
+
+def is_generic_chat_message(message: str) -> bool:
+    explicit = [
+        "walk",
+        "run",
+        "pick",
+        "grab",
+        "hold",
+        "bring",
+        "fetch",
+        "carry",
+        "fireball",
+        "smoke",
+        "jump",
+        "inspect",
+        "look",
+        "see",
+        "create",
+        "make",
+        "spawn",
+        "wish",
+    ]
+    if any(word in message for word in explicit):
+        return False
+    chat = ["hi", "hello", "hey", "what's up", "whats up", "how are", "talk", "say"]
+    return not message.strip() or any(phrase in message for phrase in chat)
 
 
 def command_target_id(payload: dict[str, Any], preferred_words: set[str] | None = None) -> str:

@@ -3,7 +3,7 @@ from __future__ import annotations
 import unittest
 from unittest.mock import patch
 
-from src.modal_omni_policy import coerce_modal_command_action
+from src.modal_omni_policy import coerce_modal_command_action, should_send_modal_image
 from src.model_policy import model_status
 from src.pet_actions import fallback_policy
 
@@ -134,6 +134,23 @@ class FireBoyCommandPolicyTest(unittest.TestCase):
         self.assertEqual(action["interaction"]["verb"], "walk")
         self.assertEqual(action["animation"], "walk")
         self.assertEqual(action["speech"], "Me walky loop.")
+
+    def test_modal_command_guard_prevents_chat_fireball(self) -> None:
+        payload = fireboy_payload("Hey, what's up?")
+        action = fallback_policy(payload)
+        action["power"]["name"] = "fireball"
+        action["interaction"]["verb"] = "inspect"
+
+        coerce_modal_command_action(action, payload)
+
+        self.assertEqual(action["power"]["name"], "ember_jump")
+        self.assertEqual(action["interaction"]["verb"], "talk")
+        self.assertEqual(action["speech"], "Me here, hehe.")
+
+    def test_modal_image_auto_only_for_visual_commands(self) -> None:
+        with patch.dict("os.environ", {"TOYBOX_MODAL_OMNI_SEND_IMAGE": "auto"}, clear=False):
+            self.assertFalse(should_send_modal_image(fireboy_payload("Fire Boy, walk around")))
+            self.assertTrue(should_send_modal_image(fireboy_payload("Fire Boy, what do you see?")))
 
 
 if __name__ == "__main__":

@@ -3,7 +3,7 @@ from __future__ import annotations
 import os
 from typing import Any
 
-from src.modal_omni_policy import try_modal_omni_policy
+from src.modal_omni_policy import modal_omni_last_error, try_modal_omni_policy
 from src.model_policy import model_status, try_model_policy
 from src.pet_actions import fallback_policy, model_unavailable_policy
 from src.pet_memory import remember_from_action
@@ -30,6 +30,12 @@ def choose_pet_action(payload: dict[str, Any]) -> dict[str, Any]:
             if isinstance(debug, dict):
                 debug["reason"] = "modal_omni_action_unavailable"
                 debug["modalOmniUrl"] = status.get("modalOmniUrl")
+                last_error = modal_omni_last_error()
+                if last_error:
+                    debug["modalLastError"] = last_error.get("message")
+                    debug["modalLastErrorType"] = last_error.get("type")
+                    debug["modalErrorElapsedMs"] = last_error.get("elapsedMs")
+                    debug["modalImageSent"] = last_error.get("imageSent")
             write_trace(payload, action)
             return action
 

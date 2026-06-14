@@ -124,6 +124,7 @@ def model_status() -> dict[str, Any]:
         "modalOmniEnabled": modal_configured,
         "modalOmniUrl": modal_url or None,
         "modalOmniModel": modal_model,
+        "modalOmniImageMode": os.getenv("TOYBOX_MODAL_OMNI_SEND_IMAGE", "auto").strip() or "auto",
         "modalOmniWsPath": "/ws/chat",
         "visionConfigured": vision_configured,
         "visionEnabled": vision_configured and (not vision_auth_required or vision_auth_configured),
@@ -139,6 +140,7 @@ def model_status() -> dict[str, Any]:
         "tracePolicyEnabled": trace_policy_enabled,
         "tracePath": os.getenv("TOYBOX_TRACE_PATH", "data/traces/pet-actions.jsonl"),
         "memoryPath": str(memory_path()),
+        "actionDbPath": os.getenv("TOYBOX_ACTION_DB_PATH", "data/pet-action-events.sqlite3"),
     }
 
 

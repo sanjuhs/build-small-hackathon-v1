@@ -359,6 +359,90 @@
       letter-spacing: 0.06em;
     }
 
+    .section-heading {
+      min-width: 0;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .mini-icon-button {
+      width: 30px;
+      height: 30px;
+      border: 1px solid rgba(23, 33, 33, 0.12);
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.62);
+      color: var(--teal);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+    }
+
+    .mini-icon-button:hover {
+      border-color: var(--teal);
+      background: #fff;
+    }
+
+    .accordion-section {
+      gap: 0;
+    }
+
+    .accordion-summary {
+      min-width: 0;
+      min-height: 34px;
+      border: 1px solid rgba(23, 33, 33, 0.1);
+      border-radius: 7px;
+      padding: 8px 10px;
+      background: rgba(255, 255, 255, 0.56);
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      gap: 8px;
+      align-items: center;
+      cursor: pointer;
+      list-style: none;
+    }
+
+    .accordion-summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .accordion-summary::before {
+      content: "›";
+      color: var(--muted);
+      font-size: 16px;
+      font-weight: 900;
+      transform: rotate(0deg);
+      transition: transform 140ms ease;
+    }
+
+    .accordion-section[open] .accordion-summary::before {
+      transform: rotate(90deg);
+    }
+
+    .accordion-summary-text {
+      min-width: 0;
+      display: grid;
+      gap: 2px;
+    }
+
+    .accordion-summary-text span:last-child {
+      min-width: 0;
+      color: var(--ink);
+      font-size: 12px;
+      font-weight: 800;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .accordion-body {
+      padding-top: 7px;
+      display: grid;
+      gap: 7px;
+    }
+
     .readout {
       min-height: 34px;
       padding: 9px 10px;
@@ -1064,11 +1148,18 @@
         <div id="perceptionReadout" class="readout">quiet walls</div>
       </section>
 
-      <section class="panel-section">
-        <div class="section-title">Agent loop</div>
-        <div id="agentReadout" class="readout">warming up</div>
-        <div id="modelMatrix" class="runtime-stack" aria-label="Runtime stack"></div>
-      </section>
+      <details id="agentLoopAccordion" class="panel-section accordion-section">
+        <summary class="accordion-summary">
+          <span class="accordion-summary-text">
+            <span class="section-title">Agent loop</span>
+            <span id="agentLoopSummary">warming up</span>
+          </span>
+        </summary>
+        <div class="accordion-body">
+          <div id="agentReadout" class="readout">warming up</div>
+          <div id="modelMatrix" class="runtime-stack" aria-label="Runtime stack"></div>
+        </div>
+      </details>
 
       <section class="panel-section">
         <div class="section-title">Judge Scorecard</div>
@@ -1101,7 +1192,12 @@
       </section>
 
       <section class="panel-section">
-        <div class="section-title">Brain Trace</div>
+        <div class="section-heading">
+          <div class="section-title">Brain Trace</div>
+          <button id="copyBrainTraceButton" class="mini-icon-button" type="button" title="Copy brain trace">
+            <i data-lucide="copy"></i>
+          </button>
+        </div>
         <div id="brainTrace" class="brain-trace readout">waiting for first action</div>
       </section>
 

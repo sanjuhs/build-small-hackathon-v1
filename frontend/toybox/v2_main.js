@@ -158,17 +158,24 @@ const dom = {
   perceptionReadout: document.getElementById("perceptionReadout"),
   modelStatus: document.getElementById("modelStatus"),
   agentReadout: document.getElementById("agentReadout"),
+  agentLoopAccordion: document.getElementById("agentLoopAccordion"),
+  agentLoopSummary: document.getElementById("agentLoopSummary"),
   modelMatrix: document.getElementById("modelMatrix"),
   judgeScorecard: document.getElementById("judgeScorecard"),
   aiEvidence: document.getElementById("aiEvidence"),
   visionBoard: document.getElementById("visionBoard"),
   brainTrace: document.getElementById("brainTrace"),
+  copyBrainTraceButton: document.getElementById("copyBrainTraceButton"),
   memoryList: document.getElementById("memoryList"),
   userView: document.getElementById("userView"),
   petView: document.getElementById("petView"),
   audioBars: document.getElementById("audioBars"),
   balanceReadout: document.getElementById("balanceReadout"),
 };
+
+if (dom.agentLoopAccordion) {
+  dom.agentLoopAccordion.open = !IS_V3_MODE;
+}
 
 const renderer = new THREE.WebGLRenderer({ canvas: dom.canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
 renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
@@ -1425,8 +1432,23 @@ function compactBrainTrace(payload, action, policy) {
     force: summarizeTraceForce(latestForce, latestInteraction),
     memory: summarizeTraceMemory(memories),
     action: summarizeTraceAction(action),
+    model: summarizeTraceModel(action),
     json: traceActionJson(action, policy),
   };
+}
+
+function summarizeTraceModel(action) {
+  if (!action) return "waiting";
+  const debug = action.debug || {};
+  const pieces = [
+    debug.provider || debug.policy || "policy",
+    debug.model ? shortRuntimeLabel(debug.model) : "",
+    debug.modelLatencyMs ? `${debug.modelLatencyMs}ms` : "",
+    debug.tokensPerSecond ? `${debug.tokensPerSecond} tok/s` : "",
+    debug.reason ? `reason:${debug.reason}` : "",
+    debug.modalLastError ? `error:${shortTraceText(debug.modalLastError, 92)}` : "",
+  ];
+  return pieces.filter(Boolean).join(" | ") || "none";
 }
 
 function summarizeTraceVision(source, detected) {
@@ -1495,6 +1517,10 @@ function traceActionJson(action, policy) {
     ops: Array.isArray(action.spell?.ops) ? action.spell.ops.slice(0, 4).map((op) => op.op || "op") : [],
     objectRecipe: action.objectRecipe?.name || null,
     soundRecipe: action.soundRecipe?.label || null,
+    errorReason: action.debug?.reason || null,
+    modalLastError: action.debug?.modalLastError || null,
+    modalLastErrorType: action.debug?.modalLastErrorType || null,
+    modalImageSent: action.debug?.modalImageSent ?? null,
     memory: action.newMemory?.concept || action.debug?.memoryApplied || null,
     vision: action.debug?.visionApplied || null,
     latencyMs: action.debug?.clientRoundTripMs || action.debug?.serverLatencyMs || null,
@@ -1592,6 +1618,9 @@ function renderRuntimeStack(agent = activeAgent()) {
     ["Judge", judge.label, judge.state],
     ["Rigs", rigs.label, rigs.state],
   ];
+  if (dom.agentLoopSummary) {
+    dom.agentLoopSummary.textContent = `${brain.label} / ${loop.label}`;
+  }
   dom.modelMatrix.innerHTML = "";
   for (const [label, value, state] of cells) {
     const chip = document.createElement("div");
@@ -2046,6 +2075,7 @@ function renderBrainTrace(agent) {
     ["when", `${trace.at} / ${trace.policy}`],
     ["text", trace.text],
     ["vision", trace.vision],
+    ["model", trace.model],
     ["sound", trace.sound],
     ["force", trace.force],
     ["memory", trace.memory],
@@ -2066,6 +2096,33 @@ function appendTraceRow(label, value, options = {}) {
   valueNode.textContent = value || "none";
   row.append(labelNode, valueNode);
   dom.brainTrace.appendChild(row);
+}
+
+async function copyBrainTrace() {
+  const text = brainTraceCopyText(activeAgent());
+  try {
+    await navigator.clipboard.writeText(text);
+    showToast("Brain trace copied.");
+  } catch {
+    showToast("Copy failed; select the trace text.");
+  }
+}
+
+function brainTraceCopyText(agent) {
+  const trace = agent?.lastTrace;
+  if (!trace) return "Brain Trace: waiting for first action";
+  return [
+    `when: ${trace.at} / ${trace.policy}`,
+    `text: ${trace.text}`,
+    `vision: ${trace.vision}`,
+    `model: ${trace.model}`,
+    `sound: ${trace.sound}`,
+    `force: ${trace.force}`,
+    `memory: ${trace.memory}`,
+    `action: ${trace.action}`,
+    "json:",
+    trace.json,
+  ].join("\n");
 }
 
 function renderMemories(agent) {
@@ -3009,6 +3066,12 @@ dom.autoButton.addEventListener("click", () => {
   setAutoplay(!autoplay);
   showToast(autoplay ? "Autoplay awake." : "Autoplay resting.");
 });
+
+if (dom.copyBrainTraceButton) {
+  dom.copyBrainTraceButton.addEventListener("click", () => {
+    copyBrainTrace();
+  });
+}
 
 if (dom.demoButton) {
   dom.demoButton.addEventListener("click", () => {

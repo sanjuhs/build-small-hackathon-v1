@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 import json
 import struct
+import threading
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -16,6 +17,8 @@ from fastapi.responses import HTMLResponse, JSONResponse, PlainTextResponse
 from fastapi.staticfiles import StaticFiles
 
 from src.ai_evidence import ai_evidence_status
+from src.action_store import action_stats, fetch_action_events, record_pet_action
+from src.modal_omni_policy import warm_modal_omni_health
 from src.pet_memory import load_memories
 from src.pet_policy import choose_pet_action, model_status
 from src.trace_dataset import training_dataset_jsonl, training_dataset_summary
@@ -34,6 +37,19 @@ if (ROOT / "potential-char-images").exists():
         StaticFiles(directory=ROOT / "potential-char-images"),
         name="potential-char-images",
     )
+
+
+@server.on_event("startup")
+def warm_modal_gateway_on_startup() -> None:
+    if os.getenv("TOYBOX_MODAL_OMNI_WARMUP", "1").lower() in {"0", "false", "no"}:
+        return
+
+    def warm() -> None:
+        result = warm_modal_omni_health()
+        if os.getenv("TOYBOX_MODAL_OMNI_DEBUG", "").lower() in {"1", "true", "yes"} and result:
+            print(f"Modal MiniCPM-o warmup: {result}", flush=True)
+
+    threading.Thread(target=warm, daemon=True).start()
 
 
 CHARACTER_LABELS = {
@@ -625,7 +641,7 @@ def toy_room_v3_html() -> str:
         '<a class="route-link glass" href="/pages">Pages</a>': '<a class="route-link glass" href="/toy-v2">v2</a><a class="route-link glass" href="/pages">Pages</a>',
         '<button id="modeButton" class="mode-button" type="button">Council</button>': '<button id="modeButton" class="mode-button" type="button">Fire Boy</button>',
         'placeholder="Teach, ask, or invent a toy-room spell"': 'placeholder="Talk to Fire Boy, move him, or ask him to play with a toy"',
-        "/frontend/toybox/v2_main.js?v=20260613-ai-evidence": "/frontend/toybox/v2_main.js?v=20260614-minicpm-v-action",
+        "/frontend/toybox/v2_main.js?v=20260613-ai-evidence": "/frontend/toybox/v2_main.js?v=20260614-modal-debug-ui",
     }
     for source, target in replacements.items():
         html = html.replace(source, target)
@@ -667,12 +683,27 @@ async def pet_action(request: Request) -> JSONResponse:
     if isinstance(debug, dict):
         debug["serverLatencyMs"] = elapsed_ms
         debug["cameraFrameSource"] = payload.get("cameraFrameSource") or ""
+    try:
+        record_pet_action(payload, action, elapsed_ms)
+    except Exception as exc:
+        if isinstance(debug, dict):
+            debug["actionStoreError"] = str(exc)[:180]
     return JSONResponse(action)
 
 
 @server.get("/api/model-status")
 def pet_model_status() -> JSONResponse:
     return JSONResponse(model_status())
+
+
+@server.get("/api/pet-action-events")
+def pet_action_events(limit: int = 50) -> JSONResponse:
+    return JSONResponse(fetch_action_events(limit=limit))
+
+
+@server.get("/api/pet-action-stats")
+def pet_action_stats() -> JSONResponse:
+    return JSONResponse(action_stats())
 
 
 @server.get("/api/ai-evidence")

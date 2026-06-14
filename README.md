@@ -86,6 +86,8 @@ Current local model status for this commit:
 - Toy Room v3 uses the deployed Modal MiniCPM-o gateway as the primary action brain when `TOYBOX_MODAL_OMNI_ACTION=1` and `TOYBOX_MODAL_OMNI_URL` are set.
 - `/api/model-status` reports `provider: modal`, `mode: modal-omni-websocket`, `model: openbmb/MiniCPM-o-4_5`, `authRequired: false`, and `fallbackPolicy: asleep_when_configured`.
 - v3 is command-driven: page load and ambient autoplay do not call the model. One typed/spoken command or explicit quick button sends one `/api/pet-action` request, which opens one Modal `/ws/chat` turn and returns one PET state update.
+- `TOYBOX_MODAL_OMNI_SEND_IMAGE=auto` sends the compact scene/object JSON on every command and only attaches the camera frame for visual commands. Startup also warms Modal `/health` in the background to reduce first-command handshake stalls.
+- Action attempts are stored in SQLite at `data/pet-action-events.sqlite3` by default. Inspect `/api/pet-action-stats` and `/api/pet-action-events?limit=50` for policy, latency, token, failure, and target data.
 - Verified local UI command: "Fire Boy, walk around the toy room" produced `interaction: walk`, `speech: "Me walky loop."`, `promptTokens: 1638`, `completionTokens: 9`, `tokensPerSecond: 2.35`, and `clientRoundTripMs: 3880.4`.
 - Verified local API command with an agent-view image: "Fire Boy, pick up the blue box" produced `interaction: pickup`, `promptTokens: 768`, `completionTokens: 7`, `tokensPerSecond: 1.96`, and `serverLatencyMs: 3565.4`.
 
@@ -345,7 +347,7 @@ Use Modal MiniCPM-o as the Toy Room v3 brain:
 export TOYBOX_MODAL_OMNI_ACTION=1
 export TOYBOX_MODAL_OMNI_URL=https://sanjuhs123--minicpm-omni-demo.modal.run
 export TOYBOX_MODAL_OMNI_MODEL=openbmb/MiniCPM-o-4_5
-export TOYBOX_MODAL_OMNI_SEND_IMAGE=1
+export TOYBOX_MODAL_OMNI_SEND_IMAGE=auto
 export TOYBOX_MODAL_OMNI_CONNECT_TIMEOUT=45
 export TOYBOX_MODAL_OMNI_TIMEOUT=120
 export TOYBOX_TRACE_POLICY=0
