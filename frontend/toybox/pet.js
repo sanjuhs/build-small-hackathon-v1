@@ -35,6 +35,9 @@ export function createPet(kind, scene) {
     basePosition: group.position.clone(),
     balanceTilt: { x: 0, y: 0, z: 0 },
     balanceState: null,
+    facingYaw: group.rotation.y,
+    targetFacingYaw: group.rotation.y,
+    strideBlend: 0,
     targetScale: 1,
     actionUntil: 0,
     animation: "bounce",
@@ -118,8 +121,11 @@ export function updatePet(pet, now, dt) {
 
   const actionActive = pet.actionUntil > now;
   const touchActive = pet.touchedUntil > now;
+  const locomotionActive = actionActive && ["walk", "run"].includes(pet.animation);
   const squash = shape.squash;
   const baseScale = pet.targetScale * (1 + pulse * 0.008);
+  const targetYaw = Number.isFinite(pet.targetFacingYaw) ? pet.targetFacingYaw : (pet.facingYaw || 0);
+  pet.facingYaw = lerpAngle(Number.isFinite(pet.facingYaw) ? pet.facingYaw : pet.group.rotation.y, targetYaw, Math.min(1, dt * 8));
   pet.group.scale.lerp(new THREE.Vector3(baseScale * (1 + squash * 0.18), baseScale * (1 - squash * 0.16), baseScale), 0.09);
   pet.group.position.y = basePosition.y + pulse * 0.028 * pet.targetScale;
   pet.group.position.z = THREE.MathUtils.lerp(pet.group.position.z, basePosition.z, 0.08);
@@ -151,17 +157,45 @@ export function updatePet(pet, now, dt) {
   }
   if (pet.parts.tail) pet.parts.tail.rotation.y = Math.sin(now * 0.004) * 0.16 + (actionActive ? Math.sin(now * 0.018) * 0.16 : 0);
   if (pet.parts.ukulele) pet.parts.ukulele.rotation.z = -0.72 + Math.sin(now * 0.004) * 0.025;
+  updateWalkCycle(pet, now, dt, locomotionActive, pet.animation === "run");
 
   if (actionActive && pet.animation?.includes("spin")) pet.group.rotation.y += dt * 4.4;
-  else if (actionActive && (pet.animation?.includes("wiggle") || pet.animation?.includes("sway"))) pet.group.rotation.y = balanceTilt.y + Math.sin(now * 0.02) * 0.16;
+  else if (actionActive && (pet.animation?.includes("wiggle") || pet.animation?.includes("sway"))) pet.group.rotation.y = pet.facingYaw + balanceTilt.y + Math.sin(now * 0.02) * 0.16;
   else if (actionActive && pet.animation?.includes("scamper")) pet.group.position.x = basePosition.x + Math.sin(now * 0.016) * 0.18;
-  else if (actionActive && pet.animation === "nuzzle") pet.group.rotation.y = balanceTilt.y + Math.sin(now * 0.02) * 0.12;
+  else if (actionActive && pet.animation === "nuzzle") pet.group.rotation.y = pet.facingYaw + balanceTilt.y + Math.sin(now * 0.02) * 0.12;
   else if (actionActive && pet.animation === "startle") pet.group.position.x = basePosition.x + Math.sin(now * 0.045) * 0.08;
-  else pet.group.rotation.y = THREE.MathUtils.lerp(pet.group.rotation.y, balanceTilt.y + Math.sin(now * 0.0009) * 0.05, 0.05);
+  else pet.group.rotation.y = lerpAngle(pet.group.rotation.y, pet.facingYaw + balanceTilt.y + Math.sin(now * 0.0009) * 0.05, 0.08);
 
-  if (!actionActive) pet.group.position.x = THREE.MathUtils.lerp(pet.group.position.x, basePosition.x, 0.04);
+  if (!(actionActive && (pet.animation?.includes("scamper") || pet.animation === "startle"))) {
+    pet.group.position.x = THREE.MathUtils.lerp(pet.group.position.x, basePosition.x, 0.08);
+  }
   if (!touchActive && !pet.hovered && pet.emotion === "petted") setPetEmotion(pet, "happy");
   if (pet.targetScale !== 1 && !actionActive) pet.targetScale = THREE.MathUtils.lerp(pet.targetScale, 1, 0.05);
+}
+
+function updateWalkCycle(pet, now, dt, active, run) {
+  const blendTarget = active ? (run ? 1 : 0.72) : 0;
+  pet.strideBlend = THREE.MathUtils.lerp(pet.strideBlend || 0, blendTarget, Math.min(1, dt * 9));
+  const blend = pet.strideBlend || 0;
+  const stride = Math.sin(now * (run ? 0.026 : 0.018));
+  const liftLeft = Math.max(0, stride) * 0.045 * blend;
+  const liftRight = Math.max(0, -stride) * 0.045 * blend;
+  if (pet.parts.leftFoot && pet.parts.rightFoot) {
+    pet.parts.leftFoot.position.z = THREE.MathUtils.lerp(pet.parts.leftFoot.position.z, 0.28 + stride * 0.11 * blend, 0.22);
+    pet.parts.rightFoot.position.z = THREE.MathUtils.lerp(pet.parts.rightFoot.position.z, 0.28 - stride * 0.11 * blend, 0.22);
+    pet.parts.leftFoot.position.y = THREE.MathUtils.lerp(pet.parts.leftFoot.position.y, 0.13 + liftLeft, 0.22);
+    pet.parts.rightFoot.position.y = THREE.MathUtils.lerp(pet.parts.rightFoot.position.y, 0.13 + liftRight, 0.22);
+  }
+  if (pet.parts.leftArm && pet.parts.rightArm) {
+    pet.parts.leftArm.rotation.x = THREE.MathUtils.lerp(pet.parts.leftArm.rotation.x, -stride * 0.42 * blend, 0.2);
+    pet.parts.rightArm.rotation.x = THREE.MathUtils.lerp(pet.parts.rightArm.rotation.x, stride * 0.42 * blend, 0.2);
+  }
+  if (pet.parts.body) pet.parts.body.rotation.z = THREE.MathUtils.lerp(pet.parts.body.rotation.z, -stride * 0.025 * blend, 0.12);
+}
+
+function lerpAngle(from, to, alpha) {
+  const delta = THREE.MathUtils.euclideanModulo(to - from + Math.PI, Math.PI * 2) - Math.PI;
+  return from + delta * alpha;
 }
 
 function addLimbs(group, parts, plush) {

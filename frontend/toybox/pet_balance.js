@@ -50,7 +50,7 @@ export function createPetBalanceRig({ world, recordForce, home: initialHome = DE
     const mass = totalWeight(parts);
     body = new CANNON.Body({ mass, material: world.defaultMaterial });
     body.position.copy(home);
-    body.linearDamping = 0.58;
+    body.linearDamping = 0.34;
     body.angularDamping = 0.86;
     body.allowSleep = false;
     body.userData = { id: `${petKind}-balance`, kind: "pet-balance" };
@@ -112,6 +112,41 @@ export function createPetBalanceRig({ world, recordForce, home: initialHome = DE
     body.wakeUp();
   }
 
+  function steerTo(position, { settleOnFloor = false } = {}) {
+    home.set(
+      Number(position.x || 0),
+      settleOnFloor ? DEFAULT_HOME.y : Number(position.y || DEFAULT_HOME.y),
+      Number(position.z || 0),
+    );
+    if (body) body.wakeUp();
+  }
+
+  function drive(direction, speed = 1, dt = 1 / 60) {
+    if (!body || !direction) return;
+    const x = Number(direction.x || 0);
+    const z = Number(direction.z || 0);
+    const length = Math.hypot(x, z);
+    if (length < 0.001) return;
+    const targetVx = (x / length) * speed;
+    const targetVz = (z / length) * speed;
+    const velocityBlend = Math.min(1, Math.max(0.08, dt * 18));
+    body.velocity.x += (targetVx - body.velocity.x) * velocityBlend;
+    body.velocity.z += (targetVz - body.velocity.z) * velocityBlend;
+    const step = Math.min(speed * Math.max(0.001, dt) * 0.82, 0.05);
+    body.position.x += (x / length) * step;
+    body.position.z += (z / length) * step;
+    body.aabbNeedsUpdate = true;
+    const gain = body.mass * (30 + Math.min(24, speed * 8));
+    body.force.x += (targetVx - body.velocity.x) * gain;
+    body.force.z += (targetVz - body.velocity.z) * gain;
+    body.wakeUp();
+  }
+
+  function position() {
+    const source = body?.position || home;
+    return new THREE.Vector3(source.x, source.y, source.z);
+  }
+
   function dropFrom(position) {
     home.set(Number(position.x || 0), DEFAULT_HOME.y, Number(position.z || 0));
     if (!body) return;
@@ -135,8 +170,8 @@ export function createPetBalanceRig({ world, recordForce, home: initialHome = DE
     body.torque.z += correction.z * torqueGain - body.angularVelocity.z * torqueDamping;
 
     const mass = Math.max(1, body.mass);
-    const horizontalSpring = 26;
-    const horizontalDamping = 8;
+    const horizontalSpring = 32;
+    const horizontalDamping = 9;
     body.force.x += ((home.x - body.position.x) * horizontalSpring - body.velocity.x * horizontalDamping) * mass;
     body.force.z += ((home.z - body.position.z) * horizontalSpring - body.velocity.z * horizontalDamping) * mass;
 
@@ -213,7 +248,7 @@ export function createPetBalanceRig({ world, recordForce, home: initialHome = DE
     return PART_WEIGHTS[petKind] || PART_WEIGHTS.squeaky;
   }
 
-  return { afterStep, beforeStep, dropFrom, moveTo, nudge, removeBody, setPet, state, twist };
+  return { afterStep, beforeStep, drive, dropFrom, moveTo, nudge, position, removeBody, setPet, state, steerTo, twist };
 }
 
 function addPetShapes(body) {

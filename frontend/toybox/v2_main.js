@@ -32,11 +32,11 @@ import {
 import { PET_LOOKS } from "./config.js";
 import { ToyAudio } from "./audio.js?v=20260613-sound-recipes";
 import { ToyEffects } from "./effects.js";
-import { applyPetBlendshape, createPet, petPointerReaction, setPetEmotion, updatePet } from "./pet.js";
-import { createPetBalanceRig } from "./pet_balance.js?v=20260613-force-dock";
+import { applyPetBlendshape, createPet, petPointerReaction, setPetEmotion, updatePet } from "./pet.js?v=20260614-locomotion";
+import { createPetBalanceRig } from "./pet_balance.js?v=20260614-locomotion4";
 import { createPhysicsWorld, createToyRoom } from "./room.js?v=20260613-generated-objects";
 import { captureCameraFrame } from "./sensing.js";
-import { createSenseFeeds } from "./senses.js";
+import { createSenseFeeds } from "./senses.js?v=20260614-forward-view";
 
 const LUCIDE_ICONS = {
   Bone,
@@ -338,6 +338,8 @@ function chooseInitialBrainMode() {
 for (const spec of AGENT_SPECS) {
   const pet = createPet(spec.kind, scene);
   pet.group.rotation.y = spec.yaw;
+  pet.facingYaw = spec.yaw;
+  pet.targetFacingYaw = spec.yaw;
   pet.group.position.set(spec.home.x, spec.home.y, spec.home.z);
   pet.group.traverse((node) => {
     if (node.isMesh) node.userData.agentKind = spec.kind;
@@ -356,6 +358,8 @@ for (const spec of AGENT_SPECS) {
     lastPartner: "",
     lastTrace: null,
     traceHistory: [],
+    locomotion: null,
+    heldObject: null,
     proceduralHitMeshes: [...pet.hitMeshes],
     rigVisual: null,
     rigHelper: null,
@@ -795,6 +799,7 @@ function beginObjectDrag(event, entry, hitPoint) {
 function beginAgentDrag(event, agent, hitPoint) {
   event.preventDefault();
   setActiveAgent(agent.kind);
+  stopAgentLocomotion(agent);
   dragPointerId = event.pointerId;
   try {
     dom.canvas.setPointerCapture(dragPointerId);
@@ -1108,7 +1113,9 @@ function executeInteraction(agent, interaction = {}) {
   const verb = interaction.verb || "none";
   if (verb === "none") return false;
   if (verb === "run" || verb === "walk") {
-    runAgentRoute(agent, Number(interaction.durationMs || (verb === "walk" ? 4200 : 2600)), { walk: verb === "walk" });
+    const requestedDuration = Number(interaction.durationMs || 0);
+    const minimumDuration = verb === "walk" ? 4200 : 3000;
+    runAgentRoute(agent, Math.max(requestedDuration, minimumDuration), { walk: verb === "walk" });
     recordInteraction({ kind: verb, pet: agent.kind, objectId: interaction.targetId || "" });
     return true;
   }
@@ -1129,12 +1136,13 @@ function executeInteraction(agent, interaction = {}) {
   }
 
   if (!target) return false;
-  moveAgentNearObject(agent, target);
 
   if (["pickup", "carry", "bring"].includes(verb)) {
-    pickUpObject(agent, target, verb, Number(interaction.durationMs || 2400));
+    approachAndPickUpObject(agent, target, verb, Number(interaction.durationMs || 2400));
     return true;
   }
+
+  moveAgentNearObject(agent, target);
 
   if (verb === "clean" || verb === "recycle") {
     const bin = objects.find((entry) => entry.id === "recycle-bin");
@@ -1175,73 +1183,236 @@ function executeInteraction(agent, interaction = {}) {
 function pickUpObject(agent, target, verb, durationMs = 2400) {
   const targetLabel = target.name || target.id.replace(/-/g, " ");
   const holdColor = PET_LOOKS[agent.kind].power;
-  const targetHalfY = Number(target.size?.y || target.radius || 0.42) * 0.5;
-  const holdOffset = new THREE.Vector3(0.46, Math.max(0.82, targetHalfY + 0.72), 0.2);
-  let holdTimer = null;
-  const holdOnce = () => {
-    const base = agent.pet.group.position;
-    placeObject(target, new CANNON.Vec3(base.x + holdOffset.x, holdOffset.y, base.z + holdOffset.z));
-    effects.stars(bodyToVector(target.body.position), holdColor, 12);
-    target.body.applyImpulse(new CANNON.Vec3(0, 0.42, 0), target.body.position);
-    document.body.dataset.lastPickupTarget = target.id;
-    document.body.dataset.lastInteractionVerb = verb;
+  releaseHeldObject(agent, { quiet: true });
+  const originalMass = target.body.mass;
+  const originalType = target.body.type;
+  target.body.type = CANNON.Body.KINEMATIC;
+  target.body.mass = 0;
+  target.body.updateMassProperties();
+  target.body.velocity.set(0, 0, 0);
+  target.body.angularVelocity.set(0, 0, 0);
+  agent.heldObject = {
+    entry: target,
+    originalMass,
+    originalType,
+    until: performance.now() + Math.max(durationMs, verb === "pickup" ? 3600 : 2600),
+    verb,
+    targetLabel,
   };
-  const stopHolding = () => {
-    if (!holdTimer) return;
-    window.clearInterval(holdTimer);
-    holdTimer = null;
-  };
-  const startHolding = () => {
-    holdOnce();
-    const started = performance.now();
-    holdTimer = window.setInterval(() => {
-      holdOnce();
-      if (performance.now() - started > Math.min(durationMs, 1800)) stopHolding();
-    }, 120);
-  };
-
+  updateHeldObject(agent, performance.now(), 0, true);
+  effects.stars(bodyToVector(target.body.position), holdColor, 12);
+  document.body.dataset.lastPickupTarget = target.id;
+  document.body.dataset.lastInteractionVerb = verb;
   playRigMotion(agent, verb === "pickup" ? "Throw" : "Walk");
-  setTimeout(startHolding, 280);
   if (verb === "carry" || verb === "bring") {
-    const offset = verb === "bring" ? new THREE.Vector3(0.15, 0, 1.28) : new THREE.Vector3(1.05, 0, 0.48);
-    const next = clampAgentPosition(agent.pet.group.position.clone().add(offset));
-    setTimeout(() => {
-      agent.rig.moveTo(new CANNON.Vec3(next.x, 0.06, next.z), { settleOnFloor: true });
-      holdOnce();
-      effects.burst(bodyToVector(target.body.position), holdColor, 9, 0.6);
-    }, 840);
-    setTimeout(() => {
-      stopHolding();
-      const base = agent.pet.group.position;
-      placeObject(target, new CANNON.Vec3(base.x + 0.62, Math.max(targetHalfY + 0.08, 0.34), base.z + 0.36));
-      effects.ring(bodyToVector(target.body.position).add(new THREE.Vector3(0, 0.28, 0)), holdColor, 0.72, 0.75);
-      showToast(`${agent.label} carried ${targetLabel}.`);
-    }, Math.min(durationMs, 2600));
+    const forward = agentForwardVector(agent);
+    const side = new THREE.Vector3(forward.z, 0, -forward.x);
+    const offset = verb === "bring"
+      ? forward.clone().multiplyScalar(1.38)
+      : forward.clone().multiplyScalar(0.92).add(side.multiplyScalar(0.72));
+    const next = clampAgentPosition(agent.rig.position().add(offset));
+    startAgentLocomotion(agent, [next], Math.max(1200, Math.min(durationMs, 2800)), { walk: true, stopAtEnd: true });
+    setTimeout(() => releaseHeldObject(agent, { toast: `${agent.label} carried ${targetLabel}.` }), Math.min(durationMs, 3200));
   } else {
     showToast(`${agent.label} picked up ${targetLabel}.`);
   }
 }
 
 function runAgentRoute(agent, durationMs = 2600, options = {}) {
-  const start = agent.pet.group.position.clone();
   const isWalk = Boolean(options.walk);
+  const start = agent.rig.position();
   const route = [
     new THREE.Vector3(1.18, 0, 0.12),
     new THREE.Vector3(0.72, 0, -1.08),
     new THREE.Vector3(-0.92, 0, -0.74),
     new THREE.Vector3(-0.54, 0, 0.86),
     new THREE.Vector3(0.12, 0, 0.08),
-  ];
+  ].map((offset) => clampAgentPosition(start.clone().add(offset)));
   document.body.dataset.lastRunAround = String(Date.now());
-  agent.pet.actionUntil = performance.now() + durationMs;
-  for (const [index, offset] of route.entries()) {
-    setTimeout(() => {
-      const next = clampAgentPosition(start.clone().add(offset));
-      agent.rig.moveTo(new CANNON.Vec3(next.x, 0.06, next.z), { settleOnFloor: true });
-      playRigMotion(agent, isWalk ? "Walk" : "Run");
-      effects.burst(agent.pet.group.position.clone().add(new THREE.Vector3(0, 0.32, 0)), PET_LOOKS[agent.kind].power, isWalk ? 3 : 8, isWalk ? 0.24 : 0.58);
-    }, index * Math.max(260, durationMs / route.length));
+  startAgentLocomotion(agent, route, durationMs, { walk: isWalk, loop: true });
+}
+
+function approachAndPickUpObject(agent, target, verb, durationMs = 2400) {
+  const targetPosition = bodyToVector(target.body.position);
+  const approach = approachPointForObject(agent, target);
+  const distance = agent.rig.position().distanceTo(approach);
+  const approachMs = THREE.MathUtils.clamp(distance * 720, 420, Math.min(1500, durationMs * 0.6));
+  setFacingToward(agent, targetPosition.clone().sub(agent.pet.group.position));
+  startAgentLocomotion(agent, [approach], approachMs + 180, { walk: true, stopAtEnd: true });
+  setTimeout(() => {
+    if (!objects.includes(target)) return;
+    setFacingToward(agent, bodyToVector(target.body.position).sub(agent.pet.group.position));
+    pickUpObject(agent, target, verb, durationMs);
+  }, approachMs);
+}
+
+function startAgentLocomotion(agent, route, durationMs = 2400, options = {}) {
+  const points = (Array.isArray(route) ? route : [route])
+    .filter(Boolean)
+    .map((point) => clampAgentPosition(point.clone ? point.clone() : new THREE.Vector3(point.x || 0, point.y || 0, point.z || 0)));
+  if (!agent || !points.length) return;
+  const now = performance.now();
+  const walk = options.walk !== false;
+  const startPosition = agent.rig.position();
+  const duration = Math.max(500, durationMs);
+  agent.locomotion = {
+    route: points,
+    index: 0,
+    until: now + duration,
+    startPosition,
+    speed: Number(options.speed || (walk ? 1.24 : 2.08)),
+    walk,
+    loop: Boolean(options.loop),
+    stopAtEnd: options.stopAtEnd !== false,
+    lastStepAt: 0,
+  };
+  agent.pet.animation = walk ? "walk" : "run";
+  agent.pet.actionUntil = Math.max(agent.pet.actionUntil, now + duration);
+  document.body.dataset.lastLocomotionStart = `${startPosition.x.toFixed(2)},${startPosition.z.toFixed(2)}`;
+  document.body.dataset.lastLocomotionMode = walk ? "walk" : "run";
+  document.body.dataset.lastLocomotionTravel = "0.00";
+  playRigMotion(agent, walk ? "Walk" : "Run");
+}
+
+function updateAgentLocomotion(agent, now, dt) {
+  const locomotion = agent?.locomotion;
+  if (!locomotion || !locomotion.route?.length) return;
+  const current = agent.rig.position();
+  if (now > locomotion.until) {
+    stopAgentLocomotion(agent, current);
+    return;
   }
+  let waypoint = locomotion.route[locomotion.index] || locomotion.route[0];
+  let toWaypoint = waypoint.clone().sub(current);
+  toWaypoint.y = 0;
+  if (toWaypoint.length() < 0.34) {
+    locomotion.index += 1;
+    if (locomotion.index >= locomotion.route.length) {
+      if (locomotion.loop) locomotion.index = 0;
+      else {
+        stopAgentLocomotion(agent, current);
+        return;
+      }
+    }
+    waypoint = locomotion.route[locomotion.index] || waypoint;
+    toWaypoint = waypoint.clone().sub(current);
+    toWaypoint.y = 0;
+  }
+  const distance = Math.max(0.001, toWaypoint.length());
+  const direction = toWaypoint.multiplyScalar(1 / distance);
+  const leadDistance = locomotion.walk ? 1.12 : 1.62;
+  const lead = clampAgentPosition(current.clone().add(direction.clone().multiplyScalar(Math.min(distance, leadDistance))));
+  agent.rig.steerTo(new CANNON.Vec3(lead.x, 0.06, lead.z), { settleOnFloor: true });
+  agent.rig.drive(new CANNON.Vec3(direction.x, 0, direction.z), locomotion.speed, dt);
+  setFacingToward(agent, direction);
+  agent.pet.animation = locomotion.walk ? "walk" : "run";
+  agent.pet.actionUntil = Math.max(agent.pet.actionUntil, now + 220);
+  document.body.dataset.lastLocomotionPet = agent.kind;
+  document.body.dataset.lastLocomotionPosition = `${current.x.toFixed(2)},${current.z.toFixed(2)}`;
+  document.body.dataset.lastLocomotionTarget = `${waypoint.x.toFixed(2)},${waypoint.z.toFixed(2)}`;
+  document.body.dataset.lastLocomotionMode = locomotion.walk ? "walk" : "run";
+  if (locomotion.startPosition) {
+    document.body.dataset.lastLocomotionTravel = current.distanceTo(locomotion.startPosition).toFixed(2);
+  }
+  if (now - locomotion.lastStepAt > (locomotion.walk ? 520 : 330)) {
+    locomotion.lastStepAt = now;
+    effects.burst(agent.pet.group.position.clone().add(new THREE.Vector3(0, 0.24, 0.2)), PET_LOOKS[agent.kind].power, locomotion.walk ? 2 : 5, locomotion.walk ? 0.18 : 0.38);
+  }
+}
+
+function stopAgentLocomotion(agent, current = agent?.rig?.position?.()) {
+  if (!agent) return;
+  const locomotion = agent.locomotion;
+  agent.locomotion = null;
+  const position = current || agent.pet.group.position;
+  agent.rig.steerTo(new CANNON.Vec3(position.x, 0.06, position.z), { settleOnFloor: true });
+  document.body.dataset.lastLocomotionMode = "stopped";
+  document.body.dataset.lastLocomotionPosition = `${position.x.toFixed(2)},${position.z.toFixed(2)}`;
+  if (locomotion?.startPosition) {
+    document.body.dataset.lastLocomotionTravel = position.distanceTo(locomotion.startPosition).toFixed(2);
+  }
+}
+
+function approachPointForObject(agent, target) {
+  const targetPosition = bodyToVector(target.body.position);
+  const fromTarget = agent.rig.position().sub(targetPosition);
+  fromTarget.y = 0;
+  if (fromTarget.lengthSq() < 0.01) fromTarget.copy(agentForwardVector(agent)).multiplyScalar(-1);
+  fromTarget.normalize().multiplyScalar(Math.max(0.88, Number(target.radius || 0.36) + 0.62));
+  return clampAgentPosition(targetPosition.clone().add(fromTarget));
+}
+
+function updateHeldObject(agent, now, _dt, immediate = false) {
+  const hold = agent?.heldObject;
+  if (!hold?.entry || !objects.includes(hold.entry)) {
+    if (agent) agent.heldObject = null;
+    return;
+  }
+  if (now > hold.until) {
+    releaseHeldObject(agent);
+    return;
+  }
+  const entry = hold.entry;
+  const current = bodyToVector(entry.body.position);
+  const target = heldObjectWorldPosition(agent, entry);
+  const velocity = target.clone().sub(current).multiplyScalar(immediate ? 0 : 12);
+  entry.body.position.set(target.x, target.y, target.z);
+  entry.body.velocity.set(velocity.x, velocity.y, velocity.z);
+  entry.body.angularVelocity.set(0, 0, 0);
+  entry.mesh.position.copy(entry.body.position);
+  entry.mesh.quaternion.copy(entry.body.quaternion);
+  document.body.dataset.lastPickupTarget = entry.id;
+  document.body.dataset.lastInteractionVerb = hold.verb || "pickup";
+  document.body.dataset.heldObject = entry.id;
+  document.body.dataset.heldObjectPosition = `${target.x.toFixed(2)},${target.y.toFixed(2)},${target.z.toFixed(2)}`;
+}
+
+function releaseHeldObject(agent, options = {}) {
+  const hold = agent?.heldObject;
+  if (!hold?.entry) return;
+  const entry = hold.entry;
+  agent.heldObject = null;
+  document.body.dataset.heldObject = "";
+  entry.body.type = hold.originalType ?? CANNON.Body.DYNAMIC;
+  entry.body.mass = Number.isFinite(hold.originalMass) ? hold.originalMass : 1;
+  entry.body.updateMassProperties();
+  const drop = heldObjectDropPosition(agent, entry);
+  placeObject(entry, new CANNON.Vec3(drop.x, drop.y, drop.z));
+  const forward = agentForwardVector(agent);
+  entry.body.velocity.set(forward.x * 0.55, 0.18, forward.z * 0.55);
+  entry.body.wakeUp();
+  effects.ring(bodyToVector(entry.body.position).add(new THREE.Vector3(0, 0.25, 0)), PET_LOOKS[agent.kind].power, 0.64, 0.56);
+  if (options.toast) showToast(options.toast);
+  else if (!options.quiet) showToast(`${agent.label} put down ${hold.targetLabel || entry.name || entry.id}.`);
+}
+
+function heldObjectWorldPosition(agent, entry) {
+  const halfY = objectHalfHeight(entry);
+  const local = new THREE.Vector3(0.42, Math.max(0.78, halfY + 0.68), 0.74);
+  return agent.pet.group.localToWorld(local);
+}
+
+function heldObjectDropPosition(agent, entry) {
+  const forward = agentForwardVector(agent);
+  const halfY = objectHalfHeight(entry);
+  return clampObjectPosition(agent.pet.group.position.clone().add(forward.multiplyScalar(0.78)).setY(Math.max(halfY + 0.08, 0.32)), entry);
+}
+
+function objectHalfHeight(entry) {
+  return Number(entry?.size?.y || entry?.radius || 0.42) * 0.5;
+}
+
+function agentForwardVector(agent) {
+  const yaw = Number.isFinite(agent?.pet?.facingYaw) ? agent.pet.facingYaw : agent?.pet?.group?.rotation?.y || 0;
+  return new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw)).normalize();
+}
+
+function setFacingToward(agent, vector) {
+  if (!agent || !vector) return;
+  const x = Number(vector.x || 0);
+  const z = Number(vector.z || 0);
+  if (Math.hypot(x, z) < 0.001) return;
+  agent.pet.targetFacingYaw = Math.atan2(x, z);
 }
 
 function applySpell(agent, spell = {}) {
@@ -2930,6 +3101,7 @@ function animate(now) {
   lastPhysicsTime = now;
   updateAgentNeeds(dt);
   controls.update();
+  for (const agent of agents.values()) updateAgentLocomotion(agent, now, dt);
   for (const agent of agents.values()) agent.rig.beforeStep(now, dt);
   room.updatePhysics(now, dt);
   checkRecyclingChallenge(now);
@@ -2937,6 +3109,7 @@ function animate(now) {
     agent.rig.afterStep(agent.pet, now, dt);
     if (agent.rigMixer) agent.rigMixer.update(dt);
     updatePet(agent.pet, now, dt);
+    updateHeldObject(agent, now, dt);
   }
   effects.update(now, dt);
   renderer.render(scene, camera);
@@ -3131,7 +3304,7 @@ function startleNearbyAgents(position, intensity) {
 }
 
 function clampObjectPosition(position, entry) {
-  const halfY = entry.size.y / 2;
+  const halfY = objectHalfHeight(entry);
   return new THREE.Vector3(
     THREE.MathUtils.clamp(position.x, -room.bounds.halfX + 0.25, room.bounds.halfX - 0.25),
     THREE.MathUtils.clamp(position.y, halfY + 0.06, 5.4),
@@ -3316,6 +3489,25 @@ window.addEventListener("resize", resize);
 
 window.__toyboxV2Debug = {
   agents: () => [...agents.values()].map((agent) => ({ kind: agent.kind, position: vectorPayload(agent.pet.group.position), intent: agent.lastIntent })),
+  activeAgentMotor: () => {
+    const agent = activeAgent();
+    return {
+      kind: agent.kind,
+      position: vectorPayload(agent.pet.group.position),
+      rigPosition: vectorPayload(agent.rig.position()),
+      facingYaw: Number((agent.pet.facingYaw || 0).toFixed(3)),
+      targetFacingYaw: Number((agent.pet.targetFacingYaw || 0).toFixed(3)),
+      animation: agent.pet.animation,
+      locomotion: agent.locomotion ? {
+        index: agent.locomotion.index,
+        remainingMs: Math.max(0, Math.round(agent.locomotion.until - performance.now())),
+        routeLength: agent.locomotion.route.length,
+        speed: agent.locomotion.speed,
+        walk: agent.locomotion.walk,
+      } : null,
+      heldObject: agent.heldObject?.entry?.id || "",
+    };
+  },
   sceneState: () => collectSceneState(activeAgent()),
   requestAll: (message = "improvise together") => [...agents.values()].forEach((agent) => requestAction(agent, message)),
   runDemo: () => runJudgeDemo(),

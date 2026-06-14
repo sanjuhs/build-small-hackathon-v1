@@ -92,8 +92,8 @@ export function createSenseFeeds({ scene, userCamera, userRenderer, dom, audio }
   }
 
   function updatePetCamera() {
-    const eye = new THREE.Vector3(0, 1.86, 0.74);
-    const target = new THREE.Vector3(0, 0.92, -2.4);
+    const eye = new THREE.Vector3(0, 1.78, 0.68);
+    const target = new THREE.Vector3(0, 1.08, 3.2);
     pet.group.localToWorld(eye);
     pet.group.localToWorld(target);
     petCamera.position.copy(eye);
