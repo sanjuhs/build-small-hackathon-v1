@@ -15,7 +15,7 @@ from src.pet_actions import fallback_policy, model_unavailable_policy
 from src.pet_memory import remember_from_action
 from src.pet_trace import write_trace
 from src.trace_policy import try_trace_policy
-from src.vision_action_policy import try_vision_action_policy
+from src.vision_action_policy import try_vision_action_policy, vision_action_last_error
 from src.vision_policy import try_vision_perception
 
 
@@ -138,6 +138,13 @@ def unavailable_for_requested_mode(mode: str, payload: dict[str, Any], status: d
         debug["ollamaEndpoint"] = local_ollama_chat_endpoint()
         debug["ollamaAvailable"] = status.get("localOllamaAvailable")
         debug["ollamaVisionInstalled"] = status.get("localOllamaVisionInstalled")
+        last_error = vision_action_last_error()
+        if last_error:
+            debug["visionLastError"] = last_error.get("message")
+            debug["visionLastErrorType"] = last_error.get("type")
+            debug["visionErrorElapsedMs"] = last_error.get("elapsedMs")
+            debug["visionImagePrefix"] = last_error.get("imagePrefix")
+            debug["visionImageBytes"] = last_error.get("imageBytes")
         if not payload.get("cameraFrame"):
             debug["ollamaError"] = "cameraFrame missing"
     elif mode == "ollama-text":

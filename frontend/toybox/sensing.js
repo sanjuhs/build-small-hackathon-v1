@@ -52,9 +52,10 @@ export function detectObjects(pet, objects) {
     .slice(0, 8);
 }
 
-export function captureCameraFrame(renderer) {
+export function captureCameraFrame(renderer, mimeType = "image/jpeg", quality = 0.45) {
   try {
-    return renderer.domElement.toDataURL("image/jpeg", 0.45);
+    if (mimeType === "image/png") return renderer.domElement.toDataURL("image/png");
+    return renderer.domElement.toDataURL(mimeType, quality);
   } catch {
     return null;
   }

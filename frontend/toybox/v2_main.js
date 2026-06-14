@@ -972,7 +972,8 @@ async function requestAction(agent, message = "") {
   updateAgentPanel();
   const previousActive = activeAgent();
   senses.setPet(agent.pet);
-  const petFrame = senses.capturePetFrame();
+  const frameMime = selectedBrainMode === "ollama-vision" ? "image/png" : "image/jpeg";
+  const petFrame = senses.capturePetFrame(frameMime, 0.45);
   senses.setPet(previousActive.pet);
   const payload = {
     pet: agent.kind,
@@ -983,7 +984,7 @@ async function requestAction(agent, message = "") {
     forces: forceEvents.slice(-12),
     interactions: interactions.slice(-10),
     detectedObjects: detectObjects(agent),
-    cameraFrame: petFrame || captureCameraFrame(renderer),
+    cameraFrame: petFrame || captureCameraFrame(renderer, frameMime, 0.45),
     cameraFrameSource: petFrame ? "agent-view" : "room-view",
     audio: senses.audioSummary(),
     cooldowns: {},
@@ -1537,6 +1538,7 @@ function summarizeTraceModel(action) {
     debug.tokensPerSecond ? `${debug.tokensPerSecond} tok/s` : "",
     debug.reason ? `reason:${debug.reason}` : "",
     debug.modalLastError ? `error:${shortTraceText(debug.modalLastError, 92)}` : "",
+    debug.visionLastError ? `vision:${shortTraceText(debug.visionLastError, 92)}` : "",
   ];
   return pieces.filter(Boolean).join(" | ") || "none";
 }
@@ -1618,6 +1620,9 @@ function traceActionJson(action, policy) {
     modalLastError: action.debug?.modalLastError || null,
     modalLastErrorType: action.debug?.modalLastErrorType || null,
     modalImageSent: action.debug?.modalImageSent ?? null,
+    visionLastError: action.debug?.visionLastError || null,
+    visionLastErrorType: action.debug?.visionLastErrorType || null,
+    visionImageBytes: action.debug?.visionImageBytes || null,
     memory: action.newMemory?.concept || action.debug?.memoryApplied || null,
     vision: action.debug?.visionApplied || null,
     latencyMs: action.debug?.clientRoundTripMs || action.debug?.serverLatencyMs || null,

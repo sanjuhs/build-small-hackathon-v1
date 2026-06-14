@@ -22,6 +22,13 @@ from src.pet_profiles import PET_PROFILES, normalize_pet
 from src.vision_policy import image_base64
 
 
+_LAST_VISION_ACTION_ERROR: dict[str, Any] = {}
+
+
+def vision_action_last_error() -> dict[str, Any]:
+    return dict(_LAST_VISION_ACTION_ERROR)
+
+
 def try_vision_action_policy(
     payload: dict[str, Any],
     endpoint_override: str | None = None,
@@ -31,14 +38,24 @@ def try_vision_action_policy(
     model = model_override or os.getenv("TOYBOX_VISION_MODEL", "").strip()
     camera_frame = payload.get("cameraFrame")
     if not endpoint or not model or not isinstance(camera_frame, str) or not camera_frame.startswith("data:image/"):
+        _record_vision_action_error(
+            "preflight",
+            "missing endpoint/model/cameraFrame data URL",
+            endpoint,
+            model,
+            camera_frame,
+            0,
+        )
         return None
 
     try:
         import httpx
-    except Exception:
+    except Exception as exc:
+        _record_vision_action_error(type(exc).__name__, str(exc), endpoint, model, camera_frame, 0)
         return None
 
     if not can_call_endpoint(endpoint, "TOYBOX_VISION"):
+        _record_vision_action_error("auth", "vision endpoint missing auth", endpoint, model, camera_frame, 0)
         return None
 
     prompt_payload = compact_payload(payload)
@@ -62,11 +79,40 @@ def try_vision_action_policy(
         debugged.setdefault("debug", {})["policy"] = "minicpm_v_action"
         debugged["debug"]["visionAction"] = True
         debugged["debug"]["visionMode"] = mode
+        _LAST_VISION_ACTION_ERROR.clear()
         return debugged
     except Exception as exc:
+        _record_vision_action_error(type(exc).__name__, str(exc), endpoint, model, camera_frame, elapsed_ms(started))
         if os.getenv("TOYBOX_VISION_DEBUG", "").lower() in {"1", "true", "yes"}:
             print(f"MiniCPM-V action policy failed: {str(exc)[:280]}", flush=True)
         return None
+
+
+def _record_vision_action_error(
+    error_type: str,
+    message: str,
+    endpoint: str,
+    model: str,
+    camera_frame: Any,
+    elapsed_ms_value: float,
+) -> None:
+    image_prefix = ""
+    image_bytes = 0
+    if isinstance(camera_frame, str):
+        image_prefix = camera_frame.split(",", 1)[0][:48]
+        image_bytes = len(camera_frame.encode("utf-8"))
+    _LAST_VISION_ACTION_ERROR.clear()
+    _LAST_VISION_ACTION_ERROR.update(
+        {
+            "type": error_type,
+            "message": str(message)[:500],
+            "endpoint": endpoint,
+            "model": model,
+            "elapsedMs": elapsed_ms_value,
+            "imagePrefix": image_prefix,
+            "imageBytes": image_bytes,
+        }
+    )
 
 
 def post_openai_vision_action(

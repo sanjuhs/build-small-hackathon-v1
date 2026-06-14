@@ -49,10 +49,11 @@ export function createSenseFeeds({ scene, userCamera, userRenderer, dom, audio }
     updateBalance(balanceState);
   }
 
-  function capturePetFrame() {
+  function capturePetFrame(mimeType = "image/jpeg", quality = 0.45) {
     renderPetView();
     try {
-      return dom.petView.toDataURL("image/jpeg", 0.45);
+      if (mimeType === "image/png") return dom.petView.toDataURL("image/png");
+      return dom.petView.toDataURL(mimeType, quality);
     } catch {
       return null;
     }
