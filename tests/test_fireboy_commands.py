@@ -123,7 +123,7 @@ class FireBoyCommandPolicyTest(unittest.TestCase):
         self.assertEqual(status["fallbackPolicy"], "asleep_when_configured")
 
     def test_modal_command_guard_prevents_walk_fireball(self) -> None:
-        payload = fireboy_payload("Fire Boy, walk around the toy room")
+        payload = fireboy_payload("walk")
         action = fallback_policy(payload)
         action["power"]["name"] = "fireball"
         action["interaction"]["verb"] = "play"

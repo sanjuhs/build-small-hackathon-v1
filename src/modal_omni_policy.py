@@ -264,7 +264,7 @@ def coerce_modal_command_action(action: dict[str, Any], payload: dict[str, Any])
     pet = normalize_pet(action.get("pet") or payload.get("pet"))
     if pet != "fire_boy":
         return
-    if any(phrase in message for phrase in ["walk around", "walk in circles", "walk the room", "stroll around"]):
+    if command_has_any(message, ["walk", "stroll", "patrol"]):
         target_id = command_target_id(payload)
         action["animation"] = "walk"
         action["power"] = {"name": "ember_jump", "targetId": target_id, "strength": 0.45, "durationMs": 900}
@@ -277,7 +277,7 @@ def coerce_modal_command_action(action: dict[str, Any], payload: dict[str, Any])
             ],
         }
         action["speech"] = "Me walky loop."
-    elif any(phrase in message for phrase in ["run around", "run in circles", "zoom around", "dash around", "race around"]):
+    elif command_has_any(message, ["run", "zoom", "dash", "race"]):
         target_id = command_target_id(payload)
         action["animation"] = "run"
         action["power"] = {"name": "ember_jump", "targetId": target_id, "strength": 0.7, "durationMs": 900}
@@ -360,6 +360,11 @@ def is_generic_chat_message(message: str) -> bool:
         return False
     chat = ["hi", "hello", "hey", "what's up", "whats up", "how are", "talk", "say"]
     return not message.strip() or any(phrase in message for phrase in chat)
+
+
+def command_has_any(message: str, words: list[str]) -> bool:
+    tokens = set(re_split_words(message))
+    return any(word in tokens or f"{word} around" in message or f"{word} the room" in message for word in words)
 
 
 def command_target_id(payload: dict[str, Any], preferred_words: set[str] | None = None) -> str:
