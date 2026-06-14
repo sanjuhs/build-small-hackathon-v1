@@ -158,6 +158,7 @@ export function updatePet(pet, now, dt) {
   if (pet.parts.tail) pet.parts.tail.rotation.y = Math.sin(now * 0.004) * 0.16 + (actionActive ? Math.sin(now * 0.018) * 0.16 : 0);
   if (pet.parts.ukulele) pet.parts.ukulele.rotation.z = -0.72 + Math.sin(now * 0.004) * 0.025;
   updateWalkCycle(pet, now, dt, locomotionActive, pet.animation === "run");
+  updateGestureCycle(pet, now, dt, actionActive && ["turn", "look", "point", "reach", "release"].includes(pet.animation), pet.animation);
 
   if (actionActive && pet.animation?.includes("spin")) pet.group.rotation.y += dt * 4.4;
   else if (actionActive && (pet.animation?.includes("wiggle") || pet.animation?.includes("sway"))) pet.group.rotation.y = pet.facingYaw + balanceTilt.y + Math.sin(now * 0.02) * 0.16;
@@ -191,6 +192,82 @@ function updateWalkCycle(pet, now, dt, active, run) {
     pet.parts.rightArm.rotation.x = THREE.MathUtils.lerp(pet.parts.rightArm.rotation.x, stride * 0.42 * blend, 0.2);
   }
   if (pet.parts.body) pet.parts.body.rotation.z = THREE.MathUtils.lerp(pet.parts.body.rotation.z, -stride * 0.025 * blend, 0.12);
+}
+
+function updateGestureCycle(pet, now, dt, active, animation) {
+  const rightArmBase = { x: 0.5, y: 0.77, z: 0.38 };
+  const leftArmBase = { x: -0.5, y: 0.77, z: 0.38 };
+  const leftFootBase = { x: -0.34, y: 0.13, z: 0.28 };
+  const rightFootBase = { x: 0.34, y: 0.13, z: 0.28 };
+  const alpha = Math.min(1, dt * 12);
+  if (!active) {
+    resetGesturePart(pet.parts.head, { rx: 0, ry: 0 });
+    resetGesturePart(pet.parts.face?.mesh, { rx: 0, ry: 0 });
+    resetGesturePart(pet.parts.leftArm, { x: leftArmBase.x, y: leftArmBase.y, z: leftArmBase.z, ry: 0, rz: 0 }, alpha);
+    resetGesturePart(pet.parts.rightArm, { x: rightArmBase.x, y: rightArmBase.y, z: rightArmBase.z, ry: 0, rz: 0 }, alpha);
+    resetGesturePart(pet.parts.leftFoot, { x: leftFootBase.x }, alpha);
+    resetGesturePart(pet.parts.rightFoot, { x: rightFootBase.x }, alpha);
+    if (pet.parts.body) {
+      pet.parts.body.rotation.x = THREE.MathUtils.lerp(pet.parts.body.rotation.x, 0, 0.1);
+      pet.parts.body.rotation.y = THREE.MathUtils.lerp(pet.parts.body.rotation.y, 0, 0.1);
+    }
+    return;
+  }
+
+  const bob = Math.sin(now * 0.012);
+  const pulse = Math.sin(now * 0.02);
+  if (animation === "look") {
+    poseHead(pet, -0.08 + bob * 0.018, pulse * 0.08, alpha);
+    poseArm(pet.parts.leftArm, leftArmBase, { rx: -0.16, ry: -0.12, rz: 0.18 }, alpha);
+    poseArm(pet.parts.rightArm, rightArmBase, { rx: -0.16, ry: 0.12, rz: -0.18 }, alpha);
+  } else if (animation === "point") {
+    poseHead(pet, -0.05, 0.1 + pulse * 0.035, alpha);
+    poseArm(pet.parts.rightArm, { x: 0.62, y: 1.0, z: 0.7 }, { rx: -0.86, ry: -0.18, rz: -0.7 }, alpha);
+    poseArm(pet.parts.leftArm, { x: -0.46, y: 0.74, z: 0.35 }, { rx: 0.16, ry: -0.08, rz: 0.24 }, alpha);
+    if (pet.parts.body) pet.parts.body.rotation.y = THREE.MathUtils.lerp(pet.parts.body.rotation.y, -0.08, 0.16);
+  } else if (animation === "reach" || animation === "release") {
+    poseHead(pet, -0.1, pulse * 0.04, alpha);
+    poseArm(pet.parts.rightArm, { x: 0.54, y: 0.95, z: 0.78 }, { rx: -1.05, ry: -0.1, rz: -0.38 }, alpha);
+    poseArm(pet.parts.leftArm, { x: -0.42, y: 0.88, z: 0.58 }, { rx: -0.58, ry: 0.18, rz: 0.34 }, alpha);
+    if (pet.parts.body) pet.parts.body.rotation.x = THREE.MathUtils.lerp(pet.parts.body.rotation.x, -0.08, 0.16);
+  } else if (animation === "turn") {
+    poseHead(pet, 0, pulse * 0.14, alpha);
+    poseArm(pet.parts.leftArm, leftArmBase, { rx: -0.22, ry: 0.12, rz: 0.34 }, alpha);
+    poseArm(pet.parts.rightArm, rightArmBase, { rx: 0.22, ry: -0.12, rz: -0.34 }, alpha);
+    if (pet.parts.leftFoot) pet.parts.leftFoot.position.x = THREE.MathUtils.lerp(pet.parts.leftFoot.position.x, leftFootBase.x + bob * 0.08, 0.24);
+    if (pet.parts.rightFoot) pet.parts.rightFoot.position.x = THREE.MathUtils.lerp(pet.parts.rightFoot.position.x, rightFootBase.x - bob * 0.08, 0.24);
+  }
+}
+
+function poseHead(pet, rx, ry, alpha) {
+  if (pet.parts.head) {
+    pet.parts.head.rotation.x = THREE.MathUtils.lerp(pet.parts.head.rotation.x, rx, alpha);
+    pet.parts.head.rotation.y = THREE.MathUtils.lerp(pet.parts.head.rotation.y, ry, alpha);
+  }
+  if (pet.parts.face?.mesh) {
+    pet.parts.face.mesh.rotation.x = pet.parts.head?.rotation.x || 0;
+    pet.parts.face.mesh.rotation.y = pet.parts.head?.rotation.y || 0;
+  }
+}
+
+function poseArm(part, position, rotation, alpha) {
+  if (!part) return;
+  if (Number.isFinite(position.x)) part.position.x = THREE.MathUtils.lerp(part.position.x, position.x, alpha);
+  if (Number.isFinite(position.y)) part.position.y = THREE.MathUtils.lerp(part.position.y, position.y, alpha);
+  if (Number.isFinite(position.z)) part.position.z = THREE.MathUtils.lerp(part.position.z, position.z, alpha);
+  if (Number.isFinite(rotation.rx)) part.rotation.x = THREE.MathUtils.lerp(part.rotation.x, rotation.rx, alpha);
+  if (Number.isFinite(rotation.ry)) part.rotation.y = THREE.MathUtils.lerp(part.rotation.y, rotation.ry, alpha);
+  if (Number.isFinite(rotation.rz)) part.rotation.z = THREE.MathUtils.lerp(part.rotation.z, rotation.rz, alpha);
+}
+
+function resetGesturePart(part, target, alpha = 0.12) {
+  if (!part) return;
+  if (Number.isFinite(target.x)) part.position.x = THREE.MathUtils.lerp(part.position.x, target.x, alpha);
+  if (Number.isFinite(target.y)) part.position.y = THREE.MathUtils.lerp(part.position.y, target.y, alpha);
+  if (Number.isFinite(target.z)) part.position.z = THREE.MathUtils.lerp(part.position.z, target.z, alpha);
+  if (Number.isFinite(target.rx)) part.rotation.x = THREE.MathUtils.lerp(part.rotation.x, target.rx, alpha);
+  if (Number.isFinite(target.ry)) part.rotation.y = THREE.MathUtils.lerp(part.rotation.y, target.ry, alpha);
+  if (Number.isFinite(target.rz)) part.rotation.z = THREE.MathUtils.lerp(part.rotation.z, target.rz, alpha);
 }
 
 function lerpAngle(from, to, alpha) {

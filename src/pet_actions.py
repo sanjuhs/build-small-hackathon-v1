@@ -24,6 +24,11 @@ INTERACTION_VERBS = [
     "play",
     "comfort",
     "talk",
+    "turn",
+    "look_at",
+    "point",
+    "reach",
+    "release",
     "pickup",
     "carry",
     "bring",
@@ -318,6 +323,15 @@ def fallback_policy(payload: dict[str, Any]) -> dict[str, Any]:
     carry_request = any(phrase in message for phrase in ["carry", "bring me", "bring the", "fetch", "take it to"])
     walk_request = any(phrase in message for phrase in ["walk around", "walk in circles", "walk the room", "stroll around"])
     run_request = any(phrase in message for phrase in ["run around", "run in circles", "go around", "zoom around", "dash around", "race around"])
+    turn_request = any(phrase in message for phrase in ["turn around", "turn back", "spin around", "face away"])
+    look_player_request = any(phrase in message for phrase in ["look at me", "look to me", "face me", "turn to me", "watch me"])
+    point_request = any(phrase in message for phrase in ["point at", "show me", "show the", "gesture at"])
+    reach_request = any(phrase in message for phrase in ["reach for", "touch the", "poke the", "tap the"])
+    release_request = any(phrase in message for phrase in ["drop it", "put it down", "release", "let go"])
+    look_object_request = (
+        not look_player_request
+        and any(phrase in message for phrase in ["look at", "face the", "watch the", "look toward", "look to the"])
+    )
     charade_request = any(
         phrase in message
         for phrase in [
@@ -346,6 +360,9 @@ def fallback_policy(payload: dict[str, Any]) -> dict[str, Any]:
     spell_override = None
     memory_applied = ""
     vision_applied = ""
+    gesture_applied = ""
+    grounded_target_id = ""
+    intent_override = ""
     interaction = {"verb": "none", "targetId": target_from_payload(payload), "partnerPet": "", "durationMs": 1200}
     if touch:
         if touch.get("kind") == "pet":
@@ -356,6 +373,46 @@ def fallback_policy(payload: dict[str, Any]) -> dict[str, Any]:
             power_name = "shrink" if pet == "squeaky" else profile["powers"][0]
             emotion = "startled"
             animation = "startle"
+    elif turn_request or look_player_request or look_object_request or point_request or reach_request or release_request:
+        preferred_target = object_from_message(objects, message, preferred={"box", "cube", "block", "toy", "ball"})
+        target = preferred_target or nearest_object_by_distance(objects)
+        target_id = str((target or {}).get("id") or target_from_payload(payload))
+        if release_request:
+            verb = "release"
+            animation = "reach" if "reach" in profile["animations"] else focus_animation_for(pet)
+            speech_override = "Me put down."
+            duration_ms = 1200
+        elif point_request:
+            verb = "point"
+            animation = "point" if "point" in profile["animations"] else focus_animation_for(pet)
+            speech_override = "Me pointy there."
+            duration_ms = 1800
+        elif reach_request:
+            verb = "reach"
+            animation = "reach" if "reach" in profile["animations"] else focus_animation_for(pet)
+            speech_override = "Me reach careful."
+            duration_ms = 1900
+        elif turn_request:
+            verb = "turn"
+            animation = "turn" if "turn" in profile["animations"] else social_animation_for(pet)
+            speech_override = "Me turn round."
+            duration_ms = 1300
+        else:
+            verb = "look_at"
+            animation = "look" if "look" in profile["animations"] else focus_animation_for(pet)
+            speech_override = "Me looky."
+            duration_ms = 1800
+        power_name = "ember_jump" if pet == "fire_boy" else social_power_for(pet, message)
+        emotion = "focused" if verb in {"point", "reach", "look_at"} else "curious"
+        interaction = {"verb": verb, "targetId": target_id, "partnerPet": "", "durationMs": duration_ms}
+        power_target_id = target_id
+        gesture_applied = "look_at_player" if look_player_request else verb
+        grounded_target_id = target_id
+        intent_override = f"grounded_{gesture_applied}"
+        spell_override = {
+            "spellName": f"{verb.replace('_', ' ')} marker",
+            "ops": [{"op": "spawn_particle", "targetId": "self" if look_player_request or turn_request else target_id, "durationMs": 650, "color": "#ffd75a"}],
+        }
     elif walk_request or run_request:
         power_name = "ember_jump" if pet == "fire_boy" else social_power_for(pet, message)
         emotion = "glee"
@@ -545,7 +602,7 @@ def fallback_policy(payload: dict[str, Any]) -> dict[str, Any]:
         "speech": speech,
         "emotion": emotion,
         "animation": animation,
-        "intent": "memory_transfer" if memory_applied else ("vision_grounded" if vision_applied else "fallback_playful_intervention"),
+        "intent": intent_override or ("memory_transfer" if memory_applied else ("vision_grounded" if vision_applied else "fallback_playful_intervention")),
         "blendshape": expressive_blendshape(emotion, power_name, touch),
         "power": {
             "name": power_name,
@@ -559,7 +616,13 @@ def fallback_policy(payload: dict[str, Any]) -> dict[str, Any]:
         "objectRecipe": object_recipe,
         "sound": random.choice(profile["sounds"]),
         "soundRecipe": fallback_sound_recipe(power_name, payload),
-        "debug": {"policy": "heuristic", "memoryApplied": memory_applied, "visionApplied": vision_applied},
+        "debug": {
+            "policy": "heuristic",
+            "memoryApplied": memory_applied,
+            "visionApplied": vision_applied,
+            "commandCoercion": gesture_applied,
+            "groundedTargetId": grounded_target_id,
+        },
     }
     if touch and touch.get("kind") == "pet":
         action["speech"] = random.choice(
@@ -1364,6 +1427,11 @@ def line_for_interaction(verb: str) -> str:
         "play": ["Play protocol engaged.", "A tiny game begins.", "I found the fun part."],
         "comfort": ["Soft comfort delivered.", "I will be gentle here.", "Tiny care mode."],
         "talk": ["Tiny conversation time.", "I have words for my friend.", "Council voice activated."],
+        "turn": ["Me turn round.", "Tiny turn-about.", "I face the new way."],
+        "look_at": ["Me looky.", "Tiny eyes on it.", "I look carefully."],
+        "point": ["Me pointy there.", "Tiny hand shows it.", "I point at the thing."],
+        "reach": ["Me reach careful.", "Tiny hand goes out.", "I reach gently."],
+        "release": ["Me put down.", "Tiny drop, soft soft.", "I let it go."],
         "pickup": ["Me got it.", "Tiny pickup job.", "I can hold this."],
         "carry": ["Carry mode, careful feet.", "I will move it gently.", "Tiny delivery paws."],
         "bring": ["I bring it close.", "Delivery coming softly.", "I fetched the toy."],
@@ -1485,6 +1553,16 @@ def fire_boy_baby_speech(text: str, power_name: str) -> str:
         return "Me walky loop."
     if any(word in lower for word in ["run", "zoom", "dash", "race"]):
         return "Me do zoom loop."
+    if any(word in lower for word in ["turn", "spin", "face"]):
+        return "Me turn round."
+    if any(word in lower for word in ["point", "show"]):
+        return "Me pointy there."
+    if any(word in lower for word in ["look", "watch", "see"]):
+        return "Me looky."
+    if any(word in lower for word in ["reach", "touch", "tap", "poke"]):
+        return "Me reach careful."
+    if any(word in lower for word in ["release", "drop", "put down", "let go"]):
+        return "Me put down."
     if any(word in lower for word in ["pick", "pickup", "hold", "carry", "bring", "fetch", "grab"]):
         return "Me hold it, hehe."
     if power_name == "fireball" or any(word in lower for word in ["fireball", "comet", "whoosh"]):

@@ -253,7 +253,7 @@ def vision_action_user_prompt(prompt_payload: dict[str, Any], schema: dict[str, 
         [
             "Decide the next action for the pet.",
             perception_line,
-            "If the player says walk around, use interaction verb walk. If they say run around, use verb run. For pick up, carry, bring, inspect, talk, or fireball, choose the matching interaction/power.",
+            "If the player says walk around, use interaction verb walk. If they say run around, use verb run. For turn around, look at me, point at, reach for, drop, pick up, carry, bring, inspect, talk, or fireball, choose the matching interaction/power.",
             "Use real object ids from the scene. Keep actions safe and visible.",
             "Return one compact JSON object only. Use null for newMemory, objectRecipe, and soundRecipe when unused.",
             f"Action contract: {json.dumps(compact_action_contract(schema), ensure_ascii=True)}",

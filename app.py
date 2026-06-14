@@ -641,6 +641,7 @@ def toy_room_v3_html() -> str:
         '<a class="route-link glass" href="/pages">Pages</a>': '<a class="route-link glass" href="/toy-v2">v2</a><a class="route-link glass" href="/pages">Pages</a>',
         '<button id="modeButton" class="mode-button" type="button">Council</button>': '<button id="modeButton" class="mode-button" type="button">Fire Boy</button>',
         'placeholder="Teach, ask, or invent a toy-room spell"': 'placeholder="Talk to Fire Boy, move him, or ask him to play with a toy"',
+        "/frontend/toybox/v2_main.js?v=20260614-grounded-pickup-walk": "/frontend/toybox/v2_main.js?v=20260614-grounded-gestures",
         "/frontend/toybox/v2_main.js?v=20260613-ai-evidence": "/frontend/toybox/v2_main.js?v=20260614-modal-debug-ui",
     }
     for source, target in replacements.items():

@@ -169,6 +169,21 @@ def action_satisfies_request(compact: dict[str, Any], action: dict[str, Any]) ->
     if any(phrase in message for phrase in ("run around", "run in circles", "go around", "zoom around", "dash around", "race around")):
         if verb != "run":
             return False
+    if any(phrase in message for phrase in ("turn around", "turn back", "spin around", "face away")):
+        if verb != "turn":
+            return False
+    if any(phrase in message for phrase in ("look at me", "look to me", "face me", "turn to me", "watch me", "look at", "face the", "watch the")):
+        if verb != "look_at":
+            return False
+    if any(phrase in message for phrase in ("point at", "show me", "show the", "gesture at")):
+        if verb != "point":
+            return False
+    if any(phrase in message for phrase in ("reach for", "touch the", "poke the", "tap the")):
+        if verb != "reach":
+            return False
+    if any(phrase in message for phrase in ("drop it", "put it down", "release", "let go")):
+        if verb != "release":
+            return False
     if "fireball" in message or "fire ball" in message:
         if power_name != "fireball":
             return False

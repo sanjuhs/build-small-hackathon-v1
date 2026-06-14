@@ -32,7 +32,7 @@ import {
 import { PET_LOOKS } from "./config.js";
 import { ToyAudio } from "./audio.js?v=20260613-sound-recipes";
 import { ToyEffects } from "./effects.js";
-import { applyPetBlendshape, createPet, petPointerReaction, setPetEmotion, updatePet } from "./pet.js?v=20260614-locomotion";
+import { applyPetBlendshape, createPet, petPointerReaction, setPetEmotion, updatePet } from "./pet.js?v=20260614-grounded-gestures";
 import { createPetBalanceRig } from "./pet_balance.js?v=20260614-locomotion4";
 import { createPhysicsWorld, createToyRoom } from "./room.js?v=20260614-grounded-targets";
 import { captureCameraFrame } from "./sensing.js";
@@ -1050,7 +1050,7 @@ function applyAgentAction(agent, action) {
   audio.play(action.sound || "happy_chirp", hasSoundRecipe ? 0.44 : 0.82);
   audio.playRecipe(action.soundRecipe, 0.9);
   audio.speak(agent.kind, agent.label, line);
-  executeInteraction(agent, action.interaction || {});
+  executeInteraction(agent, action.interaction || {}, action);
   applyObjectRecipe(agent, action.objectRecipe);
   const projectileLaunched = maybeLaunchFireball(agent, action);
   const executableSpell = executableSpellForAction(action, action.spell || spellFromPower(action.power, agent), { projectileLaunched });
@@ -1081,7 +1081,7 @@ function executableSpellForAction(action = {}, spell = {}, options = {}) {
   if (!spell || !Array.isArray(spell.ops)) return null;
   if (options.projectileLaunched) return null;
   const verb = action.interaction?.verb || "none";
-  if (!["walk", "run", "pickup", "carry", "bring"].includes(verb)) return spell;
+  if (!["walk", "run", "pickup", "carry", "bring", "turn", "look_at", "point", "reach", "release"].includes(verb)) return spell;
   const ops = spell.ops.filter((op) => ["spawn_particle", "set_light"].includes(op?.op));
   if (!ops.length) return null;
   return { ...spell, ops };
@@ -1120,9 +1120,20 @@ function applyObjectRecipe(agent, recipe) {
   return entry;
 }
 
-function executeInteraction(agent, interaction = {}) {
+function executeInteraction(agent, interaction = {}, action = {}) {
   const verb = interaction.verb || "none";
   if (verb === "none") return false;
+  if (verb === "release") {
+    releaseHeldObject(agent);
+    runPetGesture(agent, "release", { durationMs: Number(interaction.durationMs || 1200) });
+    recordInteraction({ kind: verb, pet: agent.kind, objectId: interaction.targetId || "" });
+    return true;
+  }
+  if (verb === "turn") {
+    turnAgent(agent, action);
+    recordInteraction({ kind: verb, pet: agent.kind, objectId: interaction.targetId || "" });
+    return true;
+  }
   if (verb === "run" || verb === "walk") {
     const requestedDuration = Number(interaction.durationMs || 0);
     const minimumDuration = verb === "walk" ? 4200 : 3000;
@@ -1147,6 +1158,23 @@ function executeInteraction(agent, interaction = {}) {
   }
 
   if (!target) return false;
+
+  if (verb === "look_at") {
+    const playerTarget = action.intent === "grounded_look_at_player" || action.debug?.commandCoercion === "look_at_player";
+    if (playerTarget) performLookAtPlayer(agent, interaction);
+    else performLookAtObject(agent, target, interaction);
+    return true;
+  }
+
+  if (verb === "point") {
+    performPointAtObject(agent, target, interaction);
+    return true;
+  }
+
+  if (verb === "reach") {
+    performReachForObject(agent, target, interaction);
+    return true;
+  }
 
   if (["pickup", "carry", "bring"].includes(verb)) {
     approachAndPickUpObject(agent, target, verb, Number(interaction.durationMs || 2400));
@@ -1189,6 +1217,82 @@ function executeInteraction(agent, interaction = {}) {
     return true;
   }
   return false;
+}
+
+function runPetGesture(agent, animation, options = {}) {
+  if (!agent?.pet) return;
+  const now = performance.now();
+  agent.pet.animation = animation;
+  agent.pet.actionUntil = Math.max(agent.pet.actionUntil || 0, now + Math.max(500, Number(options.durationMs || 1500)));
+  document.body.dataset.lastGesture = animation;
+}
+
+function turnAgent(agent, action = {}) {
+  const turnToPlayer = action.intent === "grounded_look_at_player" || action.debug?.commandCoercion === "look_at_player";
+  if (turnToPlayer) {
+    setFacingToward(agent, camera.position.clone().sub(agent.pet.group.position));
+  } else {
+    const currentYaw = Number.isFinite(agent.pet.targetFacingYaw) ? agent.pet.targetFacingYaw : agent.pet.group.rotation.y;
+    agent.pet.targetFacingYaw = currentYaw + Math.PI;
+  }
+  runPetGesture(agent, "turn", { durationMs: 1400 });
+  playRigMotion(agent, "Spin");
+  effects.ring(agent.pet.group.position.clone().add(new THREE.Vector3(0, 0.28, 0)), PET_LOOKS[agent.kind].power, 0.72, 0.42);
+  document.body.dataset.lastTurnYaw = String(Number(agent.pet.targetFacingYaw || 0).toFixed(3));
+}
+
+function performLookAtPlayer(agent, interaction = {}) {
+  stopAgentLocomotion(agent);
+  setFacingToward(agent, camera.position.clone().sub(agent.pet.group.position));
+  runPetGesture(agent, "look", { durationMs: Number(interaction.durationMs || 1700) });
+  playRigMotion(agent, "Wave");
+  effects.stars(agent.pet.group.position.clone().add(new THREE.Vector3(0, 1.48, 0.24)), PET_LOOKS[agent.kind].power, 6);
+  document.body.dataset.lastLookTarget = "player-camera";
+}
+
+function performLookAtObject(agent, target, interaction = {}) {
+  stopAgentLocomotion(agent);
+  const position = bodyToVector(target.body.position);
+  setFacingToward(agent, position.clone().sub(agent.pet.group.position));
+  runPetGesture(agent, "look", { durationMs: Number(interaction.durationMs || 1700) });
+  playRigMotion(agent, "Wave");
+  effects.stars(position.clone().add(new THREE.Vector3(0, 0.42, 0)), PET_LOOKS[agent.kind].power, 8);
+  document.body.dataset.lastLookTarget = target.id;
+}
+
+function performPointAtObject(agent, target, interaction = {}) {
+  stopAgentLocomotion(agent);
+  const position = bodyToVector(target.body.position);
+  setFacingToward(agent, position.clone().sub(agent.pet.group.position));
+  runPetGesture(agent, "point", { durationMs: Number(interaction.durationMs || 1800) });
+  playRigMotion(agent, "Wave");
+  effects.ring(position.clone().add(new THREE.Vector3(0, 0.24, 0)), PET_LOOKS[agent.kind].power, 0.52, 0.42);
+  document.body.dataset.lastPointTarget = target.id;
+}
+
+function performReachForObject(agent, target, interaction = {}) {
+  const position = bodyToVector(target.body.position);
+  const distance = agent.rig.position().distanceTo(position);
+  const durationMs = Number(interaction.durationMs || 1900);
+  const reach = () => {
+    if (!objects.includes(target)) return;
+    const latestPosition = bodyToVector(target.body.position);
+    setFacingToward(agent, latestPosition.clone().sub(agent.pet.group.position));
+    runPetGesture(agent, "reach", { durationMs });
+    playRigMotion(agent, "Cheer");
+    effects.stars(latestPosition.clone().add(new THREE.Vector3(0, 0.34, 0)), PET_LOOKS[agent.kind].cheeks, 6);
+    document.body.dataset.lastReachTarget = target.id;
+  };
+  if (distance > 1.35) {
+    const approach = approachPointForObject(agent, target);
+    const approachMs = THREE.MathUtils.clamp(distance * 680, 420, 1200);
+    setFacingToward(agent, position.clone().sub(agent.pet.group.position));
+    startAgentLocomotion(agent, [approach], approachMs, { walk: true, stopAtEnd: true });
+    setTimeout(reach, approachMs);
+  } else {
+    stopAgentLocomotion(agent);
+    reach();
+  }
 }
 
 function pickUpObject(agent, target, verb, durationMs = 2400) {

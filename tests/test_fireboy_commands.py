@@ -93,6 +93,50 @@ class FireBoyCommandPolicyTest(unittest.TestCase):
         self.assertEqual(action["interaction"]["verb"], "walk")
         self.assertEqual(action["animation"], "walk")
 
+    def test_turn_around_uses_turn_interaction(self) -> None:
+        action = fallback_policy(fireboy_payload("Fire Boy, turn around"))
+
+        self.assertEqual(action["interaction"]["verb"], "turn")
+        self.assertEqual(action["animation"], "turn")
+        self.assertEqual(action["debug"]["commandCoercion"], "turn")
+
+    def test_look_at_me_uses_player_camera_gesture(self) -> None:
+        action = fallback_policy(fireboy_payload("Fire Boy, look at me"))
+
+        self.assertEqual(action["interaction"]["verb"], "look_at")
+        self.assertEqual(action["animation"], "look")
+        self.assertEqual(action["debug"]["commandCoercion"], "look_at_player")
+
+    def test_point_at_yellow_ball_targets_soft_ball(self) -> None:
+        action = fallback_policy(fireboy_payload("Fire Boy, point at the yellow ball"))
+
+        self.assertEqual(action["interaction"]["verb"], "point")
+        self.assertEqual(action["interaction"]["targetId"], "soft-ball")
+        self.assertEqual(action["animation"], "point")
+
+    def test_reach_for_blue_cube_targets_cube(self) -> None:
+        action = fallback_policy(fireboy_payload("Fire Boy, reach for the blue cube"))
+
+        self.assertEqual(action["interaction"]["verb"], "reach")
+        self.assertEqual(action["interaction"]["targetId"], "cube-blue")
+        self.assertEqual(action["animation"], "reach")
+
+    def test_drop_it_uses_release_interaction(self) -> None:
+        action = fallback_policy(fireboy_payload("Fire Boy, drop it"))
+
+        self.assertEqual(action["interaction"]["verb"], "release")
+        self.assertEqual(action["animation"], "reach")
+
+    def test_command_coercion_grounds_point_after_model(self) -> None:
+        payload = fireboy_payload("point at yellow ball")
+        action = fallback_policy(fireboy_payload("hello"))
+
+        coerce_fireboy_command_action(action, payload)
+
+        self.assertEqual(action["interaction"]["verb"], "point")
+        self.assertEqual(action["interaction"]["targetId"], "soft-ball")
+        self.assertEqual(action["debug"]["commandCoercion"], "point")
+
     def test_model_status_reports_minicpm_v_action_missing_secret(self) -> None:
         with patch.dict(
             "os.environ",

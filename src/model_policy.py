@@ -470,7 +470,7 @@ def text_policy_system_prompt() -> str:
         '"soundRecipe": {"label": string, "gain": number, "tones": [{"frequency": number, "offsetMs": integer, '
         '"durationMs": integer, "gain": number, "wave": string}]} or null}. '
         f"emotion must be one of {VALID_EMOTIONS}. "
-        "interaction.verb must be one of none, eat, read, sit, gather, sniff, inspect, water, share, clean, recycle, play, comfort, talk, pickup, carry, bring, walk, run. "
+        "interaction.verb must be one of none, eat, read, sit, gather, sniff, inspect, water, share, clean, recycle, play, comfort, talk, turn, look_at, point, reach, release, pickup, carry, bring, walk, run. "
         "Blendshape may include numeric eye, smile, mouth, brow, cheek, squash, tilt, sparkle. "
         "Spell ops must use only impulse, freeze, scale, attract, spawn_particle, set_light, or nudge_pet. "
         "Spell targetId must be a listed object id, self, all-moving, all-toys, or all-agents. "
@@ -552,6 +552,7 @@ def scene_brief(prompt_payload: dict[str, Any], profile: dict[str, Any]) -> str:
             "If the player says pick up, grab, hold, fetch, carry, or bring a toy, use interaction verb pickup/carry/bring with the exact object id.",
             "If the player asks to walk around, stroll, or patrol, use interaction={verb:walk,targetId:any listed id,partnerPet:\"\",durationMs:4200}.",
             "If the player asks to run around, zoom, dash, or race, use interaction={verb:run,targetId:any listed id,partnerPet:\"\",durationMs:2600}.",
+            "If the player asks to turn around, look at me, point at an object, reach for an object, or drop a held object, use turn/look_at/point/reach/release.",
             "If pet=fire_boy and the player asks for a fireball, use power=fireball and target the named toy if possible.",
             "For another nearby agent, use interaction=talk, play, comfort, or share and set partnerPet.",
             "Use interaction={verb:none,targetId:any listed id,partnerPet:\"\",durationMs:1200} when only using a power.",

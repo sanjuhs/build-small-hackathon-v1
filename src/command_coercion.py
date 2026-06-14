@@ -11,7 +11,61 @@ def coerce_fireboy_command_action(action: dict[str, Any], payload: dict[str, Any
     pet = normalize_pet(action.get("pet") or payload.get("pet"))
     if pet != "fire_boy":
         return
-    if command_has_any(message, ["walk", "stroll", "patrol"]):
+    if any(phrase in message for phrase in ["turn around", "turn back", "spin around", "face away"]):
+        target_id = command_target_id(payload)
+        action["animation"] = "turn" if "turn" in PET_PROFILES[pet]["animations"] else "bounce"
+        action["intent"] = "grounded_turn"
+        action["power"] = {"name": "ember_jump", "targetId": target_id, "strength": 0.25, "durationMs": 700}
+        action["interaction"] = {"verb": "turn", "targetId": target_id, "partnerPet": "", "durationMs": 1300}
+        action["spell"] = cosmetic_spell("turn marker", "self", "#ffb347")
+        action["speech"] = "Me turn round."
+        mark_grounded(action, "turn", target_id)
+    elif any(phrase in message for phrase in ["look at me", "look to me", "face me", "turn to me", "watch me"]):
+        target_id = command_target_id(payload)
+        action["animation"] = "look" if "look" in PET_PROFILES[pet]["animations"] else "look_left_right"
+        action["intent"] = "grounded_look_at_player"
+        action["power"] = {"name": "ember_jump", "targetId": target_id, "strength": 0.22, "durationMs": 700}
+        action["interaction"] = {"verb": "look_at", "targetId": target_id, "partnerPet": "", "durationMs": 1700}
+        action["spell"] = cosmetic_spell("look marker", "self", "#ffd75a")
+        action["speech"] = "Me looky."
+        mark_grounded(action, "look_at_player", target_id)
+    elif any(phrase in message for phrase in ["point at", "show me", "show the", "gesture at"]):
+        target_id = command_target_id(payload, {"box", "cube", "block", "toy", "ball"})
+        action["animation"] = "point" if "point" in PET_PROFILES[pet]["animations"] else "look_left_right"
+        action["intent"] = "grounded_point"
+        action["power"] = {"name": "ember_jump", "targetId": target_id, "strength": 0.25, "durationMs": 700}
+        action["interaction"] = {"verb": "point", "targetId": target_id, "partnerPet": "", "durationMs": 1800}
+        action["spell"] = cosmetic_spell("point marker", target_id, "#ffd75a")
+        action["speech"] = "Me pointy there."
+        mark_grounded(action, "point", target_id)
+    elif any(phrase in message for phrase in ["reach for", "touch the", "poke the", "tap the"]):
+        target_id = command_target_id(payload, {"box", "cube", "block", "toy", "ball"})
+        action["animation"] = "reach" if "reach" in PET_PROFILES[pet]["animations"] else "look_left_right"
+        action["intent"] = "grounded_reach"
+        action["power"] = {"name": "ember_jump", "targetId": target_id, "strength": 0.25, "durationMs": 700}
+        action["interaction"] = {"verb": "reach", "targetId": target_id, "partnerPet": "", "durationMs": 1900}
+        action["spell"] = cosmetic_spell("reach marker", target_id, "#ffd75a")
+        action["speech"] = "Me reach careful."
+        mark_grounded(action, "reach", target_id)
+    elif any(phrase in message for phrase in ["drop it", "put it down", "release", "let go"]):
+        target_id = command_target_id(payload)
+        action["animation"] = "reach" if "reach" in PET_PROFILES[pet]["animations"] else "bounce"
+        action["intent"] = "grounded_release"
+        action["power"] = {"name": "ember_jump", "targetId": target_id, "strength": 0.2, "durationMs": 600}
+        action["interaction"] = {"verb": "release", "targetId": target_id, "partnerPet": "", "durationMs": 1200}
+        action["spell"] = cosmetic_spell("release marker", "self", "#ffb347")
+        action["speech"] = "Me put down."
+        mark_grounded(action, "release", target_id)
+    elif any(phrase in message for phrase in ["look at", "face the", "watch the", "look toward", "look to the"]):
+        target_id = command_target_id(payload, {"box", "cube", "block", "toy", "ball"})
+        action["animation"] = "look" if "look" in PET_PROFILES[pet]["animations"] else "look_left_right"
+        action["intent"] = "grounded_look_at"
+        action["power"] = {"name": "ember_jump", "targetId": target_id, "strength": 0.22, "durationMs": 700}
+        action["interaction"] = {"verb": "look_at", "targetId": target_id, "partnerPet": "", "durationMs": 1700}
+        action["spell"] = cosmetic_spell("look marker", target_id, "#ffd75a")
+        action["speech"] = "Me looky."
+        mark_grounded(action, "look_at", target_id)
+    elif command_has_any(message, ["walk", "stroll", "patrol"]):
         target_id = command_target_id(payload)
         action["animation"] = "walk"
         action["intent"] = "grounded_walk"
@@ -86,6 +140,17 @@ def is_generic_chat_message(message: str) -> bool:
         "fireball",
         "smoke",
         "jump",
+        "turn",
+        "spin",
+        "face",
+        "point",
+        "reach",
+        "touch",
+        "tap",
+        "poke",
+        "release",
+        "drop",
+        "let go",
         "inspect",
         "look",
         "see",
