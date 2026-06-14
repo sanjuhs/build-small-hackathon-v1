@@ -109,6 +109,8 @@ def finish_action(action: dict[str, Any], payload: dict[str, Any], requested_mod
     debug = action.setdefault("debug", {})
     if isinstance(debug, dict):
         debug["requestedBrainMode"] = requested_mode
+        debug.setdefault("functionCalls", 1)
+        debug.setdefault("stateUpdatesRequested", 1)
     remember_from_action(action, payload)
     write_trace(payload, action)
     return action
