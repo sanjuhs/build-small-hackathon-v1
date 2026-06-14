@@ -355,6 +355,7 @@ for (const spec of AGENT_SPECS) {
     lastSpell: "",
     lastPartner: "",
     lastTrace: null,
+    traceHistory: [],
     proceduralHitMeshes: [...pet.hitMeshes],
     rigVisual: null,
     rigHelper: null,
@@ -989,7 +990,7 @@ async function requestAction(agent, message = "") {
     audio: senses.audioSummary(),
     cooldowns: {},
   };
-  agent.lastTrace = compactBrainTrace(payload, null, "pending");
+  setAgentTrace(agent, compactBrainTrace(payload, null, "pending"));
   updateAgentPanel();
   const startedAt = performance.now();
 
@@ -1003,18 +1004,30 @@ async function requestAction(agent, message = "") {
     const action = await response.json();
     action.debug = action.debug || {};
     action.debug.clientRoundTripMs = Number((performance.now() - startedAt).toFixed(1));
-    agent.lastTrace = compactBrainTrace(payload, action, action.debug?.policy || "model");
+    setAgentTrace(agent, compactBrainTrace(payload, action, action.debug?.policy || "model"), { remember: true });
     applyAgentAction(agent, action);
   } catch {
     showToast("The agent brain blinked; local physics stayed awake.");
     const action = fallbackClientAction(agent);
     action.debug = { ...(action.debug || {}), clientRoundTripMs: Number((performance.now() - startedAt).toFixed(1)) };
-    agent.lastTrace = compactBrainTrace(payload, action, "client_fallback");
+    setAgentTrace(agent, compactBrainTrace(payload, action, "client_fallback"), { remember: true });
     applyAgentAction(agent, action);
   } finally {
     agent.inFlight = false;
     updateAgentPanel();
   }
+}
+
+function setAgentTrace(agent, trace, options = {}) {
+  if (!agent) return;
+  agent.lastTrace = trace;
+  if (!options.remember || !trace) return;
+  if (!Array.isArray(agent.traceHistory)) agent.traceHistory = [];
+  agent.traceHistory.push(trace);
+  if (agent.traceHistory.length > 80) {
+    agent.traceHistory.splice(0, agent.traceHistory.length - 80);
+  }
+  document.body.dataset.brainTraceHistory = String(agent.traceHistory.length);
 }
 
 function applyAgentAction(agent, action) {
@@ -1164,6 +1177,7 @@ function pickUpObject(agent, target, verb, durationMs = 2400) {
   const holdColor = PET_LOOKS[agent.kind].power;
   const targetHalfY = Number(target.size?.y || target.radius || 0.42) * 0.5;
   const holdOffset = new THREE.Vector3(0.46, Math.max(0.82, targetHalfY + 0.72), 0.2);
+  let holdTimer = null;
   const holdOnce = () => {
     const base = agent.pet.group.position;
     placeObject(target, new CANNON.Vec3(base.x + holdOffset.x, holdOffset.y, base.z + holdOffset.z));
@@ -1172,9 +1186,22 @@ function pickUpObject(agent, target, verb, durationMs = 2400) {
     document.body.dataset.lastPickupTarget = target.id;
     document.body.dataset.lastInteractionVerb = verb;
   };
+  const stopHolding = () => {
+    if (!holdTimer) return;
+    window.clearInterval(holdTimer);
+    holdTimer = null;
+  };
+  const startHolding = () => {
+    holdOnce();
+    const started = performance.now();
+    holdTimer = window.setInterval(() => {
+      holdOnce();
+      if (performance.now() - started > Math.min(durationMs, 1800)) stopHolding();
+    }, 120);
+  };
 
   playRigMotion(agent, verb === "pickup" ? "Throw" : "Walk");
-  setTimeout(holdOnce, 280);
+  setTimeout(startHolding, 280);
   if (verb === "carry" || verb === "bring") {
     const offset = verb === "bring" ? new THREE.Vector3(0.15, 0, 1.28) : new THREE.Vector3(1.05, 0, 0.48);
     const next = clampAgentPosition(agent.pet.group.position.clone().add(offset));
@@ -1184,6 +1211,7 @@ function pickUpObject(agent, target, verb, durationMs = 2400) {
       effects.burst(bodyToVector(target.body.position), holdColor, 9, 0.6);
     }, 840);
     setTimeout(() => {
+      stopHolding();
       const base = agent.pet.group.position;
       placeObject(target, new CANNON.Vec3(base.x + 0.62, Math.max(targetHalfY + 0.08, 0.34), base.z + 0.36));
       effects.ring(bodyToVector(target.body.position).add(new THREE.Vector3(0, 0.28, 0)), holdColor, 0.72, 0.75);
@@ -1536,6 +1564,9 @@ function summarizeTraceModel(action) {
     debug.model ? shortRuntimeLabel(debug.model) : "",
     debug.modelLatencyMs ? `${debug.modelLatencyMs}ms` : "",
     debug.tokensPerSecond ? `${debug.tokensPerSecond} tok/s` : "",
+    debug.visionMode ? `mode:${debug.visionMode}` : "",
+    debug.visionImageRejected ? "image:rejected" : "",
+    debug.visionImageError ? `image:${shortTraceText(debug.visionImageError, 92)}` : "",
     debug.reason ? `reason:${debug.reason}` : "",
     debug.modalLastError ? `error:${shortTraceText(debug.modalLastError, 92)}` : "",
     debug.visionLastError ? `vision:${shortTraceText(debug.visionLastError, 92)}` : "",
@@ -1620,6 +1651,9 @@ function traceActionJson(action, policy) {
     modalLastError: action.debug?.modalLastError || null,
     modalLastErrorType: action.debug?.modalLastErrorType || null,
     modalImageSent: action.debug?.modalImageSent ?? null,
+    visionMode: action.debug?.visionMode || null,
+    visionImageRejected: action.debug?.visionImageRejected || null,
+    visionImageError: action.debug?.visionImageError || null,
     visionLastError: action.debug?.visionLastError || null,
     visionLastErrorType: action.debug?.visionLastErrorType || null,
     visionImageBytes: action.debug?.visionImageBytes || null,
@@ -2197,6 +2231,13 @@ function renderBrainTrace(agent) {
   ];
   for (const [label, value] of rows) appendTraceRow(label, value);
   appendTraceRow("json", trace.json, { code: true });
+  const history = Array.isArray(agent.traceHistory) ? agent.traceHistory.filter((item) => item !== trace) : [];
+  if (history.length) {
+    appendTraceRow("history", `${history.length} previous turn${history.length === 1 ? "" : "s"}`);
+    for (const item of history.slice().reverse()) {
+      appendTraceRow("prev", `${item.at} / ${item.policy} / ${item.text} -> ${item.action}`, { compact: true });
+    }
+  }
 }
 
 function appendTraceRow(label, value, options = {}) {
@@ -2206,7 +2247,7 @@ function appendTraceRow(label, value, options = {}) {
   labelNode.className = "trace-label";
   labelNode.textContent = label;
   const valueNode = document.createElement(options.code ? "code" : "div");
-  valueNode.className = options.code ? "trace-value trace-json" : "trace-value";
+  valueNode.className = options.code ? "trace-value trace-json" : options.compact ? "trace-value trace-compact" : "trace-value";
   valueNode.textContent = value || "none";
   row.append(labelNode, valueNode);
   dom.brainTrace.appendChild(row);
@@ -2225,7 +2266,13 @@ async function copyBrainTrace() {
 function brainTraceCopyText(agent) {
   const trace = agent?.lastTrace;
   if (!trace) return "Brain Trace: waiting for first action";
+  const history = Array.isArray(agent?.traceHistory) && agent.traceHistory.length ? agent.traceHistory : [trace];
+  return history.map((item, index) => traceCopyBlock(item, index + 1, history.length)).join("\n\n---\n\n");
+}
+
+function traceCopyBlock(trace, index, total) {
   return [
+    `turn: ${index}/${total}`,
     `when: ${trace.at} / ${trace.policy}`,
     `brain: ${trace.brain}`,
     `text: ${trace.text}`,

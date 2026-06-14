@@ -5,7 +5,10 @@ from unittest.mock import patch
 
 from src.modal_omni_policy import coerce_modal_command_action, should_send_modal_image
 from src.model_policy import model_status
-from src.pet_actions import fallback_policy
+from src.pet_actions import action_schema, fallback_policy
+from src.pet_payload import compact_payload, target_ids_from_payload
+from src.pet_profiles import PET_PROFILES
+from src.vision_action_policy import vision_action_user_prompt
 
 
 def fireboy_payload(message: str) -> dict:
@@ -151,6 +154,27 @@ class FireBoyCommandPolicyTest(unittest.TestCase):
         with patch.dict("os.environ", {"TOYBOX_MODAL_OMNI_SEND_IMAGE": "auto"}, clear=False):
             self.assertFalse(should_send_modal_image(fireboy_payload("Fire Boy, walk around")))
             self.assertTrue(should_send_modal_image(fireboy_payload("Fire Boy, what do you see?")))
+
+    def test_minicpm_v_action_prompt_stays_compact(self) -> None:
+        payload = fireboy_payload("Fire Boy, pick up the blue box")
+        payload["scene"]["objects"] = [
+            {
+                **payload["scene"]["objects"][index % 2],
+                "id": f"toy-{index}",
+                "name": f"toy block {index}",
+                "distanceToPet": 0.8 + index * 0.08,
+            }
+            for index in range(24)
+        ]
+        prompt_payload = compact_payload(payload)
+        schema = action_schema(PET_PROFILES["fire_boy"], target_ids_from_payload(payload))
+
+        prompt = vision_action_user_prompt(prompt_payload, schema)
+
+        self.assertLess(len(prompt), 7000)
+        self.assertIn("Action contract", prompt)
+        self.assertIn("detectedObjects", prompt)
+        self.assertNotIn("Action schema", prompt)
 
 
 if __name__ == "__main__":

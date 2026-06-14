@@ -65,10 +65,38 @@ def try_vision_action_policy(
     started = time.perf_counter()
 
     try:
+        image_error: Exception | None = None
         if native_endpoint and endpoint.rstrip("/").endswith("/api/chat"):
-            content, usage = post_ollama_vision_action(httpx, native_endpoint, model, prompt_payload, schema, camera_frame)
-            mode = "ollama"
             provider = "ollama"
+            try:
+                content, usage = post_ollama_vision_action(
+                    httpx,
+                    native_endpoint,
+                    model,
+                    prompt_payload,
+                    schema,
+                    camera_frame,
+                )
+                mode = "ollama_vision"
+            except Exception as exc:
+                image_error = exc
+                if os.getenv("TOYBOX_OLLAMA_VISION_TEXT_RETRY", "1").lower() in {"0", "false", "no"}:
+                    raise
+                content, usage = post_ollama_vision_action(
+                    httpx,
+                    native_endpoint,
+                    model,
+                    prompt_payload,
+                    schema,
+                    None,
+                )
+                mode = "ollama_text_retry"
+                usage = dict(usage or {})
+                usage["visionImageRejected"] = True
+                usage["visionImageError"] = str(exc)[:500]
+                usage["visionImageBytes"] = len(camera_frame.encode("utf-8"))
+                usage["stateUpdatesRequested"] = 1
+                usage["functionCalls"] = 1
         else:
             content, usage = post_openai_vision_action(httpx, endpoint, model, prompt_payload, schema, camera_frame)
             mode = endpoint_mode(endpoint)
@@ -79,6 +107,10 @@ def try_vision_action_policy(
         debugged.setdefault("debug", {})["policy"] = "minicpm_v_action"
         debugged["debug"]["visionAction"] = True
         debugged["debug"]["visionMode"] = mode
+        if image_error:
+            debugged["debug"]["visionImageRejected"] = True
+            debugged["debug"]["visionImageError"] = str(image_error)[:500]
+            debugged["debug"]["visionImageBytes"] = len(camera_frame.encode("utf-8"))
         _LAST_VISION_ACTION_ERROR.clear()
         return debugged
     except Exception as exc:
@@ -144,8 +176,7 @@ def post_openai_vision_action(
         headers=auth_headers(endpoint, "TOYBOX_VISION"),
         timeout=float(os.getenv("TOYBOX_VISION_ACTION_TIMEOUT", os.getenv("TOYBOX_VISION_TIMEOUT", "24"))),
     )
-    response.raise_for_status()
-    data = response.json()
+    data = response_json_or_error(response, "Vision endpoint")
     return data["choices"][0]["message"]["content"], data.get("usage") if isinstance(data, dict) else None
 
 
@@ -155,33 +186,34 @@ def post_ollama_vision_action(
     model: str,
     prompt_payload: dict[str, Any],
     schema: dict[str, Any],
-    camera_frame: str,
+    camera_frame: str | None,
 ) -> tuple[str, dict[str, Any] | None]:
+    user_message: dict[str, Any] = {
+        "role": "user",
+        "content": vision_action_user_prompt(prompt_payload, schema, has_image=bool(camera_frame)),
+    }
+    if camera_frame:
+        user_message["images"] = [image_base64(camera_frame)]
     response = httpx.post(
         endpoint,
         json={
             "model": model,
             "messages": [
                 {"role": "system", "content": vision_action_system_prompt()},
-                {
-                    "role": "user",
-                    "content": vision_action_user_prompt(prompt_payload, schema),
-                    "images": [image_base64(camera_frame)],
-                },
+                user_message,
             ],
             "format": "json",
             "think": False,
             "options": {
                 "temperature": float(os.getenv("TOYBOX_VISION_ACTION_TEMPERATURE", "0.2")),
-                "num_ctx": int(os.getenv("TOYBOX_VISION_NUM_CTX", "4096")),
+                "num_ctx": int(os.getenv("TOYBOX_VISION_NUM_CTX", "8192")),
                 "num_predict": int(os.getenv("TOYBOX_VISION_ACTION_MAX_TOKENS", "900")),
             },
             "stream": False,
         },
         timeout=float(os.getenv("TOYBOX_VISION_ACTION_TIMEOUT", os.getenv("TOYBOX_VISION_TIMEOUT", "24"))),
     )
-    response.raise_for_status()
-    data = response.json()
+    data = response_json_or_error(response, "Ollama")
     eval_count = data.get("eval_count")
     eval_duration = data.get("eval_duration")
     usage = {
@@ -194,6 +226,15 @@ def post_ollama_vision_action(
     return data["message"]["content"], usage
 
 
+def response_json_or_error(response: Any, label: str) -> dict[str, Any]:
+    if int(getattr(response, "status_code", 200)) >= 400:
+        body = str(getattr(response, "text", "") or "").replace("\n", " ").strip()
+        if not body:
+            body = getattr(response, "reason_phrase", "") or "empty response body"
+        raise RuntimeError(f"{label} HTTP {response.status_code}: {body[:800]}")
+    return response.json()
+
+
 def vision_action_system_prompt() -> str:
     return (
         "You are MiniCPM-V controlling a tiny embodied virtual pet. "
@@ -202,14 +243,90 @@ def vision_action_system_prompt() -> str:
     )
 
 
-def vision_action_user_prompt(prompt_payload: dict[str, Any], schema: dict[str, Any]) -> str:
+def vision_action_user_prompt(prompt_payload: dict[str, Any], schema: dict[str, Any], has_image: bool = True) -> str:
+    perception_line = (
+        "Use the attached pet camera image plus the scene payload."
+        if has_image
+        else "The image payload was rejected by the local runtime; use detectedObjects, objects, arrangements, audio, and forces from the scene payload as Fire Boy's current view."
+    )
     return "\n".join(
         [
             "Decide the next action for the pet.",
+            perception_line,
             "If the player says walk around, use interaction verb walk. If they say run around, use verb run. For pick up, carry, bring, inspect, talk, or fireball, choose the matching interaction/power.",
             "Use real object ids from the scene. Keep actions safe and visible.",
-            "Return JSON matching this schema. Required top-level keys: pet, speech, emotion, animation, intent, blendshape, power, interaction, spell, newMemory, objectRecipe, sound, soundRecipe.",
-            f"Action schema: {json.dumps(schema, ensure_ascii=True)[:6500]}",
-            f"Scene payload: {json.dumps(prompt_payload, ensure_ascii=True)[:9000]}",
+            "Return one compact JSON object only. Use null for newMemory, objectRecipe, and soundRecipe when unused.",
+            f"Action contract: {json.dumps(compact_action_contract(schema), ensure_ascii=True)}",
+            f"Required shape: {json.dumps(action_shape_example(), ensure_ascii=True)}",
+            f"Scene payload: {json.dumps(vision_prompt_payload(prompt_payload), ensure_ascii=True)[:4200]}",
         ]
     )
+
+
+def action_shape_example() -> dict[str, Any]:
+    return {
+        "pet": "fire_boy",
+        "speech": "baby voice",
+        "emotion": "happy",
+        "animation": "walk",
+        "intent": "short",
+        "blendshape": {},
+        "power": {"name": "ember_jump", "targetId": "cube-red", "strength": 0.5, "durationMs": 900},
+        "interaction": {"verb": "pickup", "targetId": "cube-red", "partnerPet": "", "durationMs": 2600},
+        "spell": {
+            "spellName": "warm pickup",
+            "ops": [{"op": "spawn_particle", "targetId": "cube-red", "durationMs": 800, "color": "#ff9b45"}],
+        },
+        "newMemory": None,
+        "objectRecipe": None,
+        "sound": "happy_chirp",
+        "soundRecipe": None,
+    }
+
+
+def vision_prompt_payload(prompt_payload: dict[str, Any]) -> dict[str, Any]:
+    return {
+        "pet": prompt_payload.get("pet"),
+        "user_message": prompt_payload.get("user_message"),
+        "cameraFrameSource": prompt_payload.get("cameraFrameSource"),
+        "detectedObjects": (prompt_payload.get("detectedObjects") or [])[:8],
+        "objects": (prompt_payload.get("objects") or [])[:10],
+        "arrangements": (prompt_payload.get("arrangements") or [])[:3],
+        "interactions": (prompt_payload.get("interactions") or [])[-4:],
+        "recentForces": (prompt_payload.get("recentForces") or [])[-4:],
+        "memories": (prompt_payload.get("memories") or [])[:4],
+        "vision": prompt_payload.get("vision") or {},
+        "audio": prompt_payload.get("audio") or {},
+        "needs": prompt_payload.get("needs") or {},
+        "balance": prompt_payload.get("balance") or {},
+    }
+
+
+def compact_action_contract(schema: dict[str, Any]) -> dict[str, Any]:
+    properties = schema.get("properties") if isinstance(schema.get("properties"), dict) else {}
+    interaction = properties.get("interaction") if isinstance(properties.get("interaction"), dict) else {}
+    interaction_props = interaction.get("properties") if isinstance(interaction.get("properties"), dict) else {}
+    power = properties.get("power") if isinstance(properties.get("power"), dict) else {}
+    power_props = power.get("properties") if isinstance(power.get("properties"), dict) else {}
+    spell = properties.get("spell") if isinstance(properties.get("spell"), dict) else {}
+    spell_props = spell.get("properties") if isinstance(spell.get("properties"), dict) else {}
+    ops = spell_props.get("ops") if isinstance(spell_props.get("ops"), dict) else {}
+    op_items = ops.get("items") if isinstance(ops.get("items"), dict) else {}
+    op_props = op_items.get("properties") if isinstance(op_items.get("properties"), dict) else {}
+    return {
+        "pets": enum_values(properties.get("pet")),
+        "emotions": enum_values(properties.get("emotion")),
+        "animations": enum_values(properties.get("animation")),
+        "powerNames": enum_values(power_props.get("name")),
+        "interactionVerbs": enum_values(interaction_props.get("verb")),
+        "targetIds": enum_values(interaction_props.get("targetId")),
+        "spellOps": enum_values(op_props.get("op")),
+        "sounds": enum_values(properties.get("sound")),
+        "numbers": "strength 0.1-1.5, durations in ms",
+    }
+
+
+def enum_values(value: Any, limit: int = 32) -> list[str]:
+    if not isinstance(value, dict) or not isinstance(value.get("enum"), list):
+        return []
+    return [str(item) for item in value["enum"][:limit]]
