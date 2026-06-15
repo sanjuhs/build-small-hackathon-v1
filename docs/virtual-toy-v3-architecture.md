@@ -4,14 +4,20 @@ Toy Room v3 is the small, shippable cut of Tiny Toybox: one controllable Fire Bo
 
 ## Current Runtime Truth
 
-As of this build, Toy Room v3 is wired to the deployed Modal MiniCPM-o gateway:
+As of this build, Toy Room v3 is wired to a MiniCPM-V-first embodied action route:
 
-- `/api/model-status` reports `provider: modal`, `mode: modal-omni-websocket`, and `model: openbmb/MiniCPM-o-4_5`.
+- `/api/model-status` includes a nested `vlaRouter` object for `https://sanjuhs123--fireboy-vla-router.modal.run`; that route uses `openbmb/MiniCPM-V-4.6`.
+- The top-level Modal/MiniCPM-o status describes the fallback/general PET lane, not the first embodied VLA path.
 - Toy Room v3 sends one `/api/pet-action` request per typed/spoken command or explicit quick button.
-- `src/modal_omni_policy.py` opens one Modal `/ws/chat` turn, sends compact scene JSON plus the pet camera frame, and validates the streamed MiniCPM-o JSON into the PET action contract.
+- `app.py` intentionally evaluates `run_vla_router_pet_action(payload) or run_mujoco_pet_action(payload) or choose_pet_action(payload)`.
+- `src/vla_router_policy.py` sends command, scene, robot state, and optional camera frame to the Modal MiniCPM-V router. The router returns a skill/parameter contract, and the backend dispatches it through the MuJoCo policy registry.
+- `src/modal_omni_policy.py` opens one Modal `/ws/chat` turn only for fallback/general PET commands, sends compact scene JSON plus optional camera frame, and validates streamed MiniCPM-o JSON into the same PET action contract.
 - v3 does not run page-load greetings or ambient autoplay model calls; it waits for direct player commands.
 
-Verified local browser command: "Fire Boy, walk around the toy room" produced `interaction: walk`, `speech: "Me walky loop."`, `promptTokens: 1638`, `completionTokens: 9`, `tokensPerSecond: 2.35`, and `clientRoundTripMs: 3880.4`.
+Verified Space API commands:
+
+- `eat berry` routes to `openbmb/MiniCPM-V-4.6`, `skill=find_and_eat_berry`, `dispatch=registry:find_and_eat_berry`, and returns a MuJoCo policy proof with `grasped=true` and `eaten=true`.
+- `pick up the ball` routes to `skill=pick_up`, `dispatch=registry:pick_up`, and returns a MuJoCo policy proof with `grasped=true`.
 
 ## Product Loop
 
@@ -20,11 +26,15 @@ flowchart LR
   User["Player command or touch"] --> Browser["Toy Room v3 browser UI"]
   Browser --> Snapshot["Scene snapshot\nobjects, forces, pet state, camera frame"]
   Snapshot --> API["POST /api/pet-action"]
-  API --> Policy{"Brain available?"}
+  API --> VLA["Modal fireboy-vla-router\nMiniCPM-V 4.6"]
+  VLA --> Skill["skill + target params"]
+  Skill --> Physics["MuJoCo policy registry\nretarget bridge"]
+  API --> Policy{"Fallback needed?"}
   Policy -->|Modal configured| Modal["Modal /ws/chat\nMiniCPM-o 4.5"]
   Policy -->|LLM endpoint configured| LLM["OpenAI-compatible PET LLM\nMiniCPM5, OpenAI, HF, RunPod"]
   Policy -->|no endpoint| Trace["Trace retrieval"]
   Trace --> Heuristic["Heuristic command policy"]
+  Physics --> Action["PET action JSON"]
   Modal --> Action["PET action JSON"]
   LLM --> Action["PET action JSON"]
   Heuristic --> Action
@@ -160,42 +170,27 @@ The current server is not configured with either path, so the runtime chip corre
 
 ## Modal Status
 
-The existing Modal app is `minicpm-omni-45`, serving `openbmb/MiniCPM-o-4_5` through the official MiniCPM-o demo stack.
+Toy Room v3 uses two Modal apps:
 
-This is a real Modal runtime component for the submission:
+- `fireboy-vla-router` serves the live MiniCPM-V 4.6 VLA route. It loads `openbmb/MiniCPM-V-4.6`, uses the trained skill/parameter head, returns `walk_to`, `run_around`, `pick_up`, or `find_and_eat_berry`, and dispatches into MuJoCo policy proofs.
+- `minicpm-omni-45` serves the MiniCPM-o 4.5 fallback/general PET route. It wraps the official MiniCPM-o demo stack and adapts `/ws/chat` output into the same PET action JSON schema.
 
-- The app is deployed as `minicpm-omni-45`.
-- It uses an `L40S` GPU container.
-- It stores downloaded model weights in the Modal Volume `minicpm-omni-cache`.
-- It uses the Modal Secret `huggingface-token` for Hugging Face model access.
-- The public Modal endpoint is `https://sanjuhs123--minicpm-omni-demo.modal.run`.
+Both are real Modal runtime components for the submission:
 
-The current limitation is contract shape, not model availability. The Modal app is valuable, but it is not a direct plug-in for Toy Room v3 yet:
-
-- It exposes the official demo gateway/worker flow.
-- It is intended for multimodal demo traffic and WebSocket/browser use.
-- Toy Room v3 expects either:
-  - a PET action JSON endpoint, or
-  - an OpenAI-compatible `/chat/completions` endpoint for text/vision calls.
+- The public VLA endpoint is `https://sanjuhs123--fireboy-vla-router.modal.run`.
+- The public MiniCPM-o endpoint is `https://sanjuhs123--minicpm-omni-demo.modal.run`.
+- Both workers use GPU-backed Modal deployments and 180-second scale-down windows for judge-facing reliability.
 
 ```mermaid
 flowchart LR
-  Modal["Modal MiniCPM-o demo\nminicpm-omni-45"] --> DemoAPI["Official gateway + worker"]
-  ToyRoom["Toy Room v3"] --> Required["Required contract:\nJSON action or chat/completions"]
-  DemoAPI -. adapter needed .-> Required
-  Required --> ToyRoom
+  ToyRoom["Toy Room v3"] --> API["/api/pet-action"]
+  API --> VLA["fireboy-vla-router\nMiniCPM-V 4.6"]
+  VLA --> MuJoCo["MuJoCo policy registry"]
+  MuJoCo --> Action["PET action JSON"]
+  API --> Omni["minicpm-omni-45\nMiniCPM-o 4.5 fallback"]
+  Omni --> Action
+  Action --> ToyRoom
 ```
-
-The clean next step is a thin Modal adapter:
-
-1. Accept Toy Room's compact action payload.
-2. Convert it into a MiniCPM-o/MiniCPM-V prompt.
-3. Force JSON output that matches `action_schema`.
-4. Return the exact PET action JSON.
-
-Until that adapter exists, the Modal demo should be listed as a supporting experiment, not the live Toy Room brain.
-
-For prize/readme purposes, Modal is still being used: it hosts the heavier MiniCPM-o multimodal runtime while Toy Room v3 uses a reliable action contract that can later point at a Modal JSON adapter.
 
 ## Timing And Function Calls
 

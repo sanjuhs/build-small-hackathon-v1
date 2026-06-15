@@ -73,15 +73,25 @@ https://build-small-hackathon-toy-room-v3.hf.space/toy-v3
 
 ## Space Variables
 
-For the Modal MiniCPM-o v3 demo:
+For the Modal MiniCPM-V v3 embodied VLA route:
+
+```bash
+TOYBOX_VLA_ROUTER_ACTION=1
+TOYBOX_VLA_ROUTER_URL=https://sanjuhs123--fireboy-vla-router.modal.run
+TOYBOX_VLA_ROUTER_TIMEOUT=180
+TOYBOX_VLA_ROUTER_HEALTH_TIMEOUT=30
+```
+
+For the Modal MiniCPM-o fallback/general PET route:
 
 ```bash
 TOYBOX_MODAL_OMNI_ACTION=1
 TOYBOX_MODAL_OMNI_URL=https://sanjuhs123--minicpm-omni-demo.modal.run
 TOYBOX_MODAL_OMNI_MODEL=openbmb/MiniCPM-o-4_5
 TOYBOX_MODAL_OMNI_SEND_IMAGE=auto
-TOYBOX_MODAL_OMNI_CONNECT_TIMEOUT=45
-TOYBOX_MODAL_OMNI_TIMEOUT=120
+TOYBOX_MODAL_OMNI_CONNECT_TIMEOUT=180
+TOYBOX_MODAL_OMNI_WARMUP_TIMEOUT=180
+TOYBOX_MODAL_OMNI_TIMEOUT=180
 TOYBOX_MODAL_OMNI_WARMUP=1
 TOYBOX_TRACE_POLICY=0
 ```
@@ -106,24 +116,30 @@ Never commit these secrets. Put real values in Hugging Face Space secrets.
 
 ## Modal Notes
 
-The current Modal deployment is:
+The current Modal deployments are:
 
 ```text
+fireboy-vla-router
+https://sanjuhs123--fireboy-vla-router.modal.run
+
 minicpm-omni-45
 https://sanjuhs123--minicpm-omni-demo.modal.run
 ```
 
-It is the official MiniCPM-o 4.5 demo running on Modal. Modal logs confirm the worker loads `openbmb/MiniCPM-o-4_5`, places the LLM, vision, audio, and TTS components on `cuda:0`, and serves a healthy gateway after cold start.
+`fireboy-vla-router` is the judge-facing embodied route. It loads `openbmb/MiniCPM-V-4.6`, uses the frozen MiniCPM-V embedding with the trained skill/parameter head, and returns a bounded skill contract for MuJoCo/retargeted Fire Boy actions.
 
-This qualifies the project for Modal usage because Modal is used as the live multimodal MiniCPM runtime for Toy Room v3. `src/modal_omni_policy.py` adapts the Modal `/ws/chat` stream into validated PET action JSON, so typed/spoken commands directly drive Fire Boy's animation, speech, powers, and toy interactions.
+`minicpm-omni-45` is the official MiniCPM-o 4.5 demo running on Modal and remains the fallback/general PET JSON lane. This qualifies the project for Modal usage because Modal is used for the live MiniCPM-V VLA router and the MiniCPM-o fallback runtime.
 
 Useful Modal commands:
 
 ```bash
 modal app list
 modal container list --json
+modal app logs fireboy-vla-router --since 15m
+curl --max-time 45 https://sanjuhs123--fireboy-vla-router.modal.run/health
 modal app logs minicpm-omni-45 --since 15m
 curl --max-time 45 https://sanjuhs123--minicpm-omni-demo.modal.run/health
+modal deploy fireboy-vla-physics/modal_vla_router.py
 modal deploy modal-minicpm-omni/modal_minicpm_omni.py
 ```
 

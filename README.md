@@ -4,6 +4,7 @@ sdk: docker
 app_port: 7860
 pinned: false
 short_description: Fire Boy MiniCPM virtual pet toy room.
+license: mit
 tags:
   - build-small-hackathon
   - thousand-token-wood
@@ -38,6 +39,8 @@ Hosted Space:
 - v3 target: `https://build-small-hackathon-toy-room-v3.hf.space/toy-v3`
 - VLA research artifact: `https://build-small-hackathon-toy-room-v3.hf.space/vla-research`
 - in-depth policy evidence: `https://build-small-hackathon-toy-room-v3.hf.space/fireboy-policy-gallery`
+- MiniCPM-V VLA model artifacts: `https://huggingface.co/build-small-hackathon/fireboy-minicpm-v-4-6-vla`
+- rollout/media artifact dataset: `https://huggingface.co/datasets/build-small-hackathon/fireboy-vla-rollout-artifacts`
 - previous v2 build: `https://build-small-hackathon-toy-room-v2.hf.space/toy-v2`
 - demo video: [`demo/fire-boy-v3-demo.mp4`](demo/fire-boy-v3-demo.mp4)
 - demo thumbnail: [`demo/fire-boy-v3-demo-thumbnail.png`](demo/fire-boy-v3-demo-thumbnail.png)
@@ -307,7 +310,7 @@ uv run python scripts/check_pet_llm.py
 
 Toy Room v3 also has a topbar brain selector:
 
-- `Modal` sends `brainMode=modal` and uses the configured Modal MiniCPM-o gateway.
+- `Modal` sends `brainMode=modal`; the backend tries the configured Modal MiniCPM-V VLA router first, then uses the Modal MiniCPM-o gateway as fallback/general PET JSON.
 - `Ollama V` sends `brainMode=ollama-vision` and uses local Ollama `minicpm-v4.6` as the direct vision-action brain.
 - `Ollama 1B` sends `brainMode=ollama-text` and uses local Ollama `hf.co/openbmb/MiniCPM5-1B-GGUF:Q4_K_M` as a text-only action brain.
 
@@ -357,9 +360,18 @@ For a RunPod MiniCPM-V visual cortex, set `TOYBOX_VISION_ENDPOINT` and `TOYBOX_V
 
 If no endpoint is configured, the public build uses a deterministic heuristic fallback so the game stays playable. If an endpoint is configured but unavailable, the pet enters visible asleep/model-off mode by default. Set `TOYBOX_ALLOW_HEURISTIC_FALLBACK=1` only for local debugging when you want heuristic behavior even after a model endpoint fails.
 
-The current OpenBMB/MiniCPM path is local-first through Ollama because the public HF router metadata did not expose provider-backed OpenBMB MiniCPM chat models during this build. The game still uses the same action JSON contract, so a hosted MiniCPM endpoint can be connected by setting `TOYBOX_LLM_ENDPOINT`, `TOYBOX_LLM_MODEL`, and a secret token.
+The shipped OpenBMB/MiniCPM path is the Modal-hosted MiniCPM-V 4.6 VLA router. Local Ollama MiniCPM-V and MiniCPM5 routes remain useful for development, but the public Space's embodied skills use `fireboy-vla-router` first when `TOYBOX_VLA_ROUTER_ACTION=1`.
 
-Use Modal MiniCPM-o as the Toy Room v3 brain:
+Use Modal MiniCPM-V 4.6 as the Toy Room v3 embodied VLA brain:
+
+```bash
+export TOYBOX_VLA_ROUTER_ACTION=1
+export TOYBOX_VLA_ROUTER_URL=https://sanjuhs123--fireboy-vla-router.modal.run
+export TOYBOX_VLA_ROUTER_TIMEOUT=180
+export TOYBOX_VLA_ROUTER_HEALTH_TIMEOUT=30
+```
+
+Keep Modal MiniCPM-o as the general/fallback PET lane:
 
 ```bash
 export TOYBOX_MODAL_OMNI_ACTION=1
@@ -378,11 +390,13 @@ The state machine is intentionally one-turn and visible:
 stateDiagram-v2
     [*] --> Idle
     Idle --> Capturing: player types or speaks
-    Capturing --> ModalTurn: POST /api/pet-action
-    ModalTurn --> ValidateAction: Modal /ws/chat streams JSON
-    ValidateAction --> ApplyAction: validate and command-guard PET JSON
-    ApplyAction --> Idle: animation, speech, power, pickup, or movement
-    ModalTurn --> ModelUnavailable: Modal unreachable and fallback disabled
+    Capturing --> VLA: POST /api/pet-action
+    VLA --> Mujoco: MiniCPM-V skill and parameters
+    Mujoco --> ApplyAction: policy rollout and retargeted PET JSON
+    VLA --> OmniFallback: router unavailable or social command
+    OmniFallback --> ApplyAction: Modal MiniCPM-o PET JSON
+    ApplyAction --> Idle: animation, speech, power, pickup, berry eating, or movement
+    OmniFallback --> ModelUnavailable: Modal unreachable and fallback disabled
     ModelUnavailable --> Idle: visible sleepy model-off state
 ```
 
@@ -391,20 +405,27 @@ sequenceDiagram
     participant Player
     participant Browser as Toy Room v3
     participant API as FastAPI /api/pet-action
-    participant Modal as Modal MiniCPM-o /ws/chat
-    Player->>Browser: "Fire Boy, walk around"
+    participant VLA as Modal MiniCPM-V router
+    participant MuJoCo as MuJoCo policy registry
+    participant Omni as Modal MiniCPM-o fallback
+    Player->>Browser: "Fire Boy, eat berry"
     Browser->>API: command + scene JSON + pet camera frame
-    API->>Modal: one streaming MiniCPM-o turn
-    Modal-->>API: JSON action + token counts
+    API->>VLA: /route with command, scene, robot_state, optional frame
+    VLA-->>API: skill=find_and_eat_berry + target params
+    API->>MuJoCo: dispatch registry policy
+    MuJoCo-->>API: proof rollout + retarget trajectory
     API-->>Browser: validated PET action
-    Browser->>Browser: play walk rig clip, speech, particles
+    Browser->>Browser: walk, pick berry, eat, play speech and effects
+    API->>Omni: only if VLA does not apply or is unavailable
 ```
 
-Check Modal remote execution and the deployed MiniCPM-o app:
+Check Modal remote execution and the deployed MiniCPM apps:
 
 ```bash
 uv run --with modal modal run scripts/modal_square_smoke.py
 modal app list
+modal app logs fireboy-vla-router
+curl https://sanjuhs123--fireboy-vla-router.modal.run/health
 modal app logs minicpm-omni-45
 curl https://sanjuhs123--minicpm-omni-demo.modal.run/health
 ```
@@ -451,7 +472,8 @@ Action traces are written to `data/traces/pet-actions.jsonl` by default. These b
 ## Code Shape
 
 - `src/pet_policy.py` is the small orchestration layer.
-- `src/modal_omni_policy.py` is the Modal MiniCPM-o WebSocket action brain for Toy Room v3.
+- `src/vla_router_policy.py` is the MiniCPM-V 4.6 VLA-first embodied action lane for Toy Room v3.
+- `src/modal_omni_policy.py` is the Modal MiniCPM-o WebSocket fallback/general PET lane for Toy Room v3.
 - `src/model_policy.py` talks to text/PET-LLM endpoints.
 - `src/vision_policy.py` talks to MiniCPM-V-style image endpoints.
 - `src/pet_actions.py` validates actions, face blendshapes, powers, and fallback behavior.
