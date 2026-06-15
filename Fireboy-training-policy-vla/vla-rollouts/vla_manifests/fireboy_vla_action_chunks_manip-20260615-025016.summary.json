@@ -1,0 +1,13 @@
+{
+  "run_id": "manip-20260615-025016",
+  "dataset": "/Users/sanju/Desktop/coding/hackathons/build-small-hackathon-v1/Fireboy-training-policy-vla/vla-rollouts/datasets/fireboy_vla_images_manip-20260615-025016",
+  "manifest": "/Users/sanju/Desktop/coding/hackathons/build-small-hackathon-v1/Fireboy-training-policy-vla/vla-rollouts/vla_manifests/fireboy_vla_action_chunks_manip-20260615-025016.jsonl",
+  "episodes": 144,
+  "images": 6192,
+  "manifest_rows": 6192,
+  "num_episodes_per_task": 72,
+  "tasks": "pick_up,go_eat_berry",
+  "image_stride": 5,
+  "manifest_stride": 5,
+  "chunk_steps": 10
+}

@@ -158,7 +158,31 @@ export function updatePet(pet, now, dt) {
   if (pet.parts.tail) pet.parts.tail.rotation.y = Math.sin(now * 0.004) * 0.16 + (actionActive ? Math.sin(now * 0.018) * 0.16 : 0);
   if (pet.parts.ukulele) pet.parts.ukulele.rotation.z = -0.72 + Math.sin(now * 0.004) * 0.025;
   updateWalkCycle(pet, now, dt, locomotionActive, pet.animation === "run");
-  updateGestureCycle(pet, now, dt, actionActive && ["turn", "look", "point", "reach", "release"].includes(pet.animation), pet.animation);
+  updateGestureCycle(
+    pet,
+    now,
+    dt,
+    actionActive && [
+      "listen",
+      "think",
+      "nod",
+      "shake",
+      "confused",
+      "turn",
+      "look",
+      "search",
+      "point",
+      "reach",
+      "hold",
+      "place",
+      "release",
+      "push",
+      "kick",
+      "cast",
+      "recover",
+    ].includes(pet.animation),
+    pet.animation,
+  );
 
   if (actionActive && pet.animation?.includes("spin")) pet.group.rotation.y += dt * 4.4;
   else if (actionActive && (pet.animation?.includes("wiggle") || pet.animation?.includes("sway"))) pet.group.rotation.y = pet.facingYaw + balanceTilt.y + Math.sin(now * 0.02) * 0.16;
@@ -203,8 +227,8 @@ function updateGestureCycle(pet, now, dt, active, animation) {
   if (!active) {
     resetGesturePart(pet.parts.head, { rx: 0, ry: 0 });
     resetGesturePart(pet.parts.face?.mesh, { rx: 0, ry: 0 });
-    resetGesturePart(pet.parts.leftArm, { x: leftArmBase.x, y: leftArmBase.y, z: leftArmBase.z, ry: 0, rz: 0 }, alpha);
-    resetGesturePart(pet.parts.rightArm, { x: rightArmBase.x, y: rightArmBase.y, z: rightArmBase.z, ry: 0, rz: 0 }, alpha);
+    resetGesturePart(pet.parts.leftArm, { x: leftArmBase.x, y: leftArmBase.y, z: leftArmBase.z, rx: 0, ry: 0, rz: 0 }, alpha);
+    resetGesturePart(pet.parts.rightArm, { x: rightArmBase.x, y: rightArmBase.y, z: rightArmBase.z, rx: 0, ry: 0, rz: 0 }, alpha);
     resetGesturePart(pet.parts.leftFoot, { x: leftFootBase.x }, alpha);
     resetGesturePart(pet.parts.rightFoot, { x: rightFootBase.x }, alpha);
     if (pet.parts.body) {
@@ -220,16 +244,66 @@ function updateGestureCycle(pet, now, dt, active, animation) {
     poseHead(pet, -0.08 + bob * 0.018, pulse * 0.08, alpha);
     poseArm(pet.parts.leftArm, leftArmBase, { rx: -0.16, ry: -0.12, rz: 0.18 }, alpha);
     poseArm(pet.parts.rightArm, rightArmBase, { rx: -0.16, ry: 0.12, rz: -0.18 }, alpha);
+  } else if (animation === "listen" || animation === "think") {
+    const focus = animation === "think" ? 0.16 : 0.08;
+    poseHead(pet, -0.06 + bob * 0.012, pulse * focus, alpha);
+    poseArm(pet.parts.leftArm, { x: -0.48, y: 0.82, z: 0.5 }, { rx: -0.28, ry: -0.06, rz: 0.18 }, alpha);
+    poseArm(pet.parts.rightArm, { x: 0.48, y: 0.82, z: 0.5 }, { rx: -0.28, ry: 0.06, rz: -0.18 }, alpha);
+    if (pet.parts.body) pet.parts.body.rotation.x = THREE.MathUtils.lerp(pet.parts.body.rotation.x, -0.035, 0.12);
+  } else if (animation === "nod") {
+    poseHead(pet, -0.16 + Math.sin(now * 0.026) * 0.18, 0, alpha);
+    poseArm(pet.parts.leftArm, leftArmBase, { rx: -0.12, ry: 0, rz: 0.16 }, alpha);
+    poseArm(pet.parts.rightArm, rightArmBase, { rx: -0.12, ry: 0, rz: -0.16 }, alpha);
+  } else if (animation === "shake" || animation === "confused") {
+    const shake = Math.sin(now * (animation === "confused" ? 0.016 : 0.03));
+    poseHead(pet, animation === "confused" ? -0.04 : 0, shake * (animation === "confused" ? 0.22 : 0.32), alpha);
+    poseArm(pet.parts.leftArm, { x: -0.58, y: 0.88, z: 0.42 }, { rx: -0.2, ry: -0.12, rz: 0.62 }, alpha);
+    poseArm(pet.parts.rightArm, { x: 0.58, y: 0.88, z: 0.42 }, { rx: -0.2, ry: 0.12, rz: -0.62 }, alpha);
+    if (pet.parts.body) pet.parts.body.rotation.z = THREE.MathUtils.lerp(pet.parts.body.rotation.z, shake * 0.045, 0.14);
+  } else if (animation === "search") {
+    const scan = Math.sin(now * 0.01);
+    poseHead(pet, -0.04, scan * 0.5, alpha);
+    poseArm(pet.parts.leftArm, leftArmBase, { rx: -0.18, ry: 0.08, rz: 0.18 }, alpha);
+    poseArm(pet.parts.rightArm, { x: 0.54, y: 0.94, z: 0.58 }, { rx: -0.48, ry: -0.12, rz: -0.36 }, alpha);
+    if (pet.parts.body) pet.parts.body.rotation.y = THREE.MathUtils.lerp(pet.parts.body.rotation.y, scan * 0.1, 0.12);
   } else if (animation === "point") {
     poseHead(pet, -0.05, 0.1 + pulse * 0.035, alpha);
     poseArm(pet.parts.rightArm, { x: 0.62, y: 1.0, z: 0.7 }, { rx: -0.86, ry: -0.18, rz: -0.7 }, alpha);
     poseArm(pet.parts.leftArm, { x: -0.46, y: 0.74, z: 0.35 }, { rx: 0.16, ry: -0.08, rz: 0.24 }, alpha);
     if (pet.parts.body) pet.parts.body.rotation.y = THREE.MathUtils.lerp(pet.parts.body.rotation.y, -0.08, 0.16);
-  } else if (animation === "reach" || animation === "release") {
+  } else if (animation === "reach" || animation === "release" || animation === "place") {
     poseHead(pet, -0.1, pulse * 0.04, alpha);
     poseArm(pet.parts.rightArm, { x: 0.54, y: 0.95, z: 0.78 }, { rx: -1.05, ry: -0.1, rz: -0.38 }, alpha);
     poseArm(pet.parts.leftArm, { x: -0.42, y: 0.88, z: 0.58 }, { rx: -0.58, ry: 0.18, rz: 0.34 }, alpha);
     if (pet.parts.body) pet.parts.body.rotation.x = THREE.MathUtils.lerp(pet.parts.body.rotation.x, -0.08, 0.16);
+  } else if (animation === "hold") {
+    poseHead(pet, -0.08, pulse * 0.035, alpha);
+    poseArm(pet.parts.leftArm, { x: -0.34, y: 0.94, z: 0.74 }, { rx: -0.92, ry: 0.2, rz: 0.22 }, alpha);
+    poseArm(pet.parts.rightArm, { x: 0.34, y: 0.94, z: 0.74 }, { rx: -0.92, ry: -0.2, rz: -0.22 }, alpha);
+    if (pet.parts.body) pet.parts.body.rotation.x = THREE.MathUtils.lerp(pet.parts.body.rotation.x, -0.05, 0.16);
+  } else if (animation === "push" || animation === "kick") {
+    const shove = Math.max(0, Math.sin(now * 0.024));
+    poseHead(pet, -0.08, pulse * 0.04, alpha);
+    if (animation === "push") {
+      poseArm(pet.parts.leftArm, { x: -0.34, y: 0.92, z: 0.82 + shove * 0.08 }, { rx: -1.14, ry: 0.14, rz: 0.12 }, alpha);
+      poseArm(pet.parts.rightArm, { x: 0.34, y: 0.92, z: 0.82 + shove * 0.08 }, { rx: -1.14, ry: -0.14, rz: -0.12 }, alpha);
+    } else {
+      poseArm(pet.parts.leftArm, leftArmBase, { rx: -0.14, ry: 0.08, rz: 0.28 }, alpha);
+      poseArm(pet.parts.rightArm, rightArmBase, { rx: 0.1, ry: -0.08, rz: -0.28 }, alpha);
+      if (pet.parts.rightFoot) pet.parts.rightFoot.position.z = THREE.MathUtils.lerp(pet.parts.rightFoot.position.z, 0.48 + shove * 0.2, 0.28);
+      if (pet.parts.rightFoot) pet.parts.rightFoot.position.y = THREE.MathUtils.lerp(pet.parts.rightFoot.position.y, 0.16 + shove * 0.08, 0.28);
+    }
+    if (pet.parts.body) pet.parts.body.rotation.x = THREE.MathUtils.lerp(pet.parts.body.rotation.x, -0.12, 0.18);
+  } else if (animation === "cast") {
+    poseHead(pet, -0.12, pulse * 0.04, alpha);
+    poseArm(pet.parts.leftArm, { x: -0.54, y: 0.92, z: 0.38 }, { rx: -0.22, ry: 0.18, rz: 0.52 }, alpha);
+    poseArm(pet.parts.rightArm, { x: 0.66, y: 1.06, z: 0.72 }, { rx: -1.22, ry: -0.28, rz: -0.82 }, alpha);
+    if (pet.parts.body) pet.parts.body.rotation.y = THREE.MathUtils.lerp(pet.parts.body.rotation.y, -0.12, 0.16);
+  } else if (animation === "recover") {
+    poseHead(pet, -0.02 + bob * 0.015, pulse * 0.04, alpha);
+    poseArm(pet.parts.leftArm, leftArmBase, { rx: -0.1, ry: 0.04, rz: 0.22 }, alpha);
+    poseArm(pet.parts.rightArm, rightArmBase, { rx: -0.1, ry: -0.04, rz: -0.22 }, alpha);
+    if (pet.parts.body) pet.parts.body.rotation.x = THREE.MathUtils.lerp(pet.parts.body.rotation.x, 0.03, 0.12);
   } else if (animation === "turn") {
     poseHead(pet, 0, pulse * 0.14, alpha);
     poseArm(pet.parts.leftArm, leftArmBase, { rx: -0.22, ry: 0.12, rz: 0.34 }, alpha);

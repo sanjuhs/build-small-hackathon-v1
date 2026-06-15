@@ -1,0 +1,71 @@
+{
+  "checkpoint": "/workspace/fireboy-vla-physics/build/checkpoints/fireboy_minicpm_vla_action_head_movement_992/minicpm_vla_action_head.pt",
+  "task": "run_around",
+  "episodes": 3,
+  "successes": 3,
+  "success_rate": 1.0,
+  "replan_interval": 8,
+  "smooth_alpha": 0.0,
+  "reports": [
+    {
+      "episode": 0,
+      "task": "run_around",
+      "success": true,
+      "grasped": false,
+      "eaten": false,
+      "final_berry_pos": [
+        0.3899,
+        -0.0946,
+        0.2946
+      ],
+      "final_root_xy": [
+        0.2828,
+        0.0413
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.3038,
+      "gif_path": "/workspace/fireboy-vla-physics/build/runpod_artifacts/fireboy_minicpm_vla_action_head_movement_992/minicpm_vla_run_around_policy_ep000.gif",
+      "mp4_path": "/workspace/fireboy-vla-physics/build/runpod_artifacts/fireboy_minicpm_vla_action_head_movement_992/minicpm_vla_run_around_policy_ep000.mp4"
+    },
+    {
+      "episode": 1,
+      "task": "run_around",
+      "success": true,
+      "grasped": false,
+      "eaten": false,
+      "final_berry_pos": [
+        0.4022,
+        -0.1129,
+        0.2946
+      ],
+      "final_root_xy": [
+        0.0291,
+        0.0018
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.3134,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 2,
+      "task": "run_around",
+      "success": true,
+      "grasped": false,
+      "eaten": false,
+      "final_berry_pos": [
+        0.413,
+        -0.1085,
+        0.2946
+      ],
+      "final_root_xy": [
+        0.6534,
+        0.3468
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.3146,
+      "gif_path": null,
+      "mp4_path": null
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{"encoded": 25, "total": 992, "cache_hits": 0}
+{"encoded": 50, "total": 992, "cache_hits": 0}
+{"encoded": 75, "total": 992, "cache_hits": 0}
+{"encoded": 100, "total": 992, "cache_hits": 0}
+{"encoded": 125, "total": 992, "cache_hits": 0}
+{"encoded": 150, "total": 992, "cache_hits": 0}
+{"encoded": 175, "total": 992, "cache_hits": 0}
+{"encoded": 200, "total": 992, "cache_hits": 0}
+{"encoded": 225, "total": 992, "cache_hits": 0}
+{"encoded": 250, "total": 992, "cache_hits": 0}
+{"encoded": 275, "total": 992, "cache_hits": 0}
+{"encoded": 300, "total": 992, "cache_hits": 0}
+{"encoded": 325, "total": 992, "cache_hits": 0}
+{"encoded": 350, "total": 992, "cache_hits": 0}
+{"encoded": 375, "total": 992, "cache_hits": 0}
+{"encoded": 400, "total": 992, "cache_hits": 0}
+{"encoded": 425, "total": 992, "cache_hits": 0}
+{"encoded": 450, "total": 992, "cache_hits": 0}
+{"encoded": 475, "total": 992, "cache_hits": 0}
+{"encoded": 500, "total": 992, "cache_hits": 0}
+{"encoded": 525, "total": 992, "cache_hits": 0}
+{"encoded": 550, "total": 992, "cache_hits": 0}
+{"encoded": 575, "total": 992, "cache_hits": 0}
+{"encoded": 600, "total": 992, "cache_hits": 0}
+{"encoded": 625, "total": 992, "cache_hits": 0}
+{"encoded": 650, "total": 992, "cache_hits": 0}
+{"encoded": 675, "total": 992, "cache_hits": 0}
+{"encoded": 700, "total": 992, "cache_hits": 0}
+{"encoded": 725, "total": 992, "cache_hits": 0}
+{"encoded": 750, "total": 992, "cache_hits": 0}
+{"encoded": 775, "total": 992, "cache_hits": 0}
+{"encoded": 800, "total": 992, "cache_hits": 0}
+{"encoded": 825, "total": 992, "cache_hits": 0}
+{"encoded": 850, "total": 992, "cache_hits": 0}
+{"encoded": 875, "total": 992, "cache_hits": 0}
+{"encoded": 900, "total": 992, "cache_hits": 0}
+{"encoded": 925, "total": 992, "cache_hits": 0}
+{"encoded": 950, "total": 992, "cache_hits": 0}
+{"encoded": 975, "total": 992, "cache_hits": 0}
+{
+  "checkpoint": "/workspace/fireboy-vla-physics/build/checkpoints/fireboy_minicpm_vla_action_head_movement_992/minicpm_vla_action_head.pt",
+  "model_id": "openbmb/MiniCPM-V-4.6",
+  "rows": 992,
+  "train_rows": 873,
+  "val_rows": 119,
+  "device": "cuda",
+  "task_filter": [
+    "run_around",
+    "go_to_point"
+  ],
+  "vl_dim": 1024,
+  "state_dim": 27,
+  "output_dim": 320,
+  "chunk_steps": 10,
+  "head_architecture": "state_residual_fusion_v1",
+  "vl_residual_scale": 0.12,
+  "action_std_floor": 0.01,
+  "cache_hits": 0,
+  "losses": [
+    0.0006096899742260575,
+    0.0003035355475731194,
+    0.0002756500616669655,
+    0.00030057146796025336,
+    0.00022972152510192245,
+    0.0002040046820184216,
+    0.00025804570759646595,
+    0.00023361026251222938,
+    0.00018201553029939532,
+    0.00019568169955164194
+  ],
+  "val_losses": [
+    0.12462599575519562,
+    0.12490379065275192,
+    0.12287794053554535,
+    0.125482976436615,
+    0.12383489310741425,
+    0.12455359846353531,
+    0.12471164762973785,
+    0.12376765161752701,
+    0.12333167344331741,
+    0.1239633560180664
+  ]
+}

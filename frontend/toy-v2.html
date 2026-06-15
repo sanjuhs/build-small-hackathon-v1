@@ -307,11 +307,59 @@
       grid-template-rows: auto auto auto auto;
     }
 
-    body[data-toybox-version="v3"] .side-panel .panel-section:nth-child(3),
     body[data-toybox-version="v3"] .side-panel .panel-section:nth-child(4),
     body[data-toybox-version="v3"] .side-panel .panel-section:nth-child(5),
-    body[data-toybox-version="v3"] .side-panel .panel-section:nth-child(8) {
+    body[data-toybox-version="v3"] .side-panel .panel-section:nth-child(6),
+    body[data-toybox-version="v3"] .side-panel .panel-section:nth-child(9) {
       display: none;
+    }
+
+    .room-tool-dock {
+      position: absolute;
+      left: 14px;
+      top: 242px;
+      z-index: 8;
+      padding: 7px;
+      display: grid;
+      gap: 7px;
+      pointer-events: auto;
+    }
+
+    body:not([data-toybox-version="v3"]) .room-tool-dock {
+      display: none;
+    }
+
+    .tool-button {
+      width: 42px;
+      height: 42px;
+      border: 1px solid rgba(23, 33, 33, 0.14);
+      border-radius: 7px;
+      background: rgba(255, 255, 255, 0.74);
+      color: var(--teal);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: background 150ms ease, border-color 150ms ease, transform 150ms ease;
+    }
+
+    .tool-button:hover {
+      border-color: rgba(18, 50, 56, 0.3);
+      background: #fff;
+      transform: translateY(-1px);
+    }
+
+    .tool-button.active {
+      border-color: rgba(94, 156, 98, 0.36);
+      background: rgba(94, 156, 98, 0.18);
+      color: #315c34;
+      box-shadow: 0 8px 18px rgba(18, 50, 56, 0.1);
+    }
+
+    .tool-button.pet-tool.active {
+      border-color: rgba(239, 119, 88, 0.44);
+      background: rgba(239, 119, 88, 0.18);
+      color: #7d321f;
     }
 
     .ability-dock {
@@ -490,6 +538,60 @@
       font-weight: 650;
       line-height: 1.35;
       overflow-wrap: anywhere;
+    }
+
+    .pet-meter-grid {
+      display: grid;
+      gap: 7px;
+    }
+
+    .pet-meter {
+      min-width: 0;
+      display: grid;
+      gap: 4px;
+    }
+
+    .pet-meter-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+      align-items: baseline;
+      color: var(--ink);
+      font-size: 11px;
+      font-weight: 900;
+    }
+
+    .pet-meter-row span:last-child {
+      color: var(--muted);
+      font-size: 10px;
+      font-weight: 850;
+    }
+
+    .pet-meter-track {
+      height: 8px;
+      border-radius: 999px;
+      background: rgba(23, 33, 33, 0.1);
+      overflow: hidden;
+    }
+
+    .pet-meter-fill {
+      height: 100%;
+      width: 50%;
+      border-radius: inherit;
+      background: var(--aqua);
+      transition: width 180ms ease, background 180ms ease;
+    }
+
+    .pet-meter-fill.hunger {
+      background: linear-gradient(90deg, #8c7ac0, #ef7758);
+    }
+
+    .pet-meter-fill.energy {
+      background: linear-gradient(90deg, #f0bc42, #5e9c62);
+    }
+
+    .pet-meter-fill.playfulness {
+      background: linear-gradient(90deg, #66cbd8, #ffcc4f);
     }
 
     .runtime-stack {
@@ -1191,10 +1293,27 @@
 
     <section id="forceDock" class="force-dock glass" aria-label="Active agent force controls"></section>
 
+    <section id="roomToolDock" class="room-tool-dock glass" aria-label="Room tools">
+      <button id="handToolButton" class="tool-button active" type="button" title="Hand mode">
+        <i data-lucide="hand"></i>
+      </button>
+      <button id="foodToolButton" class="tool-button" type="button" title="Food mode: drop grapes">
+        <i data-lucide="grape"></i>
+      </button>
+      <button id="petToolButton" class="tool-button pet-tool" type="button" title="Pet mode: touch, ragdoll, and play with Fire Boy">
+        <i data-lucide="heart"></i>
+      </button>
+    </section>
+
     <aside class="side-panel glass" aria-label="Agent readouts">
       <section class="panel-section">
         <div class="section-title" id="perceptionTitle">Squeaky sees</div>
         <div id="perceptionReadout" class="readout">quiet walls</div>
+      </section>
+
+      <section class="panel-section">
+        <div class="section-title">Pet State</div>
+        <div id="petMeters" class="pet-meter-grid" aria-label="Fire Boy hunger energy and playfulness"></div>
       </section>
 
       <details id="agentLoopAccordion" class="panel-section accordion-section">
@@ -1268,6 +1387,6 @@
     </form>
   </main>
 
-  <script type="module" src="/frontend/toybox/v2_main.js?v=20260614-grounded-gestures"></script>
+  <script type="module" src="/frontend/toybox/v2_main.js?v=20260615-pet-tools5"></script>
 </body>
 </html>

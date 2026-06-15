@@ -1,0 +1,412 @@
+{
+  "checkpoint": "/workspace/fireboy-vla-physics/build/checkpoints/fireboy_articulated_pick_up_chunk/faithful_articulated_chunk_policy.pt",
+  "task": "pick_up",
+  "episodes": 20,
+  "successes": 20,
+  "success_rate": 1.0,
+  "smooth_alpha": 0.0,
+  "replan_interval": 8,
+  "chunk_steps": 16,
+  "reports": [
+    {
+      "episode": 0,
+      "task": "pick_up",
+      "success": true,
+      "grasped": true,
+      "eaten": false,
+      "final_berry_pos": [
+        0.5021,
+        0.1147,
+        0.3759
+      ],
+      "final_root_xy": [
+        0.5057,
+        0.5514
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.2652,
+      "gif_path": "/workspace/fireboy-vla-physics/build/runpod_artifacts/learned_chunk/faithful_chunk_pick_up_policy_ep000.gif",
+      "mp4_path": "/workspace/fireboy-vla-physics/build/runpod_artifacts/learned_chunk/faithful_chunk_pick_up_policy_ep000.mp4"
+    },
+    {
+      "episode": 1,
+      "task": "pick_up",
+      "success": true,
+      "grasped": true,
+      "eaten": false,
+      "final_berry_pos": [
+        0.5022,
+        0.0723,
+        0.3613
+      ],
+      "final_root_xy": [
+        0.4325,
+        0.5232
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.2637,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 2,
+      "task": "pick_up",
+      "success": true,
+      "grasped": true,
+      "eaten": false,
+      "final_berry_pos": [
+        0.4697,
+        0.0598,
+        0.3669
+      ],
+      "final_root_xy": [
+        0.4172,
+        0.5026
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.2617,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 3,
+      "task": "pick_up",
+      "success": true,
+      "grasped": true,
+      "eaten": false,
+      "final_berry_pos": [
+        0.537,
+        0.0833,
+        0.3759
+      ],
+      "final_root_xy": [
+        0.5089,
+        0.5364
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.2651,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 4,
+      "task": "pick_up",
+      "success": true,
+      "grasped": true,
+      "eaten": false,
+      "final_berry_pos": [
+        0.3959,
+        0.0383,
+        0.3713
+      ],
+      "final_root_xy": [
+        0.3696,
+        0.4767
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.2568,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 5,
+      "task": "pick_up",
+      "success": true,
+      "grasped": true,
+      "eaten": false,
+      "final_berry_pos": [
+        0.4087,
+        0.0706,
+        0.362
+      ],
+      "final_root_xy": [
+        0.3838,
+        0.5082
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.2632,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 6,
+      "task": "pick_up",
+      "success": true,
+      "grasped": true,
+      "eaten": false,
+      "final_berry_pos": [
+        0.584,
+        0.0953,
+        0.3647
+      ],
+      "final_root_xy": [
+        0.5544,
+        0.5396
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.2642,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 7,
+      "task": "pick_up",
+      "success": true,
+      "grasped": true,
+      "eaten": false,
+      "final_berry_pos": [
+        0.5147,
+        0.0734,
+        0.3642
+      ],
+      "final_root_xy": [
+        0.4332,
+        0.531
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.2636,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 8,
+      "task": "pick_up",
+      "success": true,
+      "grasped": true,
+      "eaten": false,
+      "final_berry_pos": [
+        0.393,
+        0.0359,
+        0.3707
+      ],
+      "final_root_xy": [
+        0.3689,
+        0.4729
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.2549,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 9,
+      "task": "pick_up",
+      "success": true,
+      "grasped": true,
+      "eaten": false,
+      "final_berry_pos": [
+        0.3924,
+        0.0429,
+        0.3648
+      ],
+      "final_root_xy": [
+        0.391,
+        0.4749
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.2663,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 10,
+      "task": "pick_up",
+      "success": true,
+      "grasped": true,
+      "eaten": false,
+      "final_berry_pos": [
+        0.4223,
+        0.0752,
+        0.3671
+      ],
+      "final_root_xy": [
+        0.3814,
+        0.5192
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.2652,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 11,
+      "task": "pick_up",
+      "success": true,
+      "grasped": true,
+      "eaten": false,
+      "final_berry_pos": [
+        0.3855,
+        0.0387,
+        0.3605
+      ],
+      "final_root_xy": [
+        0.3773,
+        0.4717
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.2596,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 12,
+      "task": "pick_up",
+      "success": true,
+      "grasped": true,
+      "eaten": false,
+      "final_berry_pos": [
+        0.3815,
+        0.0465,
+        0.3704
+      ],
+      "final_root_xy": [
+        0.3837,
+        0.4847
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.2672,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 13,
+      "task": "pick_up",
+      "success": true,
+      "grasped": true,
+      "eaten": false,
+      "final_berry_pos": [
+        0.4838,
+        0.0759,
+        0.362
+      ],
+      "final_root_xy": [
+        0.419,
+        0.5257
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.2645,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 14,
+      "task": "pick_up",
+      "success": true,
+      "grasped": true,
+      "eaten": false,
+      "final_berry_pos": [
+        0.4616,
+        0.0263,
+        0.362
+      ],
+      "final_root_xy": [
+        0.4113,
+        0.4682
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.263,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 15,
+      "task": "pick_up",
+      "success": true,
+      "grasped": true,
+      "eaten": false,
+      "final_berry_pos": [
+        0.4359,
+        0.063,
+        0.3604
+      ],
+      "final_root_xy": [
+        0.4576,
+        0.4981
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.2656,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 16,
+      "task": "pick_up",
+      "success": true,
+      "grasped": true,
+      "eaten": false,
+      "final_berry_pos": [
+        0.3901,
+        0.0413,
+        0.3626
+      ],
+      "final_root_xy": [
+        0.3902,
+        0.473
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.2668,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 17,
+      "task": "pick_up",
+      "success": true,
+      "grasped": true,
+      "eaten": false,
+      "final_berry_pos": [
+        0.4013,
+        0.0769,
+        0.3608
+      ],
+      "final_root_xy": [
+        0.3872,
+        0.5106
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.2661,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 18,
+      "task": "pick_up",
+      "success": true,
+      "grasped": true,
+      "eaten": false,
+      "final_berry_pos": [
+        0.5625,
+        0.1072,
+        0.3634
+      ],
+      "final_root_xy": [
+        0.5397,
+        0.5441
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.2641,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 19,
+      "task": "pick_up",
+      "success": true,
+      "grasped": true,
+      "eaten": false,
+      "final_berry_pos": [
+        0.5624,
+        0.1042,
+        0.3667
+      ],
+      "final_root_xy": [
+        0.5387,
+        0.5433
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.2641,
+      "gif_path": null,
+      "mp4_path": null
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "source_manifest": "Fireboy-training-policy-vla/vla-rollouts/vla_manifests/fireboy_vla_action_chunks_go_to_point_1step_20260615.jsonl",
+  "manifest": "/Users/sanju/Desktop/coding/hackathons/build-small-hackathon-v1/Fireboy-training-policy-vla/vla-rollouts/minicpm_slices/go_to_point_480_1step/vla_manifests/fireboy_vla_slice.jsonl",
+  "dataset": "/Users/sanju/Desktop/coding/hackathons/build-small-hackathon-v1/Fireboy-training-policy-vla/vla-rollouts/minicpm_slices/go_to_point_480_1step/datasets/fireboy_vla_slice",
+  "rows": 480,
+  "counts": {
+    "go_to_point": 480
+  },
+  "image_size": 320,
+  "sample_mode": "uniform"
+}

@@ -17,7 +17,7 @@ tags:
   - custom-ui
 models:
   - openbmb/MiniCPM-o-4_5
-  - minicpm-v4.6
+  - openbmb/MiniCPM-V-4_6
 ---
 
 # Tiny Toybox
@@ -36,6 +36,8 @@ Local ship route:
 Hosted Space:
 
 - v3 target: `https://build-small-hackathon-toy-room-v3.hf.space/toy-v3`
+- VLA research artifact: `https://build-small-hackathon-toy-room-v3.hf.space/vla-research`
+- in-depth policy evidence: `https://build-small-hackathon-toy-room-v3.hf.space/fireboy-policy-gallery`
 - previous v2 build: `https://build-small-hackathon-toy-room-v2.hf.space/toy-v2`
 - demo video: [`demo/fire-boy-v3-demo.mp4`](demo/fire-boy-v3-demo.mp4)
 - demo thumbnail: [`demo/fire-boy-v3-demo-thumbnail.png`](demo/fire-boy-v3-demo-thumbnail.png)
@@ -98,12 +100,12 @@ The Build Small Hackathon prize page asks entrants to make prize usage explicit 
 | Track or prize | Evidence in this repo and Space |
 | --- | --- |
 | Thousand Token Wood | A tiny-world virtual pet where Fire Boy observes objects, reacts to commands, moves, carries toys, speaks, and fires visible powers inside a toy room. |
-| Best MiniCPM Build | Toy Room v3 sends action-brain turns to `openbmb/MiniCPM-o-4_5` through the deployed Modal gateway. MiniCPM-V visual cortex and MiniCPM5 local routes remain configurable secondary paths. |
-| Best Use of Modal | `modal-minicpm-omni/modal_minicpm_omni.py` deploys `openbmb/MiniCPM-o-4_5` to Modal with an L40S GPU, a Modal Volume for model cache, and a Modal Secret for Hugging Face access. Toy Room v3 calls that Modal `/ws/chat` gateway directly from `src/modal_omni_policy.py`. |
-| Best Use of Codex | The GitHub repo has Codex-attributed implementation and documentation commits for v3, Fire Boy command control, MiniCPM-V helper, and submission docs. |
+| Best MiniCPM Build | Toy Room v3 sends action-brain turns to `openbmb/MiniCPM-o-4_5` through the deployed Modal gateway. The VLA research artifact documents `openbmb/MiniCPM-V-4_6` frozen-backbone action heads, LoRA adapters, and a skill-parameter router; MiniCPM5 local routes remain configurable secondary paths. |
+| Best Use of Modal | `modal-minicpm-omni/modal_minicpm_omni.py` deploys `openbmb/MiniCPM-o-4_5` to Modal with an L40S GPU, a Modal Volume for model cache, and a Modal Secret for Hugging Face access. Toy Room v3 calls that Modal `/ws/chat` gateway directly from `src/modal_omni_policy.py`, and the Space README explicitly notes Modal runtime usage as required by the prize. |
+| Best Use of Codex | The connected GitHub repo has Codex-attributed commits by `Codex <codex@openai.com>` for v3, Fire Boy command control, MiniCPM-V action-brain wiring, Modal MiniCPM routing, grounding fixes, screenshots, and submission docs. The `/vla-research` page and PDF also describe how OpenAI Codex was used holistically throughout the build. |
 | Best Agent | Commands become strict PET action JSON, then execute as animations, speech, powers, particles, object pickup/carry, and physics operations. |
 | Off Brand / custom UI | The user-facing app is a custom Three.js toy room inside a Gradio-compatible Space, not a default Gradio chat screen. |
-| Best Demo | A short MP4 is kept at `demo/fire-boy-v3-demo.mp4` and shows pickup, fireball, run-around, speech, loop metrics, and the live toy controls. |
+| Best Demo | A short MP4 is kept at `demo/fire-boy-v3-demo.mp4` and shows pickup, fireball, run-around, speech, loop metrics, and the live toy controls. `/fireboy-policy-gallery` and `/vla-research` provide deeper demo evidence. |
 
 This entry does **not** claim the Nemotron hardware prize because no Nemotron model is currently in the runtime. It also does not claim Tiny Titan for the MiniCPM-o Modal path, because MiniCPM-o 4.5 is larger than a tiny 4B-or-under target; the smaller MiniCPM-V/MiniCPM5 routes remain documented and configurable.
 

@@ -1,0 +1,140 @@
+{
+  "checkpoint": "/workspace/fireboy-vla-physics/build/checkpoints/fireboy_minicpm_vla_lora_skill_param_head/minicpm_vla_lora_skill_param_head.pt",
+  "adapter_dir": "/workspace/fireboy-vla-physics/build/checkpoints/fireboy_minicpm_vla_lora_skill_param_head/lora_adapter",
+  "seed_checkpoint": "/workspace/seed_minicpm_vla_skill_param_head.pt",
+  "model_id": "openbmb/MiniCPM-V-4.6",
+  "rows": 512,
+  "train_rows": 430,
+  "val_rows": 82,
+  "device": "cuda",
+  "lora_rank": 8,
+  "lora_alpha": 16,
+  "downsample_mode": "16x",
+  "max_slice_nums": 9,
+  "history": [
+    {
+      "step": 0.0,
+      "loss": 0.0013974073808640242,
+      "skill_loss": 1.1920928244535389e-07,
+      "param_loss": 0.003992252051830292,
+      "val_skill_accuracy": 1.0,
+      "val_param_mae": 0.02674272656440735
+    },
+    {
+      "step": 25.0,
+      "loss": 0.0012553874403238297,
+      "skill_loss": 0.0,
+      "param_loss": 0.0035868212580680847,
+      "val_skill_accuracy": 1.0,
+      "val_param_mae": 0.06171206757426262
+    },
+    {
+      "step": 50.0,
+      "loss": 0.0042282515205442905,
+      "skill_loss": 7.152555099310121e-07,
+      "param_loss": 0.01207867544144392,
+      "val_skill_accuracy": 1.0,
+      "val_param_mae": 0.08254653960466385
+    },
+    {
+      "step": 75.0,
+      "loss": 0.004061468411237001,
+      "skill_loss": 0.003161672269925475,
+      "param_loss": 0.002570845652371645,
+      "val_skill_accuracy": 1.0,
+      "val_param_mae": 0.12105468660593033
+    },
+    {
+      "step": 100.0,
+      "loss": 0.0018232421716675162,
+      "skill_loss": 1.847726889536716e-05,
+      "param_loss": 0.00515647092834115,
+      "val_skill_accuracy": 1.0,
+      "val_param_mae": 0.0758436769247055
+    },
+    {
+      "step": 125.0,
+      "loss": 0.0003561553603503853,
+      "skill_loss": 0.0,
+      "param_loss": 0.0010175867937505245,
+      "val_skill_accuracy": 1.0,
+      "val_param_mae": 0.09452082961797714
+    },
+    {
+      "step": 150.0,
+      "loss": 0.0006389878108166158,
+      "skill_loss": 9.536738616588991e-07,
+      "param_loss": 0.0018229547422379255,
+      "val_skill_accuracy": 1.0,
+      "val_param_mae": 0.06626474857330322
+    },
+    {
+      "step": 175.0,
+      "loss": 0.00034375343238934875,
+      "skill_loss": 0.0,
+      "param_loss": 0.0009821526473388076,
+      "val_skill_accuracy": 1.0,
+      "val_param_mae": 0.05962243303656578
+    },
+    {
+      "step": 200.0,
+      "loss": 0.0016782761085778475,
+      "skill_loss": 3.4570634852570947e-06,
+      "param_loss": 0.0047851973213255405,
+      "val_skill_accuracy": 1.0,
+      "val_param_mae": 0.09165690839290619
+    },
+    {
+      "step": 219.0,
+      "loss": 0.0026617322582751513,
+      "skill_loss": 3.576278118089249e-07,
+      "param_loss": 0.00760392751544714,
+      "val_skill_accuracy": 1.0,
+      "val_param_mae": 0.054667044430971146
+    }
+  ],
+  "val_metrics": {
+    "skill_accuracy": 0.9999999403953552,
+    "param_mae": 0.05892230197787285,
+    "param_mae_by_name": {
+      "target_x": 0.07024771720170975,
+      "target_y": 0.22257930040359497,
+      "target_z": 0.0222700834274292,
+      "radius": 0.008006667718291283,
+      "speed_hint": 0.01653633825480938,
+      "object_is_berry": 0.013893689028918743
+    },
+    "confusion": [
+      [
+        15,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        25,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        27,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        15
+      ]
+    ],
+    "skill_names": [
+      "walk_to",
+      "run_around",
+      "pick_up",
+      "find_and_eat_berry"
+    ]
+  }
+}

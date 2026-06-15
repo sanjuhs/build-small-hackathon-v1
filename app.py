@@ -18,13 +18,20 @@ from fastapi.staticfiles import StaticFiles
 
 from src.ai_evidence import ai_evidence_status
 from src.action_store import action_stats, fetch_action_events, record_pet_action
+from src.articulated_fireboy_bridge import run_articulated_fireboy
 from src.modal_omni_policy import warm_modal_omni_health
+from src.mujoco_audit_bridge import run_mujoco_policy_audit
+from src.mujoco_policy_bridge import run_mujoco_pet_action
+from src.mujoco_showcase_bridge import run_mujoco_showcase
 from src.pet_memory import load_memories
 from src.pet_policy import choose_pet_action, model_status
 from src.trace_dataset import training_dataset_jsonl, training_dataset_summary
+from src.vla_router_policy import route_vla, run_vla_router_pet_action, vla_router_status
 
 
 ROOT = Path(__file__).parent
+FIREBOY_VLA_ROOT = ROOT / "fireboy-vla-physics"
+FIREBOY_RUNPOD_ARTIFACT_ROOT = ROOT / "Fireboy-training-policy-vla" / "runpod-artifacts"
 
 server = FastAPI(title="Tiny Toybox")
 server.mount("/frontend", StaticFiles(directory=ROOT / "frontend"), name="frontend")
@@ -36,6 +43,18 @@ if (ROOT / "potential-char-images").exists():
         "/potential-char-images",
         StaticFiles(directory=ROOT / "potential-char-images"),
         name="potential-char-images",
+    )
+if FIREBOY_VLA_ROOT.exists():
+    server.mount(
+        "/fireboy-vla",
+        StaticFiles(directory=FIREBOY_VLA_ROOT),
+        name="fireboy-vla",
+    )
+if FIREBOY_RUNPOD_ARTIFACT_ROOT.exists():
+    server.mount(
+        "/fireboy-runpod-artifacts",
+        StaticFiles(directory=FIREBOY_RUNPOD_ARTIFACT_ROOT),
+        name="fireboy-runpod-artifacts",
     )
 
 
@@ -612,6 +631,260 @@ def judge_readiness_status() -> dict[str, Any]:
     }
 
 
+POLICY_REGISTRY_PATH_KEYS = (
+    "policy_path",
+    "checkpoint_path",
+    "local_checkpoint_path",
+    "seed_checkpoint_path",
+    "adapter_path",
+    "eval_path",
+    "train_path",
+    "manifest_path",
+    "manifest_summary_path",
+    "local_manifest_path",
+    "local_manifest_summary_path",
+    "proof_mp4",
+    "proof_gif",
+    "local_demo_mp4",
+    "local_fallback_policy_path",
+    "report_path",
+    "artifact_archive",
+)
+
+
+def fireboy_policy_registry_status() -> dict[str, Any]:
+    registry_path = FIREBOY_VLA_ROOT / "policy_registry.json"
+    if not registry_path.exists():
+        return {
+            "ok": False,
+            "reason": f"missing registry: {registry_path.relative_to(ROOT)}",
+            "skills": [],
+            "failedExperiments": [],
+            "bodyProofs": [],
+            "vlaModels": [],
+        }
+
+    registry = json.loads(registry_path.read_text(encoding="utf-8"))
+    skills = registry.get("skills", {}) if isinstance(registry.get("skills"), dict) else {}
+    failed = registry.get("failed_experiments", {}) if isinstance(registry.get("failed_experiments"), dict) else {}
+    proofs = registry.get("body_proofs", {}) if isinstance(registry.get("body_proofs"), dict) else {}
+    vla_models = registry.get("vla_models", {}) if isinstance(registry.get("vla_models"), dict) else {}
+
+    return {
+        "ok": True,
+        "generatedAt": datetime.now(timezone.utc).isoformat(),
+        "registryPath": registry_path.relative_to(ROOT).as_posix(),
+        "version": registry.get("version"),
+        "notes": registry.get("notes"),
+        "fireboyGlb": _policy_path_payload(registry.get("fireboy_glb")),
+        "skills": [
+            _policy_entry_payload(
+                name,
+                _resolve_policy_alias(name, skills),
+                section="skills",
+                aliasOf=entry.get("alias_of"),
+            )
+            for name, entry in skills.items()
+            if isinstance(entry, dict)
+        ],
+        "activeSkills": [
+            _policy_entry_payload(
+                name,
+                _resolve_policy_alias(name, skills),
+                section="skills",
+                aliasOf=entry.get("alias_of"),
+            )
+            for name, entry in skills.items()
+            if isinstance(entry, dict) and not entry.get("alias_of")
+        ],
+        "failedExperiments": [
+            _policy_entry_payload(name, entry, section="failed_experiments")
+            for name, entry in failed.items()
+            if isinstance(entry, dict)
+        ],
+        "bodyProofs": [
+            _policy_entry_payload(name, entry, section="body_proofs")
+            for name, entry in proofs.items()
+            if isinstance(entry, dict)
+        ],
+        "vlaModels": [
+            _policy_entry_payload(name, entry, section="vla_models")
+            for name, entry in vla_models.items()
+            if isinstance(entry, dict)
+        ],
+    }
+
+
+def _resolve_policy_alias(name: str, skills: dict[str, Any]) -> dict[str, Any]:
+    current = name
+    visited: set[str] = set()
+    entry = skills.get(current)
+    while isinstance(entry, dict) and entry.get("alias_of"):
+        if current in visited:
+            return {}
+        visited.add(current)
+        current = str(entry.get("alias_of"))
+        entry = skills.get(current)
+    return entry if isinstance(entry, dict) else {}
+
+
+def _policy_entry_payload(
+    name: str,
+    entry: dict[str, Any],
+    *,
+    section: str,
+    aliasOf: str | None = None,
+) -> dict[str, Any]:
+    paths = {
+        key: _policy_path_payload(entry.get(key))
+        for key in POLICY_REGISTRY_PATH_KEYS
+        if entry.get(key)
+    }
+    eval_summary = _policy_eval_summary(paths.get("eval_path", {}).get("resolved"))
+    train_summary = _policy_eval_summary(paths.get("train_path", {}).get("resolved"))
+    manifest_summary = (
+        _policy_eval_summary(paths.get("manifest_summary_path", {}).get("resolved"))
+        or _policy_eval_summary(paths.get("local_manifest_summary_path", {}).get("resolved"))
+    )
+    report_summary = _policy_eval_summary(paths.get("report_path", {}).get("resolved"))
+    media = {
+        "mp4Url": paths.get("proof_mp4", {}).get("url") or paths.get("local_demo_mp4", {}).get("url") or "",
+        "gifUrl": paths.get("proof_gif", {}).get("url") or "",
+        "evalUrl": paths.get("eval_path", {}).get("url") or "",
+        "reportUrl": paths.get("report_path", {}).get("url") or "",
+    }
+    return {
+        "name": name,
+        "aliasOf": aliasOf or "",
+        "section": section,
+        "task": entry.get("task") or entry.get("mode") or name,
+        "lane": entry.get("lane") or entry.get("runtime") or "",
+        "runtime": entry.get("runtime") or "",
+        "modelId": entry.get("model_id") or "",
+        "skills": entry.get("skills") if isinstance(entry.get("skills"), list) else [],
+        "parameters": entry.get("parameters") if isinstance(entry.get("parameters"), list) else [],
+        "status": entry.get("status") or "",
+        "successes": entry.get("successes"),
+        "episodes": entry.get("episodes"),
+        "successRate": entry.get("success_rate"),
+        "reason": entry.get("reason") or "",
+        "note": entry.get("note") or "",
+        "paths": paths,
+        "media": media,
+        "evalSummary": eval_summary,
+        "trainSummary": train_summary,
+        "manifestSummary": manifest_summary,
+        "reportSummary": report_summary,
+    }
+
+
+def _policy_path_payload(path_value: Any) -> dict[str, Any]:
+    if not path_value:
+        return {"path": "", "resolved": "", "exists": False, "url": ""}
+    path = Path(str(path_value))
+    if not path.is_absolute():
+        path = ROOT / path
+    exists = path.exists()
+    return {
+        "path": str(path_value),
+        "resolved": str(path),
+        "exists": exists,
+        "url": _policy_static_url(path) if exists else "",
+        "sizeBytes": path.stat().st_size if exists and path.is_file() else None,
+    }
+
+
+def _policy_static_url(path: Path) -> str:
+    roots = (
+        (FIREBOY_RUNPOD_ARTIFACT_ROOT, "/fireboy-runpod-artifacts"),
+        (FIREBOY_VLA_ROOT, "/fireboy-vla"),
+        (ROOT / "fire-boy-rig", "/fire-boy-rig"),
+        (ROOT / "assets", "/toy-assets"),
+        (ROOT / "potential-char-images", "/potential-char-images"),
+    )
+    resolved = path.resolve()
+    for root, prefix in roots:
+        if not root.exists():
+            continue
+        try:
+            rel = resolved.relative_to(root.resolve())
+        except ValueError:
+            continue
+        return prefix + "/" + quote(rel.as_posix(), safe="/")
+    return ""
+
+
+def _policy_eval_summary(resolved_path: str | None) -> dict[str, Any] | None:
+    if not resolved_path:
+        return None
+    path = Path(resolved_path)
+    if not path.exists() or not path.is_file() or path.suffix.lower() != ".json":
+        return None
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except Exception as exc:
+        return {"error": str(exc)[:240]}
+    summary: dict[str, Any] = {}
+    for key in (
+        "mode",
+        "task",
+        "success",
+        "episodes",
+        "successes",
+        "success_rate",
+        "frames",
+        "smooth_alpha",
+        "replan_interval",
+        "rows",
+        "rows_written",
+        "train_rows",
+        "val_rows",
+        "device",
+        "model_id",
+        "policy_kind",
+        "cache_hits",
+        "state_mode",
+        "action_type",
+        "skipped",
+    ):
+        if key in payload:
+            summary[key] = payload[key]
+    if isinstance(payload.get("skill_names"), list):
+        summary["skill_names"] = payload["skill_names"]
+    if isinstance(payload.get("param_names"), list):
+        summary["param_names"] = payload["param_names"]
+    if isinstance(payload.get("skills"), dict):
+        summary["skills"] = payload["skills"]
+    metrics = payload.get("metrics")
+    if isinstance(metrics, dict):
+        for key in ("skill_accuracy", "param_mae", "confusion"):
+            if key in metrics:
+                summary[key] = metrics[key]
+        if isinstance(metrics.get("param_mae_by_name"), dict):
+            summary["param_mae_by_name"] = metrics["param_mae_by_name"]
+    val_metrics = payload.get("val_metrics")
+    if isinstance(val_metrics, dict):
+        if "skill_accuracy" in val_metrics:
+            summary["val_skill_accuracy"] = val_metrics["skill_accuracy"]
+        if "param_mae" in val_metrics:
+            summary["val_param_mae"] = val_metrics["param_mae"]
+        if isinstance(val_metrics.get("param_mae_by_name"), dict):
+            summary["val_param_mae_by_name"] = val_metrics["param_mae_by_name"]
+    if isinstance(payload.get("report"), dict):
+        report = payload["report"]
+        for key in ("nbody", "njnt", "nu", "actuated_joints", "body_tree", "resembles_fireboy", "not_yet"):
+            if key in report:
+                summary[key] = report[key]
+    reports = payload.get("reports")
+    if isinstance(reports, list) and reports:
+        summary["sampleReport"] = {
+            key: reports[0].get(key)
+            for key in ("success", "grasped", "eaten", "final_root_xy", "target_xy", "min_mouth_dist")
+            if key in reports[0]
+        }
+    return summary
+
+
 @server.get("/toy", response_class=HTMLResponse)
 def toy_room() -> str:
     return toy_room_v3_html()
@@ -641,7 +914,8 @@ def toy_room_v3_html() -> str:
         '<a class="route-link glass" href="/pages">Pages</a>': '<a class="route-link glass" href="/toy-v2">v2</a><a class="route-link glass" href="/pages">Pages</a>',
         '<button id="modeButton" class="mode-button" type="button">Council</button>': '<button id="modeButton" class="mode-button" type="button">Fire Boy</button>',
         'placeholder="Teach, ask, or invent a toy-room spell"': 'placeholder="Talk to Fire Boy, move him, or ask him to play with a toy"',
-        "/frontend/toybox/v2_main.js?v=20260614-grounded-pickup-walk": "/frontend/toybox/v2_main.js?v=20260614-grounded-gestures",
+        "/frontend/toybox/v2_main.js?v=20260614-grounded-pickup-walk": "/frontend/toybox/v2_main.js?v=20260614-mujoco-policy",
+        "/frontend/toybox/v2_main.js?v=20260614-grounded-gestures": "/frontend/toybox/v2_main.js?v=20260614-mujoco-policy",
         "/frontend/toybox/v2_main.js?v=20260613-ai-evidence": "/frontend/toybox/v2_main.js?v=20260614-modal-debug-ui",
     }
     for source, target in replacements.items():
@@ -674,11 +948,26 @@ def fireboy_rigged() -> str:
     return (ROOT / "frontend" / "fireboy-rigged.html").read_text(encoding="utf-8")
 
 
+@server.get("/mujoco-policy", response_class=HTMLResponse)
+def mujoco_policy_page() -> str:
+    return (ROOT / "frontend" / "mujoco-policy.html").read_text(encoding="utf-8")
+
+
+@server.get("/fireboy-policy-gallery", response_class=HTMLResponse)
+def fireboy_policy_gallery() -> str:
+    return (ROOT / "frontend" / "fireboy-policy-gallery.html").read_text(encoding="utf-8")
+
+
+@server.get("/vla-research", response_class=HTMLResponse)
+def vla_research_page() -> str:
+    return (ROOT / "frontend" / "vla-research.html").read_text(encoding="utf-8")
+
+
 @server.post("/api/pet-action")
 async def pet_action(request: Request) -> JSONResponse:
     payload: dict[str, Any] = await request.json()
     started = time.perf_counter()
-    action = choose_pet_action(payload)
+    action = run_vla_router_pet_action(payload) or run_mujoco_pet_action(payload) or choose_pet_action(payload)
     elapsed_ms = round((time.perf_counter() - started) * 1000, 1)
     debug = action.setdefault("debug", {})
     if isinstance(debug, dict):
@@ -692,9 +981,62 @@ async def pet_action(request: Request) -> JSONResponse:
     return JSONResponse(action)
 
 
+@server.post("/api/mujoco-policy")
+async def mujoco_policy(request: Request) -> JSONResponse:
+    payload: dict[str, Any] = await request.json()
+    action = run_mujoco_pet_action(payload)
+    if action is None:
+        return JSONResponse({"enabled": False, "reason": "command did not route to MuJoCo policy"}, status_code=404)
+    return JSONResponse({"enabled": True, "action": action})
+
+
+@server.post("/api/vla-router")
+async def vla_router(request: Request) -> JSONResponse:
+    payload: dict[str, Any] = await request.json()
+    try:
+        return JSONResponse({"ok": True, "result": route_vla(payload)})
+    except Exception as exc:
+        return JSONResponse({"ok": False, "status": vla_router_status(), "error": str(exc)[:800]}, status_code=503)
+
+
+@server.get("/api/fireboy-policy-registry")
+def fireboy_policy_registry() -> JSONResponse:
+    return JSONResponse(fireboy_policy_registry_status())
+
+
+@server.post("/api/mujoco-showcase")
+async def mujoco_showcase(request: Request) -> JSONResponse:
+    payload: dict[str, Any] = await request.json()
+    mode = str(payload.get("mode") or "learned")
+    try:
+        return JSONResponse({"ok": True, "result": run_mujoco_showcase(mode)})
+    except Exception as exc:
+        return JSONResponse({"ok": False, "error": str(exc)[:1000]}, status_code=500)
+
+
+@server.post("/api/mujoco-audit")
+async def mujoco_audit() -> JSONResponse:
+    try:
+        return JSONResponse({"ok": True, "result": run_mujoco_policy_audit()})
+    except Exception as exc:
+        return JSONResponse({"ok": False, "error": str(exc)[:1400]}, status_code=500)
+
+
+@server.post("/api/articulated-fireboy")
+async def articulated_fireboy(request: Request) -> JSONResponse:
+    payload: dict[str, Any] = await request.json()
+    mode = str(payload.get("mode") or "all")
+    try:
+        return JSONResponse({"ok": True, "result": run_articulated_fireboy(mode)})
+    except Exception as exc:
+        return JSONResponse({"ok": False, "error": str(exc)[:1400]}, status_code=500)
+
+
 @server.get("/api/model-status")
 def pet_model_status() -> JSONResponse:
-    return JSONResponse(model_status())
+    status = model_status()
+    status["vlaRouter"] = vla_router_status()
+    return JSONResponse(status)
 
 
 @server.get("/api/pet-action-events")

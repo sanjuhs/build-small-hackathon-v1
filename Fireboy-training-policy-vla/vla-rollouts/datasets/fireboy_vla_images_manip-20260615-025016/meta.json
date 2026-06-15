@@ -1,0 +1,29 @@
+{
+  "task": "fireboy_articulated_pick_up,go_eat_berry",
+  "simulator": "mujoco",
+  "action_type": "normalized_joint_targets",
+  "camera_keys": [
+    "agent_rgb"
+  ],
+  "state_keys": [
+    "qpos",
+    "qvel",
+    "ctrl",
+    "previous_action",
+    "right_hand_pos",
+    "left_hand_pos",
+    "mouth_pos",
+    "ball_pos",
+    "task_flags",
+    "stage_flags"
+  ],
+  "language_templates": [
+    "pick up the berry",
+    "grab the berry",
+    "go to the berry and lift it",
+    "go find the berry and eat it",
+    "pick up the berry and bring it to your mouth",
+    "eat the berry"
+  ],
+  "image_stride": 5
+}

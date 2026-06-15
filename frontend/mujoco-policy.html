@@ -1,0 +1,490 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fire Boy MuJoCo Policy Viewer</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #182023;
+      --muted: #596468;
+      --line: #d7ddd9;
+      --panel: #ffffff;
+      --floor: #eef1ed;
+      --accent: #cc3047;
+      --accent-2: #26736d;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: var(--ink);
+      background: var(--floor);
+    }
+    main {
+      min-height: 100vh;
+      display: grid;
+      grid-template-columns: minmax(280px, 360px) minmax(0, 1fr);
+    }
+    aside {
+      border-right: 1px solid var(--line);
+      background: #fbfcfb;
+      padding: 20px;
+    }
+    section {
+      padding: 20px;
+    }
+    h1 {
+      font-size: 22px;
+      line-height: 1.15;
+      margin: 0 0 10px;
+      letter-spacing: 0;
+    }
+    p {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+      margin: 0 0 16px;
+    }
+    .controls {
+      display: grid;
+      gap: 8px;
+      margin: 16px 0;
+    }
+    button {
+      width: 100%;
+      min-height: 42px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: var(--panel);
+      color: var(--ink);
+      font-weight: 700;
+      cursor: pointer;
+      text-align: left;
+      padding: 10px 12px;
+    }
+    button[data-active="true"] {
+      border-color: color-mix(in srgb, var(--accent) 58%, var(--line));
+      box-shadow: inset 3px 0 0 var(--accent);
+    }
+    .status {
+      min-height: 22px;
+      font-size: 13px;
+      color: var(--muted);
+      margin-top: 12px;
+    }
+    .viewer {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 360px);
+      gap: 18px;
+      align-items: start;
+    }
+    .media-shell {
+      background: #111;
+      border: 1px solid #20272a;
+      border-radius: 8px;
+      overflow: hidden;
+      min-height: 360px;
+      display: grid;
+      place-items: center;
+    }
+    img, video {
+      display: block;
+      width: 100%;
+      max-height: calc(100vh - 80px);
+      object-fit: contain;
+      background: #111;
+    }
+    .panel {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: var(--panel);
+      padding: 14px;
+    }
+    .panel + .panel {
+      margin-top: 12px;
+    }
+    h2 {
+      margin: 0 0 8px;
+      font-size: 15px;
+      letter-spacing: 0;
+    }
+    dl {
+      display: grid;
+      gap: 8px;
+      margin: 0;
+    }
+    dt {
+      font-size: 11px;
+      text-transform: uppercase;
+      color: var(--muted);
+      font-weight: 800;
+      letter-spacing: 0.03em;
+    }
+    dd {
+      margin: 0;
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    a {
+      color: var(--accent-2);
+      font-weight: 700;
+    }
+    pre {
+      margin: 0;
+      max-height: 280px;
+      overflow: auto;
+      padding: 10px;
+      border-radius: 6px;
+      background: #f2f5f4;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .audit-panel {
+      margin-top: 18px;
+    }
+    .audit-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .audit-card {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: #fbfcfb;
+    }
+    .audit-card video,
+    .audit-card img {
+      width: 100%;
+      max-height: 260px;
+      background: #111;
+      object-fit: contain;
+    }
+    .audit-card div {
+      padding: 10px;
+      font-size: 12px;
+      line-height: 1.4;
+    }
+    .plot-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 12px;
+      margin-top: 12px;
+    }
+    .plot-grid img {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: white;
+    }
+    #diagnosis {
+      display: grid;
+      gap: 6px;
+      margin-top: 8px;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.4;
+    }
+    @media (max-width: 900px) {
+      main, .viewer {
+        grid-template-columns: 1fr;
+      }
+      aside {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+      .media-shell {
+        min-height: 240px;
+      }
+      .audit-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <aside>
+      <h1>Fire Boy MuJoCo Policy Viewer</h1>
+      <p>This page renders the actual MuJoCo model and rollouts. It does not use the ToyV3 animation bridge.</p>
+      <div class="controls">
+        <button type="button" data-mode="rest">Rest / Physics Body</button>
+        <button type="button" data-mode="expert">IK Expert Rollout</button>
+        <button type="button" data-mode="learned" data-active="true">Learned Policy Rollout</button>
+        <button type="button" id="auditButton">Run Full Policy Audit</button>
+        <button type="button" id="articulatedButton">Run Articulated Fireboy Proof</button>
+      </div>
+      <div id="status" class="status">Ready.</div>
+      <p><a href="/toy-v3">Back to ToyV3</a></p>
+    </aside>
+    <section>
+      <div class="viewer">
+        <div class="media-shell">
+          <video id="video" controls muted loop playsinline hidden></video>
+          <img id="gif" alt="MuJoCo rollout" />
+        </div>
+        <div>
+          <div class="panel">
+            <h2>Rollout</h2>
+            <dl id="rolloutFacts"></dl>
+          </div>
+          <div class="panel">
+            <h2>Current Body</h2>
+            <dl id="modelFacts"></dl>
+          </div>
+          <div class="panel">
+            <h2>Raw Result</h2>
+            <pre id="raw">{}</pre>
+          </div>
+        </div>
+      </div>
+      <div class="panel audit-panel" id="auditPanel" hidden>
+        <h2>Policy Audit</h2>
+        <p>This compares the expert demonstrations, the raw learned checkpoint, and the stabilized deployment controller.</p>
+        <div id="diagnosis"></div>
+        <div class="audit-grid" id="auditGrid"></div>
+        <div class="plot-grid">
+          <img id="distancePlot" alt="Berry-to-mouth distance plot" hidden />
+          <img id="actionPlot" alt="Action jump plot" hidden />
+        </div>
+      </div>
+      <div class="panel audit-panel" id="articulatedPanel" hidden>
+        <h2>Articulated Fireboy</h2>
+        <p>Connected body proof: torso, shoulders, elbows, wrists, gripper fingers, hips, knees, ankles.</p>
+        <div class="audit-grid" id="articulatedGrid"></div>
+      </div>
+      <div class="panel audit-panel" id="faithfulLearnedPanel">
+        <h2>Faithful Learned Checkpoints</h2>
+        <p>RunPod-trained policies on the faithful Fireboy body.</p>
+        <div class="audit-grid" id="faithfulLearnedGrid"></div>
+      </div>
+    </section>
+  </main>
+  <script>
+    const statusEl = document.getElementById("status");
+    const gifEl = document.getElementById("gif");
+    const videoEl = document.getElementById("video");
+    const rolloutFactsEl = document.getElementById("rolloutFacts");
+    const modelFactsEl = document.getElementById("modelFacts");
+    const rawEl = document.getElementById("raw");
+    const buttons = [...document.querySelectorAll("button[data-mode]")];
+    const auditButton = document.getElementById("auditButton");
+    const articulatedButton = document.getElementById("articulatedButton");
+    const auditPanel = document.getElementById("auditPanel");
+    const articulatedPanel = document.getElementById("articulatedPanel");
+    const auditGrid = document.getElementById("auditGrid");
+    const articulatedGrid = document.getElementById("articulatedGrid");
+    const faithfulLearnedGrid = document.getElementById("faithfulLearnedGrid");
+    const diagnosisEl = document.getElementById("diagnosis");
+    const distancePlot = document.getElementById("distancePlot");
+    const actionPlot = document.getElementById("actionPlot");
+    const faithfulLearnedRollouts = [
+      {
+        mode: "pick_up",
+        success: "15/20 eval · preview success",
+        note: "learned checkpoint",
+        mp4_url: "/fireboy-vla/build/articulated_policy/faithful_learned_pick_up.mp4",
+      },
+      {
+        mode: "run_around",
+        success: "18/20 eval · preview success",
+        note: "learned checkpoint",
+        mp4_url: "/fireboy-vla/build/articulated_policy/faithful_learned_run_around.mp4",
+      },
+      {
+        mode: "go_eat_berry",
+        success: "0/20 eval · preview failed after grasp",
+        note: "needs DAgger/RL",
+        mp4_url: "/fireboy-vla/build/articulated_policy/faithful_learned_go_eat_berry.mp4",
+      },
+      {
+        mode: "go_eat_berry_phase_clock",
+        success: "0/30 eval · preview failed before stable grasp",
+        note: "phase/clock BC attempt",
+        mp4_url: "/fireboy-vla/build/articulated_policy_phase_clock/faithful_learned_go_eat_berry.mp4",
+      },
+    ];
+
+    function factRows(data) {
+      return Object.entries(data || {})
+        .filter(([, value]) => value !== null && value !== undefined && value !== "")
+        .map(([key, value]) => `<dt>${escapeHtml(key)}</dt><dd>${escapeHtml(formatValue(value))}</dd>`)
+        .join("");
+    }
+
+    function formatValue(value) {
+      if (Array.isArray(value)) return value.join(", ");
+      if (typeof value === "object") return JSON.stringify(value);
+      return String(value);
+    }
+
+    function escapeHtml(value) {
+      return String(value)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    async function renderMode(mode) {
+      statusEl.textContent = `Rendering ${mode}...`;
+      buttons.forEach((button) => button.dataset.active = String(button.dataset.mode === mode));
+      const response = await fetch("/api/mujoco-showcase", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode }),
+      });
+      const payload = await response.json();
+      rawEl.textContent = JSON.stringify(payload, null, 2);
+      if (!payload.ok) {
+        statusEl.textContent = payload.error || "Render failed.";
+        return;
+      }
+      const result = payload.result;
+      const mediaToken = Date.now();
+      if (result.mp4_url) {
+        videoEl.src = `${result.mp4_url}?t=${mediaToken}`;
+        videoEl.hidden = false;
+        gifEl.hidden = true;
+      } else if (result.gif_url) {
+        gifEl.src = `${result.gif_url}?t=${mediaToken}`;
+        gifEl.hidden = false;
+        videoEl.hidden = true;
+      }
+      rolloutFactsEl.innerHTML = factRows({
+        mode: result.mode,
+        success: result.success,
+        grasped: result.grasped,
+        eaten: result.eaten,
+        frames: result.frames,
+        gif: result.gif_url,
+        mp4: result.mp4_url,
+      });
+      modelFactsEl.innerHTML = factRows(result.model_summary || {});
+      statusEl.textContent = result.success === false ? "Rendered, but rollout did not complete." : "Rendered.";
+    }
+
+    buttons.forEach((button) => {
+      button.addEventListener("click", () => renderMode(button.dataset.mode));
+    });
+
+    auditButton.addEventListener("click", () => runAudit());
+    articulatedButton.addEventListener("click", () => runArticulated());
+
+    async function runAudit() {
+      statusEl.textContent = "Running full policy audit...";
+      auditButton.disabled = true;
+      const response = await fetch("/api/mujoco-audit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({}),
+      });
+      const payload = await response.json();
+      rawEl.textContent = JSON.stringify(payload, null, 2);
+      auditButton.disabled = false;
+      if (!payload.ok) {
+        statusEl.textContent = payload.error || "Audit failed.";
+        return;
+      }
+      renderAudit(payload.result);
+      statusEl.textContent = "Audit rendered.";
+    }
+
+    function renderAudit(result) {
+      auditPanel.hidden = false;
+      diagnosisEl.innerHTML = (result.policy_diagnosis || [])
+        .map((item) => `<div>${escapeHtml(item)}</div>`)
+        .join("");
+      auditGrid.innerHTML = (result.rollouts || [])
+        .map((rollout) => {
+          const media = rollout.mp4_url
+            ? `<video controls muted loop playsinline src="${rollout.mp4_url}?t=${Date.now()}"></video>`
+            : `<img alt="${escapeHtml(rollout.mode)} rollout" src="${rollout.gif_url}?t=${Date.now()}" />`;
+          return `
+            <article class="audit-card">
+              ${media}
+              <div>
+                <strong>${escapeHtml(rollout.mode.replaceAll("_", " "))}</strong><br />
+                success: ${escapeHtml(rollout.success)} · grasped: ${escapeHtml(rollout.grasped)} · eaten: ${escapeHtml(rollout.eaten)}<br />
+                min mouth distance: ${escapeHtml(rollout.min_mouth_dist)} · max action jump: ${escapeHtml(rollout.max_action_jump)}
+              </div>
+            </article>
+          `;
+        })
+        .join("");
+      if (result.plots?.distance_url) {
+        distancePlot.src = `${result.plots.distance_url}?t=${Date.now()}`;
+        distancePlot.hidden = false;
+      }
+      if (result.plots?.action_url) {
+        actionPlot.src = `${result.plots.action_url}?t=${Date.now()}`;
+        actionPlot.hidden = false;
+      }
+    }
+
+    async function runArticulated() {
+      statusEl.textContent = "Rendering articulated Fireboy proofs...";
+      articulatedButton.disabled = true;
+      const response = await fetch("/api/articulated-fireboy", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ mode: "all" }),
+      });
+      const payload = await response.json();
+      rawEl.textContent = JSON.stringify(payload, null, 2);
+      articulatedButton.disabled = false;
+      if (!payload.ok) {
+        statusEl.textContent = payload.error || "Articulated render failed.";
+        return;
+      }
+      renderArticulated(payload.result);
+      statusEl.textContent = "Articulated Fireboy rendered.";
+    }
+
+    function renderArticulated(result) {
+      articulatedPanel.hidden = false;
+      const cards = ["body", "run", "pick", "eat"]
+        .map((key) => result[key])
+        .filter(Boolean);
+      articulatedGrid.innerHTML = cards
+        .map((item) => {
+          const media = item.mp4_url
+            ? `<video controls muted loop playsinline src="${item.mp4_url}?t=${Date.now()}"></video>`
+            : `<img alt="${escapeHtml(item.mode)} rollout" src="${item.gif_url}?t=${Date.now()}" />`;
+          return `
+            <article class="audit-card">
+              ${media}
+              <div>
+                <strong>${escapeHtml(item.mode.replaceAll("_", " "))}</strong><br />
+                success: ${escapeHtml(item.success)} · frames: ${escapeHtml(item.frames)}<br />
+                grasped: ${escapeHtml(item.report?.grasped)} · eaten: ${escapeHtml(item.report?.eaten)}<br />
+                joints: ${escapeHtml(item.report?.nu)} actuators · bodies: ${escapeHtml(item.report?.nbody)}
+              </div>
+            </article>
+          `;
+        })
+        .join("");
+    }
+
+    function renderFaithfulLearned() {
+      faithfulLearnedGrid.innerHTML = faithfulLearnedRollouts
+        .map((item) => `
+          <article class="audit-card">
+            <video controls muted loop playsinline src="${item.mp4_url}?t=${Date.now()}"></video>
+            <div>
+              <strong>${escapeHtml(item.mode.replaceAll("_", " "))}</strong><br />
+              ${escapeHtml(item.success)}<br />
+              ${escapeHtml(item.note)}
+            </div>
+          </article>
+        `)
+        .join("");
+    }
+
+    renderFaithfulLearned();
+    renderMode("learned");
+  </script>
+</body>
+</html>

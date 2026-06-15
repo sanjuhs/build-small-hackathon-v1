@@ -1,0 +1,208 @@
+{
+  "ok": true,
+  "generated_at": "2026-06-15T06:35:33.943485+00:00",
+  "base_url": "http://127.0.0.1:65373",
+  "model_status": {
+    "vlaRouterConfigured": true,
+    "vlaRouterEnabled": true,
+    "vlaRouterHealthOk": true,
+    "vlaRouterUrl": "https://sanjuhs123--fireboy-vla-router.modal.run",
+    "routerCheckpointExists": true,
+    "routerModelLoaded": false,
+    "routerHealthLatencyMs": 791.8
+  },
+  "registry": {
+    "registry": "fireboy-vla-physics/policy_registry.json",
+    "checked_paths": 49,
+    "missing_count": 0,
+    "missing": [],
+    "ok": true
+  },
+  "route_checks": [
+    {
+      "command": "walk to the yellow marker",
+      "expected_skill": "walk_to",
+      "passed": true,
+      "skill": "walk_to",
+      "neural_skill": "find_and_eat_berry",
+      "device": "cuda",
+      "policy_kind": "minicpm_vla_frozen_encoder_skill_param_head_v1",
+      "dispatch": "registry:walk_to",
+      "params": {
+        "target_x": 0.44,
+        "target_y": 0.02,
+        "target_z": 0.0,
+        "radius": 0.0,
+        "speed_hint": 0.55,
+        "object_is_berry": 0.0
+      },
+      "latency_ms": 1648.4,
+      "client_latency_ms": 19215.0
+    },
+    {
+      "command": "run around",
+      "expected_skill": "run_around",
+      "passed": true,
+      "skill": "run_around",
+      "neural_skill": "find_and_eat_berry",
+      "device": "cuda",
+      "policy_kind": "minicpm_vla_frozen_encoder_skill_param_head_v1",
+      "dispatch": "registry:run_around",
+      "params": {
+        "target_x": 0.44,
+        "target_y": 0.02,
+        "target_z": 0.0,
+        "radius": 0.55,
+        "speed_hint": 1.0,
+        "object_is_berry": 0.0
+      },
+      "latency_ms": 122.3,
+      "client_latency_ms": 955.2
+    },
+    {
+      "command": "pick up the berry",
+      "expected_skill": "pick_up",
+      "passed": true,
+      "skill": "pick_up",
+      "neural_skill": "find_and_eat_berry",
+      "device": "cuda",
+      "policy_kind": "minicpm_vla_frozen_encoder_skill_param_head_v1",
+      "dispatch": "registry:pick_up",
+      "params": {
+        "target_x": 0.42,
+        "target_y": -0.1,
+        "target_z": 0.08,
+        "radius": 0.0,
+        "speed_hint": 0.25,
+        "object_is_berry": 1.0
+      },
+      "latency_ms": 118.3,
+      "client_latency_ms": 1048.1
+    },
+    {
+      "command": "go find berry and eat it",
+      "expected_skill": "find_and_eat_berry",
+      "passed": true,
+      "skill": "find_and_eat_berry",
+      "neural_skill": "find_and_eat_berry",
+      "device": "cuda",
+      "policy_kind": "minicpm_vla_frozen_encoder_skill_param_head_v1",
+      "dispatch": "registry:find_and_eat_berry",
+      "params": {
+        "target_x": 0.42,
+        "target_y": -0.1,
+        "target_z": 0.08,
+        "radius": 0.0,
+        "speed_hint": 0.25,
+        "object_is_berry": 1.0
+      },
+      "latency_ms": 114.9,
+      "client_latency_ms": 1035.6
+    }
+  ],
+  "pet_action_checks": [
+    {
+      "command": "walk to the yellow marker",
+      "expected_skill": "walk_to",
+      "expected_animation": "walk",
+      "passed": true,
+      "intent": "vla_router_mujoco_articulated_policy",
+      "animation": "walk",
+      "policy": "modal_minicpm_vla_router_plus_mujoco",
+      "vla_skill": "walk_to",
+      "vla_neural_skill": "find_and_eat_berry",
+      "vla_device": "cuda",
+      "vla_policy_kind": "minicpm_vla_frozen_encoder_skill_param_head_v1",
+      "mujoco_success": true,
+      "mujoco_skill": "walk_to",
+      "gif_url": "/fireboy-vla/build/toy-v3-policy/articulated/faithful_learned_go_to_point.gif",
+      "mp4_url": "/fireboy-vla/build/toy-v3-policy/articulated/faithful_learned_go_to_point.mp4",
+      "registry_status": "active",
+      "server_latency_ms": 3195.3
+    },
+    {
+      "command": "run around",
+      "expected_skill": "run_around",
+      "expected_animation": "run",
+      "passed": true,
+      "intent": "vla_router_mujoco_articulated_policy",
+      "animation": "run",
+      "policy": "modal_minicpm_vla_router_plus_mujoco",
+      "vla_skill": "run_around",
+      "vla_neural_skill": "find_and_eat_berry",
+      "vla_device": "cuda",
+      "vla_policy_kind": "minicpm_vla_frozen_encoder_skill_param_head_v1",
+      "mujoco_success": true,
+      "mujoco_skill": "run_around",
+      "gif_url": "/fireboy-vla/build/toy-v3-policy/articulated/faithful_learned_run_around.gif",
+      "mp4_url": "/fireboy-vla/build/toy-v3-policy/articulated/faithful_learned_run_around.mp4",
+      "registry_status": "active",
+      "server_latency_ms": 3221.4
+    },
+    {
+      "command": "pick up the berry",
+      "expected_skill": "pick_up",
+      "expected_animation": "hold",
+      "passed": true,
+      "intent": "vla_router_mujoco_learned_pick_up",
+      "animation": "hold",
+      "policy": "modal_minicpm_vla_router_plus_mujoco",
+      "vla_skill": "pick_up",
+      "vla_neural_skill": "find_and_eat_berry",
+      "vla_device": "cuda",
+      "vla_policy_kind": "minicpm_vla_frozen_encoder_skill_param_head_v1",
+      "mujoco_success": true,
+      "mujoco_skill": "pick_up",
+      "gif_url": "/fireboy-vla/build/toy-v3-policy/learned_pick_up.gif",
+      "mp4_url": "",
+      "registry_status": "gpu_vla_checkpoint_ready",
+      "server_latency_ms": 1184.2
+    },
+    {
+      "command": "go find berry and eat it",
+      "expected_skill": "find_and_eat_berry",
+      "expected_animation": "hold",
+      "passed": true,
+      "intent": "vla_router_mujoco_learned_berry_eat",
+      "animation": "hold",
+      "policy": "modal_minicpm_vla_router_plus_mujoco",
+      "vla_skill": "find_and_eat_berry",
+      "vla_neural_skill": "find_and_eat_berry",
+      "vla_device": "cuda",
+      "vla_policy_kind": "minicpm_vla_frozen_encoder_skill_param_head_v1",
+      "mujoco_success": true,
+      "mujoco_skill": "find_and_eat_berry",
+      "gif_url": "/fireboy-vla/build/toy-v3-policy/learned_berry_eat.gif",
+      "mp4_url": "",
+      "registry_status": "gpu_vla_checkpoint_ready_local_fallback_used",
+      "server_latency_ms": 1980.7
+    }
+  ],
+  "resource_state": {
+    "runpod_pods": {
+      "command": [
+        "runpodctl",
+        "pod",
+        "list",
+        "--all"
+      ],
+      "returncode": 0,
+      "stdout": "[]",
+      "stderr": ""
+    },
+    "modal_apps": {
+      "command": [
+        "modal",
+        "app",
+        "list"
+      ],
+      "returncode": 0,
+      "stdout": "Apps                                \n\u250f\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2533\u2501\u2501\n\u2503 App ID                    \u2503 Description  \u2503 State    \u2503 Tasks \u2503 Created at   \u2503 S\n\u2521\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2501\u2547\u2501\u2501\n\u2502 ap-MBwcfzFfQWMokEMbKllXSL \u2502 minicpm-omn\u2026 \u2502 deployed \u2502 0     \u2502 2026-06-13   \u2502  \n\u2502                           \u2502              \u2502          \u2502       \u2502 21:08 IST    \u2502  \n\u2502 ap-Sa2dawCXknBevN7VuCVbA4 \u2502 fireboy-vla\u2026 \u2502 deployed \u2502 1     \u2502 2026-06-15   \u2502  \n\u2502                           \u2502              \u2502          \u2502       \u2502 11:41 IST    \u2502  \n\u2502 ap-UWLor3xV9IlK6RWrx7dGBF \u2502 fireboy-vla\u2026 \u2502 stopped  \u2502 0     \u2502 2026-06-15   \u2502 2\n\u2502                           \u2502              \u2502          \u2502       \u2502 11:38 IST    \u2502 1\n\u2514\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2534\u2500\u2500",
+      "stderr": ""
+    }
+  },
+  "notes": [
+    "This is the final hackathon smoke gate for the hybrid VLA path.",
+    "It proves Modal MiniCPM-V routing and local MuJoCo dispatch through the same API path the website uses."
+  ]
+}

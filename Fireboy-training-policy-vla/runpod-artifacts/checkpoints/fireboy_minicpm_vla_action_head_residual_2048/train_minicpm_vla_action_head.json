@@ -1,0 +1,125 @@
+{"encoded": 25, "total": 2048, "cache_hits": 0}
+{"encoded": 50, "total": 2048, "cache_hits": 0}
+{"encoded": 75, "total": 2048, "cache_hits": 0}
+{"encoded": 100, "total": 2048, "cache_hits": 0}
+{"encoded": 125, "total": 2048, "cache_hits": 0}
+{"encoded": 150, "total": 2048, "cache_hits": 0}
+{"encoded": 175, "total": 2048, "cache_hits": 0}
+{"encoded": 200, "total": 2048, "cache_hits": 0}
+{"encoded": 225, "total": 2048, "cache_hits": 0}
+{"encoded": 250, "total": 2048, "cache_hits": 0}
+{"encoded": 275, "total": 2048, "cache_hits": 0}
+{"encoded": 300, "total": 2048, "cache_hits": 0}
+{"encoded": 325, "total": 2048, "cache_hits": 0}
+{"encoded": 350, "total": 2048, "cache_hits": 0}
+{"encoded": 375, "total": 2048, "cache_hits": 0}
+{"encoded": 400, "total": 2048, "cache_hits": 0}
+{"encoded": 425, "total": 2048, "cache_hits": 0}
+{"encoded": 450, "total": 2048, "cache_hits": 0}
+{"encoded": 475, "total": 2048, "cache_hits": 0}
+{"encoded": 500, "total": 2048, "cache_hits": 0}
+{"encoded": 525, "total": 2048, "cache_hits": 0}
+{"encoded": 550, "total": 2048, "cache_hits": 0}
+{"encoded": 575, "total": 2048, "cache_hits": 0}
+{"encoded": 600, "total": 2048, "cache_hits": 0}
+{"encoded": 625, "total": 2048, "cache_hits": 0}
+{"encoded": 650, "total": 2048, "cache_hits": 0}
+{"encoded": 675, "total": 2048, "cache_hits": 0}
+{"encoded": 700, "total": 2048, "cache_hits": 0}
+{"encoded": 725, "total": 2048, "cache_hits": 0}
+{"encoded": 750, "total": 2048, "cache_hits": 0}
+{"encoded": 775, "total": 2048, "cache_hits": 0}
+{"encoded": 800, "total": 2048, "cache_hits": 0}
+{"encoded": 825, "total": 2048, "cache_hits": 0}
+{"encoded": 850, "total": 2048, "cache_hits": 0}
+{"encoded": 875, "total": 2048, "cache_hits": 0}
+{"encoded": 900, "total": 2048, "cache_hits": 0}
+{"encoded": 925, "total": 2048, "cache_hits": 0}
+{"encoded": 950, "total": 2048, "cache_hits": 0}
+{"encoded": 975, "total": 2048, "cache_hits": 0}
+{"encoded": 1000, "total": 2048, "cache_hits": 0}
+{"encoded": 1025, "total": 2048, "cache_hits": 0}
+{"encoded": 1050, "total": 2048, "cache_hits": 0}
+{"encoded": 1075, "total": 2048, "cache_hits": 0}
+{"encoded": 1100, "total": 2048, "cache_hits": 0}
+{"encoded": 1125, "total": 2048, "cache_hits": 0}
+{"encoded": 1150, "total": 2048, "cache_hits": 0}
+{"encoded": 1175, "total": 2048, "cache_hits": 0}
+{"encoded": 1200, "total": 2048, "cache_hits": 0}
+{"encoded": 1225, "total": 2048, "cache_hits": 0}
+{"encoded": 1250, "total": 2048, "cache_hits": 0}
+{"encoded": 1275, "total": 2048, "cache_hits": 0}
+{"encoded": 1300, "total": 2048, "cache_hits": 0}
+{"encoded": 1325, "total": 2048, "cache_hits": 0}
+{"encoded": 1350, "total": 2048, "cache_hits": 0}
+{"encoded": 1375, "total": 2048, "cache_hits": 0}
+{"encoded": 1400, "total": 2048, "cache_hits": 0}
+{"encoded": 1425, "total": 2048, "cache_hits": 0}
+{"encoded": 1450, "total": 2048, "cache_hits": 0}
+{"encoded": 1475, "total": 2048, "cache_hits": 0}
+{"encoded": 1500, "total": 2048, "cache_hits": 0}
+{"encoded": 1525, "total": 2048, "cache_hits": 0}
+{"encoded": 1550, "total": 2048, "cache_hits": 0}
+{"encoded": 1575, "total": 2048, "cache_hits": 0}
+{"encoded": 1600, "total": 2048, "cache_hits": 0}
+{"encoded": 1625, "total": 2048, "cache_hits": 0}
+{"encoded": 1650, "total": 2048, "cache_hits": 0}
+{"encoded": 1675, "total": 2048, "cache_hits": 0}
+{"encoded": 1700, "total": 2048, "cache_hits": 0}
+{"encoded": 1725, "total": 2048, "cache_hits": 0}
+{"encoded": 1750, "total": 2048, "cache_hits": 0}
+{"encoded": 1775, "total": 2048, "cache_hits": 0}
+{"encoded": 1800, "total": 2048, "cache_hits": 0}
+{"encoded": 1825, "total": 2048, "cache_hits": 0}
+{"encoded": 1850, "total": 2048, "cache_hits": 0}
+{"encoded": 1875, "total": 2048, "cache_hits": 0}
+{"encoded": 1900, "total": 2048, "cache_hits": 0}
+{"encoded": 1925, "total": 2048, "cache_hits": 0}
+{"encoded": 1950, "total": 2048, "cache_hits": 0}
+{"encoded": 1975, "total": 2048, "cache_hits": 0}
+{"encoded": 2000, "total": 2048, "cache_hits": 0}
+{"encoded": 2025, "total": 2048, "cache_hits": 0}
+{
+  "checkpoint": "/workspace/fireboy-vla-physics/build/checkpoints/fireboy_minicpm_vla_action_head_residual_2048/minicpm_vla_action_head.pt",
+  "model_id": "openbmb/MiniCPM-V-4.6",
+  "rows": 2048,
+  "train_rows": 1802,
+  "val_rows": 246,
+  "device": "cuda",
+  "task_filter": [
+    "pick_up",
+    "go_eat_berry"
+  ],
+  "vl_dim": 1024,
+  "state_dim": 27,
+  "output_dim": 320,
+  "chunk_steps": 10,
+  "head_architecture": "state_residual_fusion_v1",
+  "vl_residual_scale": 0.12,
+  "action_std_floor": 0.01,
+  "cache_hits": 0,
+  "losses": [
+    5.261338083073497e-05,
+    5.635580964735709e-05,
+    4.5062271965434775e-05,
+    6.829881021985784e-05,
+    5.855149356648326e-05,
+    9.47353764786385e-05,
+    8.88977010617964e-05,
+    6.661167572019622e-05,
+    4.755576446768828e-05,
+    6.594738079002127e-05
+  ],
+  "val_losses": [
+    0.006777200382202864,
+    0.006830858066678047,
+    0.006756489165127277,
+    0.006855066865682602,
+    0.00674181804060936,
+    0.00686730956658721,
+    0.006572894752025604,
+    0.006594406440854073,
+    0.0067767612636089325,
+    0.006485409568995237
+  ]
+}

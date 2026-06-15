@@ -1,0 +1,62 @@
+{"encoded": 25, "total": 480, "cache_hits": 0}
+{"encoded": 50, "total": 480, "cache_hits": 0}
+{"encoded": 75, "total": 480, "cache_hits": 0}
+{"encoded": 100, "total": 480, "cache_hits": 0}
+{"encoded": 125, "total": 480, "cache_hits": 0}
+{"encoded": 150, "total": 480, "cache_hits": 0}
+{"encoded": 175, "total": 480, "cache_hits": 0}
+{"encoded": 200, "total": 480, "cache_hits": 0}
+{"encoded": 225, "total": 480, "cache_hits": 0}
+{"encoded": 250, "total": 480, "cache_hits": 0}
+{"encoded": 275, "total": 480, "cache_hits": 0}
+{"encoded": 300, "total": 480, "cache_hits": 0}
+{"encoded": 325, "total": 480, "cache_hits": 0}
+{"encoded": 350, "total": 480, "cache_hits": 0}
+{"encoded": 375, "total": 480, "cache_hits": 0}
+{"encoded": 400, "total": 480, "cache_hits": 0}
+{"encoded": 425, "total": 480, "cache_hits": 0}
+{"encoded": 450, "total": 480, "cache_hits": 0}
+{"encoded": 475, "total": 480, "cache_hits": 0}
+{
+  "checkpoint": "/workspace/fireboy-vla-physics/build/checkpoints/fireboy_minicpm_vla_action_head_go_to_point_navclock_480/minicpm_vla_action_head.pt",
+  "model_id": "openbmb/MiniCPM-V-4.6",
+  "rows": 480,
+  "train_rows": 422,
+  "val_rows": 58,
+  "device": "cuda",
+  "task_filter": [
+    "go_to_point"
+  ],
+  "vl_dim": 1024,
+  "state_dim": 42,
+  "output_dim": 320,
+  "chunk_steps": 10,
+  "head_architecture": "state_residual_fusion_v1",
+  "vl_residual_scale": 0.12,
+  "action_std_floor": 0.01,
+  "cache_hits": 0,
+  "losses": [
+    0.00010174018098041415,
+    9.500983287580311e-05,
+    9.62485937634483e-05,
+    0.000127674313262105,
+    0.0001690959616098553,
+    0.00020477276120800525,
+    0.000454821769380942,
+    0.00017500491230748594,
+    0.000461577030364424,
+    0.00020655289699789137
+  ],
+  "val_losses": [
+    0.25456759333610535,
+    0.25441235303878784,
+    0.25453487038612366,
+    0.2532779574394226,
+    0.25529661774635315,
+    0.2526071071624756,
+    0.24974018335342407,
+    0.2534652054309845,
+    0.2585735321044922,
+    0.2529798746109009
+  ]
+}

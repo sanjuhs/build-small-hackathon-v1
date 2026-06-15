@@ -183,6 +183,8 @@ for _ in {1..60}; do
     echo "blender models: $base_url/blender-models"
     echo "parts lab: $base_url/parts-lab"
     echo "fire boy rigged: $base_url/fireboy-rigged"
+    echo "mujoco policy viewer: $base_url/mujoco-policy"
+    echo "fire boy policy gallery: $base_url/fireboy-policy-gallery"
     exit 0
   fi
 

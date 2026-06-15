@@ -1,0 +1,989 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>MiniCPM-V 4.6 Fire Boy VLA Paper</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #172121;
+      --muted: #61706c;
+      --paper: #fffaf0;
+      --surface: #ffffff;
+      --wash: #eef8f6;
+      --line: rgba(23, 33, 33, 0.15);
+      --teal: #123238;
+      --aqua: #66cbd8;
+      --amber: #f0bc42;
+      --coral: #ef7758;
+      --shadow: 0 16px 42px rgba(18, 50, 56, 0.12);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        linear-gradient(180deg, #f7f1df 0%, #eef8f6 38%, #fffaf0 100%);
+    }
+
+    a {
+      color: inherit;
+      font: inherit;
+    }
+
+    .shell {
+      width: min(1180px, calc(100vw - 24px));
+      margin: 0 auto;
+      padding: 12px 0 44px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 10px;
+      z-index: 5;
+      min-height: 54px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 8px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: rgba(255, 250, 240, 0.92);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+    }
+
+    .brand {
+      min-width: 0;
+      display: grid;
+      gap: 2px;
+    }
+
+    .brand strong {
+      font-size: 15px;
+      line-height: 1.1;
+      font-weight: 880;
+      white-space: nowrap;
+    }
+
+    .brand span {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.15;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .nav-links,
+    .actions {
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .button {
+      min-width: 0;
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 7px 11px;
+      color: var(--ink);
+      background: var(--surface);
+      text-decoration: none;
+      font-size: 12px;
+      font-weight: 820;
+      white-space: nowrap;
+      overflow-wrap: anywhere;
+    }
+
+    .button.primary {
+      background: var(--teal);
+      border-color: var(--teal);
+      color: #fff;
+    }
+
+    .button:hover {
+      border-color: var(--teal);
+    }
+
+    .hero {
+      padding: 42px 0 18px;
+      display: grid;
+      gap: 16px;
+    }
+
+    .hero-layout {
+      display: grid;
+      grid-template-columns: minmax(0, 0.86fr) minmax(360px, 1.14fr);
+      gap: 18px;
+      align-items: stretch;
+    }
+
+    h1 {
+      margin: 0;
+      max-width: 760px;
+      font-size: clamp(34px, 5.8vw, 70px);
+      line-height: 0.98;
+      letter-spacing: 0;
+      font-weight: 920;
+      overflow-wrap: anywhere;
+    }
+
+    .lede {
+      margin: 0;
+      max-width: 720px;
+      color: var(--muted);
+      font-size: 16px;
+      line-height: 1.52;
+      font-weight: 620;
+    }
+
+    .paper-panel,
+    .section-band,
+    .metric,
+    .chart-panel,
+    .pdf-frame {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.76);
+      box-shadow: 0 10px 30px rgba(18, 50, 56, 0.08);
+    }
+
+    .paper-panel {
+      min-height: 100%;
+      padding: 16px;
+      display: grid;
+      gap: 14px;
+      align-content: start;
+    }
+
+    .eyebrow {
+      color: var(--teal);
+      font-size: 11px;
+      font-weight: 900;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+    }
+
+    .paper-panel h2,
+    .section-band h2,
+    .chart-panel h2 {
+      margin: 0;
+      font-size: 25px;
+      line-height: 1.06;
+      letter-spacing: 0;
+      font-weight: 900;
+    }
+
+    .paper-panel p,
+    .section-band p,
+    .chart-panel p,
+    li {
+      color: var(--muted);
+      font-size: 13.5px;
+      line-height: 1.55;
+      font-weight: 590;
+    }
+
+    .paper-panel p,
+    .section-band p,
+    .chart-panel p {
+      margin: 0;
+    }
+
+    .hero-image {
+      width: 100%;
+      min-width: 0;
+      min-height: 330px;
+      margin: 0;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid var(--line);
+      background: #fff;
+      box-shadow: var(--shadow);
+    }
+
+    .hero-image img {
+      display: block;
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+    }
+
+    .metric-grid {
+      display: grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 10px;
+      margin: 8px 0 16px;
+    }
+
+    .metric {
+      padding: 12px;
+      display: grid;
+      gap: 4px;
+      min-height: 112px;
+    }
+
+    .metric strong {
+      font-size: 22px;
+      line-height: 1;
+      font-weight: 920;
+    }
+
+    .metric span {
+      color: var(--muted);
+      font-size: 12px;
+      line-height: 1.35;
+      font-weight: 680;
+    }
+
+    .metric.coral {
+      border-color: rgba(239, 119, 88, 0.42);
+      background: rgba(255, 239, 234, 0.82);
+    }
+
+    .metric.aqua {
+      border-color: rgba(102, 203, 216, 0.48);
+      background: rgba(233, 250, 250, 0.82);
+    }
+
+    .metric.amber {
+      border-color: rgba(240, 188, 66, 0.48);
+      background: rgba(255, 247, 222, 0.82);
+    }
+
+    .mark {
+      display: inline;
+      border-radius: 5px;
+      padding: 0 0.18em;
+      font-weight: 820;
+      box-decoration-break: clone;
+      -webkit-box-decoration-break: clone;
+    }
+
+    .mark.minicpm {
+      color: #0f3d43;
+      background: rgba(102, 203, 216, 0.25);
+    }
+
+    .mark.codex {
+      color: #463207;
+      background: rgba(240, 188, 66, 0.28);
+    }
+
+    .mark.modal {
+      color: #4c2118;
+      background: rgba(239, 119, 88, 0.22);
+    }
+
+    .section-band {
+      margin: 12px 0;
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .two-col {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: 14px;
+      align-items: start;
+    }
+
+    .three-col {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .note-card {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 13px;
+      background: rgba(255, 255, 255, 0.72);
+      display: grid;
+      gap: 6px;
+    }
+
+    .note-card strong {
+      font-size: 14px;
+      line-height: 1.2;
+      font-weight: 900;
+    }
+
+    .note-card span {
+      color: var(--muted);
+      font-size: 12.5px;
+      line-height: 1.45;
+      font-weight: 620;
+    }
+
+    .chart-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      margin: 12px 0;
+    }
+
+    .chart-panel {
+      overflow: hidden;
+      display: grid;
+      gap: 10px;
+    }
+
+    .chart-panel h2,
+    .chart-panel p {
+      padding: 0 14px;
+    }
+
+    .chart-panel h2 {
+      padding-top: 14px;
+      font-size: 20px;
+    }
+
+    .chart-panel img {
+      display: block;
+      width: 100%;
+      height: auto;
+      border-bottom: 1px solid var(--line);
+      background: #fff;
+    }
+
+    .chart-panel p {
+      padding-bottom: 14px;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      overflow: hidden;
+      border-radius: 8px;
+      background: var(--surface);
+      border: 1px solid var(--line);
+    }
+
+    th,
+    td {
+      padding: 10px;
+      border-bottom: 1px solid var(--line);
+      text-align: left;
+      vertical-align: top;
+      font-size: 12.5px;
+      line-height: 1.45;
+    }
+
+    th {
+      color: #fff;
+      background: var(--teal);
+      font-weight: 850;
+    }
+
+    tr:last-child td {
+      border-bottom: 0;
+    }
+
+    td {
+      color: var(--muted);
+      font-weight: 600;
+    }
+
+    td strong {
+      color: var(--ink);
+    }
+
+    ul {
+      margin: 0;
+      padding-left: 18px;
+      display: grid;
+      gap: 7px;
+    }
+
+    .pdf-shell {
+      margin-top: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .pdf-frame {
+      width: 100%;
+      height: min(78vh, 860px);
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .pdf-frame object {
+      display: block;
+      width: 100%;
+      height: 100%;
+      border: 0;
+    }
+
+    code {
+      border-radius: 5px;
+      padding: 1px 5px;
+      background: rgba(18, 50, 56, 0.08);
+      color: var(--teal);
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 0.94em;
+    }
+
+    pre {
+      margin: 0;
+      max-width: 100%;
+      overflow-x: auto;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: rgba(246, 243, 234, 0.9);
+    }
+
+    pre code {
+      padding: 0;
+      border-radius: 0;
+      background: transparent;
+      color: var(--ink);
+      font-size: 12px;
+      line-height: 1.45;
+      white-space: pre;
+    }
+
+    @media (max-width: 860px) {
+      body {
+        overflow-x: hidden;
+      }
+
+      .shell {
+        width: 100%;
+        padding: 12px 12px 36px;
+        overflow-x: hidden;
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .nav-links,
+      .actions {
+        width: 100%;
+      }
+
+      .nav-links,
+      .actions {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .actions {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .button {
+        width: 100%;
+        max-width: 100%;
+        flex: none;
+        white-space: normal;
+        text-align: center;
+      }
+
+      .hero-layout,
+      .two-col,
+      .three-col,
+      .chart-grid,
+      .metric-grid {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .hero {
+        padding-top: 30px;
+      }
+
+      h1 {
+        max-width: 100%;
+        font-size: 30px;
+        line-height: 1.03;
+        word-break: break-word;
+      }
+
+      .paper-panel p,
+      .section-band p,
+      .chart-panel p,
+      li,
+      td,
+      th {
+        overflow-wrap: anywhere;
+      }
+
+      .pdf-frame {
+        height: 560px;
+      }
+
+      .paper-panel,
+      .section-band,
+      .metric,
+      .chart-panel,
+      .pdf-frame,
+      .hero-image {
+        min-width: 0;
+        max-width: 100%;
+      }
+    }
+
+    @media (max-width: 520px) {
+      .shell {
+        width: 366px;
+        max-width: calc(100vw - 24px);
+        margin-left: 12px;
+        margin-right: 12px;
+      }
+
+      .nav-links {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      h1 {
+        font-size: 27px;
+      }
+
+      .paper-panel h2,
+      .section-band h2 {
+        font-size: 22px;
+      }
+
+      .hero-image {
+        min-height: 260px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <nav class="topbar">
+      <div class="brand">
+        <strong>MiniCPM-V 4.6 VLA Paper</strong>
+        <span>Fire Boy research artifact</span>
+      </div>
+      <div class="nav-links" aria-label="Demo navigation">
+        <a class="button" href="/pages">Pages</a>
+        <a class="button" href="/toy-v3">Toy Room v3</a>
+        <a class="button" href="/fireboy-policy-gallery">Policy Gallery</a>
+        <a class="button primary" href="/frontend/research/minicpm-v46-fireboy-vla-research-paper.pdf" target="_blank" rel="noreferrer">Open PDF</a>
+      </div>
+    </nav>
+
+    <section class="hero" aria-label="Research paper overview">
+      <div class="hero-layout">
+        <div class="paper-panel">
+          <span class="eyebrow">Research paper</span>
+          <h1>Turning MiniCPM-V 4.6 into a Fire Boy VLA</h1>
+          <p class="lede">This page packages the training story into a judge-ready research artifact: how the MiniCPM-V backbone was frozen, how the router was added, which action-head experiments failed, which ones survived closed-loop physics, where Modal and RunPod fit, and how Codex helped scaffold the whole experimental loop.</p>
+          <div class="actions" aria-label="Paper actions">
+            <a class="button primary" href="/frontend/research/minicpm-v46-fireboy-vla-research-paper.pdf" download>Download PDF</a>
+            <a class="button" href="/frontend/research/minicpm-v46-fireboy-vla-research-paper.pdf" target="_blank" rel="noreferrer">Open in Browser</a>
+            <a class="button" href="/fireboy-policy-gallery">In-depth Demo</a>
+            <a class="button" href="/toy-v3">Toy Room v3 Demo</a>
+            <a class="button" href="#embedded-pdf">Read Below</a>
+          </div>
+        </div>
+        <figure class="hero-image" aria-label="VLA architecture chart">
+          <img src="/frontend/research/vla-architecture.png" alt="Architecture diagram for MiniCPM-V 4.6, router head, action heads, skill dispatch, and runtime proof" />
+        </figure>
+      </div>
+    </section>
+
+    <section class="metric-grid" aria-label="Headline results">
+      <div class="metric coral"><strong>0/20</strong><span>single-step manipulation before action chunks</span></div>
+      <div class="metric aqua"><strong>20/20</strong><span>pick and eat after chunked action policies</span></div>
+      <div class="metric amber"><strong>512/512</strong><span>frozen router skill choices on held-out eval rows</span></div>
+      <div class="metric aqua"><strong>0.0170</strong><span>frozen router mean parameter MAE</span></div>
+    </section>
+
+    <section id="demo-story" class="section-band">
+      <span class="eyebrow">Demo story</span>
+      <h2>The objective: an AI-age virtual toy with a real inner loop</h2>
+      <p>This project came from an earlier attempt to build a real robot. The practical pivot was to build the thing that felt most alive first: a virtual toy, somewhere between Talking Tom, Tamagotchi, and an imaginary Pokémon-like companion, but updated for multimodal AI, physics, memory, and learned action. The goal is not just a chatbot with a mascot. The goal is a small creature that sees its room, understands commands, forms habits, chooses actions, plays with objects, reacts physically, and slowly develops a recognizable personality.</p>
+      <div class="three-col">
+        <div class="note-card"><strong>Why virtual first?</strong><span>Simulation lets the pet fail, recover, explore, and build behavior data without the cost and fragility of a physical robot.</span></div>
+        <div class="note-card"><strong>Why a tiny VLA?</strong><span>A small MiniCPM-class model can combine vision, language, state, and action while staying cheap enough for experiments and consumer-grade deployment.</span></div>
+        <div class="note-card"><strong>Why it matters?</strong><span>AI pets can become autonomous toys: they can interact with humans, other toys, and their own environment in ways that scripted games cannot.</span></div>
+      </div>
+      <p>The hackathon build is the tiny version of that thesis. Fire Boy can be commanded, routed through a learned MiniCPM-V policy layer, retargeted into a rigged body, and shown with proof videos and debug traces. The future version is a full-stack pet brain: perception, memory, personality, physics rollouts, skill learning, reflex control, and a slow deliberative model working together.</p>
+      <div class="actions" aria-label="Demo story actions">
+        <a class="button primary" href="/toy-v3">Open Toy Room v3 Demo</a>
+        <a class="button" href="/fireboy-policy-gallery">Open In-depth Demo Evidence</a>
+        <a class="button" href="/frontend/research/minicpm-v46-fireboy-vla-research-paper.pdf" target="_blank" rel="noreferrer">Open Research PDF</a>
+      </div>
+    </section>
+
+    <section class="section-band">
+      <span class="eyebrow">Abstract</span>
+      <h2>What changed from “vision model” to “vision-language-action model”?</h2>
+      <p>MiniCPM-V 4.6 already supplies image-language understanding, but Fire Boy needs actions: walk to a target, run around, pick up an object, eat a berry, and retarget proof trajectories onto a rigged Three.js body. The conversion freezes the MiniCPM-V backbone first, extracts a 1024-dimensional vision-language embedding, concatenates a robot-state vector, and trains small heads around that representation. The public demo promotes the skill-parameter router because it proved more reliable than a single monolithic low-level controller.</p>
+      <div class="two-col">
+        <div>
+          <h2>Backbone and state</h2>
+          <p>The router reads camera/image context, the user instruction, root pose, hand and mouth positions, target positions, task flags, stage flags, previous action, and grasp/eaten state. That state vector matters because the image alone does not expose velocities, contact phase, prior action, or whether an object is already held.</p>
+        </div>
+        <div>
+          <h2>Actions and dispatch</h2>
+          <p>The final router predicts one of four skills plus six parameters: <code>target_x</code>, <code>target_y</code>, <code>target_z</code>, <code>radius</code>, <code>speed_hint</code>, and <code>object_is_berry</code>. Bounds and stabilizers keep those outputs in safe scene ranges before dispatching to policy registry skills.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="chart-grid" aria-label="Modeling and rollout evidence">
+      <article class="chart-panel">
+        <img src="/frontend/research/vla-modeling-pipeline.png" alt="Fire Boy modeling pipeline from concept art to SAM cleanup, rigging, MuJoCo body, and live retarget" />
+        <h2>Modeling Pipeline</h2>
+        <p>Fire Boy starts as concept art, moves through SAM-style extraction and cleanup, becomes a 20-bone Blender GLB, is matched to a MuJoCo body, and finally returns to the browser as retargeted Toy Room motion.</p>
+      </article>
+      <article class="chart-panel">
+        <img src="/frontend/research/vla-vm-sync.png" alt="Local, RunPod, Modal, Newton, and Toy Room artifact synchronization diagram" />
+        <h2>VM and Runtime Sync</h2>
+        <p>The practical research loop was local orchestration, RunPod GPU training/eval, artifact copyback, Modal serverless inference, and a documented Newton/Warp lane for future GPU rollout throughput.</p>
+      </article>
+      <article class="chart-panel">
+        <img src="/frontend/research/vla-parameter-summary.png" alt="Trainable parameter counts for router head, residual action head, and LoRA adapter" />
+        <h2>Head Sizes</h2>
+        <p>The promoted frozen router trains 814,090 head parameters. The residual 10x32 action-chunk head trains 1,078,912 parameters, while the LoRA adapter adds 4,743,168 trainable parameters across layers 0-23.</p>
+      </article>
+      <article class="chart-panel">
+        <img src="/frontend/research/vla-rollout-samples.png" alt="Sample rollout observations and Toy Room proof screenshots" />
+        <h2>Rollout Samples</h2>
+        <p>The dataset rows are image + state + command + action labels sampled from rollout frames, not isolated stills. Those same proof paths become the browser policy gallery and retarget evidence.</p>
+      </article>
+      <article class="chart-panel">
+        <img src="/frontend/research/vla-training-roadmap.png" alt="Policy training ladder from rollouts to behavior cloning, chunks, residual VLA, router, and future reinforcement learning" />
+        <h2>Policy Training Ladder</h2>
+        <p>The technical path was deliberately staged: behavior cloning first, action chunks when one-step control failed, residual VLA heads for manipulation, then a safe router for the public demo.</p>
+      </article>
+      <article class="chart-panel">
+        <img src="/frontend/research/vla-future-stack.png" alt="Future single-brain virtual pet stack with MiniCPM brain, validated action contract, fast local controller, memory, Modal inference, and rollout factory" />
+        <h2>Future Pet Stack</h2>
+        <p>The larger version should separate a slow MiniCPM/Omni-style pet brain from a fast local reflex controller so the creature can feel alive without waiting on every model call.</p>
+      </article>
+    </section>
+
+    <section class="section-band">
+      <span class="eyebrow">Paper-style notes</span>
+      <h2>How the embodied asset and policy loop were built</h2>
+      <div class="two-col">
+        <div>
+          <p>The avatar pipeline is part of the model, not decoration. The SAM-cleaned Fire Boy body was repaired into a single connected mesh, bound to a humanoid skeleton, exported with motion clips, then compared against a MuJoCo body so simulator traces could drive the browser rig. The Fire Boy rig report records 3,311 vertices, zero unweighted vertices, and a clean single-component body for the shipped base.</p>
+        </div>
+        <div>
+          <p>The data pipeline is similarly explicit. The first four-skill manifest had 64 episodes and 2,368 image rows; the focused manipulation manifest expanded contact-heavy tasks to 144 episodes and 6,192 rows; the all-skill router manifest wrote 3,072 skill-parameter rows with images required.</p>
+        </div>
+      </div>
+      <pre><code># Sketch of the promoted VLA router
+vl = MiniCPM_V_4_6(image, instruction).mean_pool()  # 1024-d, frozen
+state = build_robot_state(root, hands, mouth, targets, flags, previous_action)  # 42-d
+h = silu(linear(concat(vl, state), 1066, 512))
+h = silu(linear(h, 512, 512))
+skill_logits = linear(h, 512, 4)
+params = linear(h, 512, 6)  # target_xyz, radius, speed_hint, object_is_berry
+loss = cross_entropy(skill_logits, skill_id) + 0.35 * mse(params, target_params)</code></pre>
+    </section>
+
+    <section class="chart-grid" aria-label="Research graphs">
+      <article class="chart-panel">
+        <img src="/frontend/research/vla-success-progression.png" alt="Experiment success-rate graph" />
+        <h2>Experiment Progression</h2>
+        <p>Single-step manipulation failed, chunked manipulation worked, the first mixed VLA dataset exposed data imbalance, and the final router solved the public-demo decision layer.</p>
+      </article>
+      <article class="chart-panel">
+        <img src="/frontend/research/vla-router-loss-curve.png" alt="Router validation-loss and LoRA validation-MAE curve" />
+        <h2>Loss and Validation Curve</h2>
+        <p>The frozen router kept perfect skill accuracy while validation parameter loss moved downward. LoRA preserved classification, but parameter precision was less stable.</p>
+      </article>
+      <article class="chart-panel">
+        <img src="/frontend/research/vla-router-param-mae.png" alt="Frozen versus LoRA router parameter mean absolute error by parameter" />
+        <h2>Router Parameter MAE</h2>
+        <p>The LoRA router's biggest regression was coordinate precision, especially <code>target_y</code>. In physics, a small coordinate error becomes a visible miss.</p>
+      </article>
+      <article class="chart-panel">
+        <img src="/frontend/research/vla-active-skills.png" alt="Final active skill proof graph" />
+        <h2>Final Active Skills</h2>
+        <p>The demo stack combines proved skills: walk and run from MuJoCo articulated policies, manipulation from MiniCPM-V LoRA/residual proof lanes, and the frozen router for command selection.</p>
+      </article>
+    </section>
+
+    <section class="section-band">
+      <span class="eyebrow">Router internals</span>
+      <h2>The router is the demo-safe VLA layer</h2>
+      <table>
+        <thead>
+          <tr><th>Part</th><th>Role in the VLA</th><th>Why it matters</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Frozen MiniCPM-V 4.6</strong></td><td>Produces pooled vision-language hidden-state features from the image and instruction.</td><td>Protects the pretrained visual-language representation while the action interface is still being tested.</td></tr>
+          <tr><td><strong>Robot state constructor</strong></td><td>Builds navigation, object, hand, mouth, previous-action, task, stage, grasp, and eaten features.</td><td>Gives the model proprioception that cannot be trusted from pixels alone.</td></tr>
+          <tr><td><strong>MLP trunk</strong></td><td>Fuses the 1024-d MiniCPM-V embedding with the state vector through SiLU layers.</td><td>Keeps training fast and interpretable on RunPod GPUs.</td></tr>
+          <tr><td><strong>Skill head</strong></td><td>Predicts <code>walk_to</code>, <code>run_around</code>, <code>pick_up</code>, or <code>find_and_eat_berry</code>.</td><td>Maps language into a bounded action vocabulary with MP4 proof.</td></tr>
+          <tr><td><strong>Parameter head</strong></td><td>Predicts grounded target and behavior parameters.</td><td>Lets the same skill adapt to the ball, berry, viewer camera, or marker.</td></tr>
+          <tr><td><strong>Stabilizers</strong></td><td>Clip output ranges, copy explicit scene targets, and prefer heuristic skill for explicit commands unless forced neural.</td><td>Makes learned routing robust enough for a live demo.</td></tr>
+        </tbody>
+      </table>
+      <pre><code># Trainable sizes in the artifact
+router_head = 814_090            # 1066 -> 512 -> 512 -> skill(4) + params(6)
+residual_action_head = 1_078_912 # VL branch + state branch + 10x32 action chunk
+lora_adapter = 4_743_168         # rank 8 adapters on q/k/v/o/gate/up/down, layers 0-23
+
+# Router output contract
+skills = ["walk_to", "run_around", "pick_up", "find_and_eat_berry"]
+params = ["target_x", "target_y", "target_z", "radius", "speed_hint", "object_is_berry"]</code></pre>
+    </section>
+
+    <section class="section-band">
+      <span class="eyebrow">What failed</span>
+      <h2>The failed paths explain the final architecture</h2>
+      <table>
+        <thead>
+          <tr><th>Experiment</th><th>Result</th><th>Lesson</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Single-step manipulation</strong></td><td>pick_up 0/20, go_eat_berry 0/20</td><td>One action target averaged across approach, reach, descend, close, lift, and mouth-transfer phases.</td></tr>
+          <tr><td><strong>First mixed manifest</strong></td><td>pick/eat 2/8 each, run 8/8, go_to 7/8</td><td>The JSONL-to-head path worked, but contact-heavy data was too sparse.</td></tr>
+          <tr><td><strong>All-skill direct low-level head</strong></td><td>pick 2/2, run 2/2, eat 0/2, go_to 0/2</td><td>A single low-level controller could not cover contact manipulation and locomotion reliably.</td></tr>
+          <tr><td><strong>Direct go_to MiniCPM-V variants</strong></td><td>1-step, root-velocity, and recovery-root-velocity variants stayed at 0/5</td><td>Closed-loop navigation exposed root drift and saturation that offline loss did not solve.</td></tr>
+          <tr><td><strong>LoRA router promotion</strong></td><td>perfect skill accuracy, but eval MAE 0.0629 vs frozen 0.0170</td><td>Backbone adaptation was real, but the frozen router was numerically safer for the demo.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section-band">
+      <span class="eyebrow">Simulation and hardware</span>
+      <h2>MuJoCo proof, NVIDIA Newton lane, RunPod training, Modal inference</h2>
+      <div class="two-col">
+        <div>
+          <p>MuJoCo is the proof source for the shipped policy gallery: eval JSON, MP4/GIF rollouts, body render checks, and Toy Room trajectory retargeting. The NVIDIA Newton lane is documented as the GPU physics scaling route: Fire Boy asset load test, CUDA rollout, qpos/action trace export, and MP4/USD/NPZ artifacts. The current public proof remains MuJoCo-backed, with Newton/Warp as the next simulation-throughput path.</p>
+        </div>
+        <div>
+          <ul>
+            <li>RunPod RTX 6000 Ada: frozen residual MiniCPM-V manipulation head, 2048 rows, 3/3 pick and 3/3 eat.</li>
+            <li>RunPod NVIDIA A40: frozen and LoRA skill-parameter router experiments.</li>
+            <li>Modal L40S: live MiniCPM-o 4.5 WebSocket runtime with Volume cache and Hugging Face Secret.</li>
+            <li>Local app: FastAPI/Gradio-style server, Three.js rig, CANNON interactions, policy gallery, browser screenshots, and PDF delivery.</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-band">
+      <span class="eyebrow">Sampling and parameters</span>
+      <h2>The model was trained around visible state, not hidden magic</h2>
+      <div class="two-col">
+        <div>
+          <p>The router rows pair a rendered observation with the instruction, a normalized robot-state vector, a skill id, and six grounded parameters. Contact tasks needed more data than navigation because pickup and eating pass through several phases: approach, reach above, descend, close, lift, transfer to mouth, and verify object state.</p>
+        </div>
+        <div>
+          <p>That is why direct one-step manipulation failed at 0/20, while chunked action policies reached 20/20. The final presentation keeps the router as the demo-safe VLA layer and treats low-level action heads as skill-specific research lanes until they pass broader randomized closed-loop tests.</p>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Dataset / head</th><th>Size</th><th>What it taught us</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>First four-skill manifest</strong></td><td>64 episodes, 2,368 image rows</td><td>The JSONL and image pipeline worked, but manipulation was underrepresented.</td></tr>
+          <tr><td><strong>Focused manipulation manifest</strong></td><td>144 episodes, 6,192 rows</td><td>More contact-phase examples turned pick/eat from brittle into reliable eval behaviors.</td></tr>
+          <tr><td><strong>Skill-parameter router manifest</strong></td><td>3,072 rows</td><td>Balanced high-level routing over pick_up, go_eat_berry, run_around, and go_to_point.</td></tr>
+          <tr><td><strong>Frozen router head</strong></td><td>814,090 trainable parameters</td><td>Small enough to inspect and stable enough to promote for the live demo.</td></tr>
+          <tr><td><strong>LoRA router adapter</strong></td><td>4,743,168 trainable parameters</td><td>Proved adaptation works, but coordinate MAE was worse than the frozen head in this run.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section-band">
+      <span class="eyebrow">Policy training</span>
+      <h2>How the policy was trained and why the design changed</h2>
+      <p>The training loop started with behavior cloning because it gives a stable first signal: image, instruction, state, and the demonstrated action that solved the rollout. That worked for route selection and simple movement, but contact manipulation exposed the hard part of embodiment. A single next-action label averaged across approach, contact, lift, and mouth-transfer phases, so the controller looked reasonable offline but failed in closed-loop physics. The fix was to train short action chunks and then promote a skill-parameter router for the live demo.</p>
+      <table>
+        <thead>
+          <tr><th>Stage</th><th>Training signal</th><th>Reason for keeping or changing it</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Behavior cloning baseline</strong></td><td>Rendered rollout image, language command, robot state, next action.</td><td>Fast, interpretable, and enough to prove the data path, but too phase-blind for manipulation.</td></tr>
+          <tr><td><strong>Action chunks</strong></td><td>10-step x 32-actuator targets for contact-heavy pick/eat rollouts.</td><td>Preserved temporal phase, turning manipulation from 0/20 into 20/20 in the focused eval.</td></tr>
+          <tr><td><strong>Residual VLA head</strong></td><td>MiniCPM-V embedding plus state controller plus residual action branch.</td><td>Let vision-language features adjust the state policy without letting the whole controller drift.</td></tr>
+          <tr><td><strong>Skill-parameter router</strong></td><td>Four skill labels plus six continuous parameters.</td><td>Most robust public-demo layer: it routes to proved skills instead of asking one head to solve every motor regime.</td></tr>
+          <tr><td><strong>Future RL layer</strong></td><td>Task success, contact, smoothness, energy, time, curiosity, and personality rewards.</td><td>Useful only after the sim lane can generate enough rollouts and failures; otherwise RL optimizes brittle shortcuts.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section-band">
+      <span class="eyebrow">VLA design space</span>
+      <h2>Other ways to convert a multimodal model into a VLA</h2>
+      <p>The current build uses a frozen MiniCPM-V encoder plus small action heads because that was the safest route for a hackathon demo. It is not the only way, and it is not the final most optimized form. A larger version should test multiple conversion strategies against the same closed-loop physics suite.</p>
+      <table>
+        <thead>
+          <tr><th>Conversion method</th><th>What changes</th><th>When it is better</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Frozen VLM + action head</strong></td><td>Freeze MiniCPM-V, train only router/action MLPs.</td><td>Best first pass: cheap, stable, debuggable, and easy to run on modest GPUs.</td></tr>
+          <tr><td><strong>LoRA / QLoRA adapter</strong></td><td>Train low-rank adapters in the language/vision-language stack plus action heads.</td><td>Useful when the model must internalize action semantics, but it needs better numeric grounding checks.</td></tr>
+          <tr><td><strong>Action-token fine-tuning</strong></td><td>Represent skills, coordinates, or joint chunks as tokens and fine-tune the model to emit them.</td><td>Good for a single brain/controller interface, especially if the runtime can validate structured tokens.</td></tr>
+          <tr><td><strong>Diffusion or flow action head</strong></td><td>Generate action chunks as trajectories rather than single deterministic vectors.</td><td>Better for multimodal behavior where several actions are valid, such as playful motion or grasp approach.</td></tr>
+          <tr><td><strong>World model + planner</strong></td><td>Learn latent dynamics, predict future states, and plan before acting.</td><td>Better for long-horizon pet behavior, habits, curiosity, and multi-toy interactions.</td></tr>
+          <tr><td><strong>RL after imitation</strong></td><td>Start from behavior cloning, then improve in simulation using rewards.</td><td>Best once Newton/MuJoCo rollouts are fast enough to find many failures and recoveries.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section-band">
+      <span class="eyebrow">Single brain roadmap</span>
+      <h2>From tiny demo to full virtual-pet controller</h2>
+      <div class="two-col">
+        <div>
+          <p>A future MiniCPM-V or MiniCPM-o style system could become the single high-level pet brain: see the toy room, understand speech, remember prior interactions, choose goals, select motor skills, and explain its own behavior. The fully fine-tuned route would train the model on multimodal episodes with observation frames, state summaries, action traces, rewards, and personality labels, then ask it to emit a structured action plan or compact action tokens.</p>
+        </div>
+        <div>
+          <p>The most practical architecture is still hierarchical. A slow brain handles language, personality, memory, and goal choice. A fast local policy handles millisecond reflexes: balance, hand motion, contact correction, and object attachment. Modal or another serverless GPU lane can run the slow multimodal brain, while a distilled local controller keeps the toy responsive.</p>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr><th>Layer</th><th>Latency target</th><th>Optimization path</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Fast reflex policy</strong></td><td>milliseconds</td><td>Distilled MLP/transformer head, quantized ONNX/WebGPU/WASM, cached state, no image model in the inner loop.</td></tr>
+          <tr><td><strong>Skill router</strong></td><td>tens of milliseconds when warm</td><td>Frozen MiniCPM features cached per frame, small head local or on a warm GPU worker.</td></tr>
+          <tr><td><strong>Pet brain</strong></td><td>sub-second to seconds</td><td>Modal warm containers, model weight cache, prompt/state compression, streaming responses, tool-call validation.</td></tr>
+          <tr><td><strong>Training factory</strong></td><td>offline</td><td>Run many MuJoCo/Newton rollouts, mine failures, relabel with success/failure, retrain adapters and skill heads.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section-band">
+      <span class="eyebrow">Codex throughout</span>
+      <h2>OpenAI Codex helped turn the research loop into a presentable system</h2>
+      <p>The build history shows a steady chain of OpenAI Codex-assisted work: shipping Toy Room v3, adding the Fire Boy command loop, wiring MiniCPM-V action paths, routing Toy Room v3 through Modal MiniCPM, adding brain trace diagnostics, hardening Modal WebSocket timeouts, keeping the MiniCPM-V loop live, making locomotion and pickup physical, grounding pickup targets, adding gestures, generating screenshots, and packaging this paper. The value was not a single magic patch; it was iteration speed with evidence discipline.</p>
+      <table>
+        <thead>
+          <tr><th>Codex role</th><th>Concrete contribution</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>Scaffolding</strong></td><td>Routes, frontend pages, training scripts, policy-gallery wiring, static assets, and local verification loops.</td></tr>
+          <tr><td><strong>Experiment hygiene</strong></td><td>JSON summaries, runbooks, artifact paths, screenshots, proof bundle validation, and paper/page generation.</td></tr>
+          <tr><td><strong>Debugging</strong></td><td>Modal timeout hardening, action contract validation, grounding fixes, retarget bridge checks, and browser QA.</td></tr>
+          <tr><td><strong>Demo polish</strong></td><td>Page directory, unique screenshots, PDF download/open controls, and a coherent narrative tying Modal, VLA, Newton, RunPod, and MiniCPM together.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section class="section-band">
+      <span class="eyebrow">Future scope</span>
+      <h2>Where this goes beyond the current virtual-pet level</h2>
+      <p>The current result is a practical VLA demo: MiniCPM-V sees the scene, the router grounds the command, and proof-backed policies make Fire Boy move, pick up, and eat in the Toy Room. The next research step is not a bigger page; it is broader closed-loop evidence with randomized objects, randomized rooms, longer tasks, and a Newton/Warp GPU rollout lane that can generate enough failures to train against.</p>
+      <ul>
+        <li>Promote the frozen router for public demos while keeping LoRA as a research checkpoint until its coordinate MAE improves.</li>
+        <li>Move from one Toy Room to randomized rooms with object affordances, target references, player-camera commands, and multi-step language plans.</li>
+        <li>Train skill-specific low-level heads instead of forcing one shared head to handle locomotion, contact, grasping, mouth transfer, and recovery.</li>
+        <li>Use NVIDIA Newton/Warp or another GPU physics path to multiply rollout throughput and make sim failures visible before they reach the browser.</li>
+        <li>Add contact/tactile labels, reward-model scoring, longer action chunks, and distillation into smaller on-device policies once the skill interface stabilizes.</li>
+        <li>Add long-lived memory and habit formation so Fire Boy can develop preferences, routines, and a recognizable personality.</li>
+        <li>Return to the multi-agent toy idea: several virtual pets interacting with each other, the user, and shared objects in ways that can be observed but not fully scripted.</li>
+        <li>Use the virtual pet as a bridge toward future humanoid robots: perception, state, safety bounds, action tokens, low-level control, and recovery policies all transfer conceptually.</li>
+      </ul>
+    </section>
+
+    <section class="section-band">
+      <span class="eyebrow">References</span>
+      <h2>Primary sources reflected in the paper</h2>
+      <table>
+        <thead>
+          <tr><th>Reference</th><th>Why it is in the artifact</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong><a href="https://huggingface.co/openbmb/MiniCPM-V-4.6" target="_blank" rel="noreferrer">MiniCPM-V 4.6 model card</a></strong></td><td>Backbone for frozen vision-language features and LoRA experiments.</td></tr>
+          <tr><td><strong><a href="https://arxiv.org/abs/2304.02643" target="_blank" rel="noreferrer">Segment Anything</a></strong></td><td>SAM-style segmentation is part of the avatar extraction and cleanup story.</td></tr>
+          <tr><td><strong><a href="https://mujoco.org/" target="_blank" rel="noreferrer">MuJoCo</a></strong></td><td>Simulator used for articulated body proof, closed-loop eval, and retarget traces.</td></tr>
+          <tr><td><strong><a href="https://developer.nvidia.com/newton-physics" target="_blank" rel="noreferrer">NVIDIA Newton</a></strong></td><td>Future GPU physics lane for scalable rollout generation and USD/MJCF-compatible traces.</td></tr>
+          <tr><td><strong><a href="https://modal.com/docs" target="_blank" rel="noreferrer">Modal</a></strong></td><td>Serverless GPU/runtime lane for the live MiniCPM-o action gateway.</td></tr>
+          <tr><td><strong><a href="https://openai.com/codex/" target="_blank" rel="noreferrer">OpenAI Codex</a></strong></td><td>Agentic coding partner used throughout scaffolding, debugging, screenshot generation, and packaging.</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <section id="embedded-pdf" class="section-band">
+      <span class="eyebrow">PDF</span>
+      <h2>Read the full paper</h2>
+      <p>The embedded paper below is the generated PDF artifact. Use the buttons if the browser prefers opening PDFs in a separate viewer.</p>
+      <div class="actions" aria-label="PDF actions">
+        <a class="button primary" href="/frontend/research/minicpm-v46-fireboy-vla-research-paper.pdf" download>Download PDF</a>
+        <a class="button" href="/frontend/research/minicpm-v46-fireboy-vla-research-paper.pdf" target="_blank" rel="noreferrer">Open PDF</a>
+      </div>
+      <div class="pdf-shell">
+        <div class="pdf-frame">
+          <object data="/frontend/research/minicpm-v46-fireboy-vla-research-paper.pdf" type="application/pdf">
+            <p>Open the PDF: <a href="/frontend/research/minicpm-v46-fireboy-vla-research-paper.pdf">MiniCPM-V 4.6 Fire Boy VLA research paper</a>.</p>
+          </object>
+        </div>
+      </div>
+    </section>
+  </main>
+  <script>
+    (() => {
+      const pattern = /(MiniCPM-V 4\.6|MiniCPM-o 4\.5|MiniCPM-o|MiniCPM-V|MiniCPM|OpenAI Codex|Codex|Modal)/g;
+      const skip = new Set(["SCRIPT", "STYLE", "CODE", "PRE", "OBJECT", "IFRAME", "NOSCRIPT"]);
+      const nodes = [];
+      const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT, {
+        acceptNode(node) {
+          if (!node.nodeValue || !pattern.test(node.nodeValue)) {
+            pattern.lastIndex = 0;
+            return NodeFilter.FILTER_REJECT;
+          }
+          pattern.lastIndex = 0;
+          for (let el = node.parentElement; el; el = el.parentElement) {
+            if (skip.has(el.tagName) || el.classList.contains("mark")) {
+              return NodeFilter.FILTER_REJECT;
+            }
+          }
+          return NodeFilter.FILTER_ACCEPT;
+        }
+      });
+      while (walker.nextNode()) {
+        nodes.push(walker.currentNode);
+      }
+      for (const node of nodes) {
+        const text = node.nodeValue;
+        const frag = document.createDocumentFragment();
+        let lastIndex = 0;
+        for (const match of text.matchAll(pattern)) {
+          if (match.index > lastIndex) {
+            frag.append(text.slice(lastIndex, match.index));
+          }
+          const span = document.createElement("span");
+          const value = match[0];
+          span.className = `mark ${value.includes("Modal") ? "modal" : value.includes("Codex") ? "codex" : "minicpm"}`;
+          span.textContent = value;
+          frag.append(span);
+          lastIndex = match.index + value.length;
+        }
+        if (lastIndex < text.length) {
+          frag.append(text.slice(lastIndex));
+        }
+        node.parentNode.replaceChild(frag, node);
+      }
+    })();
+  </script>
+</body>
+</html>

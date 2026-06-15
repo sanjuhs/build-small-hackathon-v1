@@ -3,6 +3,7 @@ from __future__ import annotations
 import os
 from typing import Any
 
+from src.command_coercion import coerce_fireboy_command_action
 from src.modal_omni_policy import modal_omni_last_error, try_modal_omni_policy
 from src.model_policy import (
     local_ollama_chat_endpoint,
@@ -106,6 +107,7 @@ def try_requested_brain_mode(mode: str, payload: dict[str, Any], status: dict[st
 
 
 def finish_action(action: dict[str, Any], payload: dict[str, Any], requested_mode: str) -> dict[str, Any]:
+    coerce_fireboy_command_action(action, payload)
     debug = action.setdefault("debug", {})
     if isinstance(debug, dict):
         debug["requestedBrainMode"] = requested_mode
@@ -118,6 +120,7 @@ def finish_action(action: dict[str, Any], payload: dict[str, Any], requested_mod
 
 def unavailable_for_requested_mode(mode: str, payload: dict[str, Any], status: dict[str, Any]) -> dict[str, Any]:
     action = model_unavailable_policy(payload)
+    coerce_fireboy_command_action(action, payload)
     debug = action.setdefault("debug", {})
     if not isinstance(debug, dict):
         return action

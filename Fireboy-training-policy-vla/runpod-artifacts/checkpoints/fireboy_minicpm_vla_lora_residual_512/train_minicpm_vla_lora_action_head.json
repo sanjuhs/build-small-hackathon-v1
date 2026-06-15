@@ -1,0 +1,52 @@
+{"step": 0, "loss": 0.00011892372276633978, "val_loss": 0.0003207573080696117, "train_rows": 461, "val_rows": 51}
+{"step": 25, "loss": 2.9775144867016934e-05, "val_loss": 0.0013390906504658535, "train_rows": 461, "val_rows": 51}
+{"step": 50, "loss": 0.00034663217957131565, "val_loss": 0.0018666797706525056, "train_rows": 461, "val_rows": 51}
+{"step": 75, "loss": 3.667430792120285e-05, "val_loss": 0.001727207385404957, "train_rows": 461, "val_rows": 51}
+{"step": 100, "loss": 4.9290418246528134e-05, "val_loss": 0.0010511419776169835, "train_rows": 461, "val_rows": 51}
+{"step": 125, "loss": 5.49502219655551e-05, "val_loss": 0.00032780489179155364, "train_rows": 461, "val_rows": 51}
+{"step": 150, "loss": 2.8829002985730767e-05, "val_loss": 0.006115289918094883, "train_rows": 461, "val_rows": 51}
+{"step": 175, "loss": 1.5259813153534196e-05, "val_loss": 0.004112965246804379, "train_rows": 461, "val_rows": 51}
+{"step": 200, "loss": 0.07562658190727234, "val_loss": 0.0012381888178272977, "train_rows": 461, "val_rows": 51}
+{"step": 225, "loss": 0.01383525412529707, "val_loss": 0.002521020463594444, "train_rows": 461, "val_rows": 51}
+{"step": 250, "loss": 0.0001638668036321178, "val_loss": 0.012263435462500638, "train_rows": 461, "val_rows": 51}
+{"step": 275, "loss": 0.0002889819152187556, "val_loss": 0.0056755013377672485, "train_rows": 461, "val_rows": 51}
+{"step": 300, "loss": 2.1143732737982646e-05, "val_loss": 0.002520928166025745, "train_rows": 461, "val_rows": 51}
+{"step": 325, "loss": 0.006100194528698921, "val_loss": 0.002453137239172065, "train_rows": 461, "val_rows": 51}
+{"step": 349, "loss": 0.004216234665364027, "val_loss": 0.00205221986940766, "train_rows": 461, "val_rows": 51}
+{
+  "checkpoint": "/workspace/fireboy-vla-physics/build/checkpoints/fireboy_minicpm_vla_lora_residual_512/minicpm_vla_lora_action_head.pt",
+  "adapter_dir": "/workspace/fireboy-vla-physics/build/checkpoints/fireboy_minicpm_vla_lora_residual_512/lora_adapter",
+  "seed_checkpoint": "/workspace/seed_minicpm_vla_action_head.pt",
+  "model_id": "openbmb/MiniCPM-V-4.6",
+  "rows": 512,
+  "train_rows": 461,
+  "val_rows": 51,
+  "device": "cuda",
+  "lora_rank": 8,
+  "lora_alpha": 16,
+  "freeze_state_head": true,
+  "losses": [
+    5.49502219655551e-05,
+    2.8829002985730767e-05,
+    1.5259813153534196e-05,
+    0.07562658190727234,
+    0.01383525412529707,
+    0.0001638668036321178,
+    0.0002889819152187556,
+    2.1143732737982646e-05,
+    0.006100194528698921,
+    0.004216234665364027
+  ],
+  "val_losses": [
+    0.00032780489179155364,
+    0.006115289918094883,
+    0.004112965246804379,
+    0.0012381888178272977,
+    0.002521020463594444,
+    0.012263435462500638,
+    0.0056755013377672485,
+    0.002520928166025745,
+    0.002453137239172065,
+    0.00205221986940766
+  ]
+}

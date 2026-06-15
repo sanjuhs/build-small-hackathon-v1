@@ -10,6 +10,9 @@ import {
   Cloud,
   FlipVertical2,
   Flame,
+  Grape,
+  Hand,
+  Heart,
   Magnet,
   Mic,
   MicOff,
@@ -34,7 +37,7 @@ import { ToyAudio } from "./audio.js?v=20260613-sound-recipes";
 import { ToyEffects } from "./effects.js";
 import { applyPetBlendshape, createPet, petPointerReaction, setPetEmotion, updatePet } from "./pet.js?v=20260614-grounded-gestures";
 import { createPetBalanceRig } from "./pet_balance.js?v=20260614-locomotion4";
-import { createPhysicsWorld, createToyRoom } from "./room.js?v=20260614-grounded-targets";
+import { createPhysicsWorld, createToyRoom } from "./room.js?v=20260615-pet-tools1";
 import { captureCameraFrame } from "./sensing.js";
 import { createSenseFeeds } from "./senses.js?v=20260614-forward-view";
 
@@ -45,6 +48,9 @@ const LUCIDE_ICONS = {
   Cloud,
   FlipVertical2,
   Flame,
+  Grape,
+  Hand,
+  Heart,
   Magnet,
   Mic,
   MicOff,
@@ -155,6 +161,10 @@ const dom = {
   agentDock: document.getElementById("agentDock"),
   abilityDock: document.getElementById("abilityDock"),
   forceDock: document.getElementById("forceDock"),
+  roomToolDock: document.getElementById("roomToolDock"),
+  handToolButton: document.getElementById("handToolButton"),
+  foodToolButton: document.getElementById("foodToolButton"),
+  petToolButton: document.getElementById("petToolButton"),
   composer: document.getElementById("composer"),
   input: document.getElementById("messageInput"),
   resetButton: document.getElementById("resetButton"),
@@ -169,6 +179,7 @@ const dom = {
   effectFlash: document.getElementById("effectFlash"),
   perceptionTitle: document.getElementById("perceptionTitle"),
   perceptionReadout: document.getElementById("perceptionReadout"),
+  petMeters: document.getElementById("petMeters"),
   modelStatus: document.getElementById("modelStatus"),
   agentReadout: document.getElementById("agentReadout"),
   agentLoopAccordion: document.getElementById("agentLoopAccordion"),
@@ -223,6 +234,7 @@ const gltfLoader = new GLTFLoader();
 const raycaster = new THREE.Raycaster();
 const pointer = new THREE.Vector2();
 const dragPlane = new THREE.Plane();
+const floorPlane = new THREE.Plane(new THREE.Vector3(0, 1, 0), 0);
 const dragHit = new THREE.Vector3();
 const dragOffset = new THREE.Vector3();
 const dragHistory = [];
@@ -242,6 +254,7 @@ let hoverAgent = null;
 let autoplay = !IS_V3_MODE;
 let councilMode = !IS_V3_MODE;
 let rigMeshesVisible = true;
+let roomToolMode = "hand";
 let lastPhysicsTime = performance.now();
 let lastAutoAction = 0;
 let lastSoundReaction = 0;
@@ -286,7 +299,7 @@ function setBrainMode(mode) {
 }
 
 function brainModeAvailable(mode) {
-  if (mode === "modal") return Boolean(modelStatus.modalOmniEnabled || modelStatus.modalOmniConfigured);
+  if (mode === "modal") return Boolean(modelStatus.vlaRouter?.enabled || modelStatus.modalOmniEnabled || modelStatus.modalOmniConfigured);
   if (mode === "ollama-vision") {
     return Boolean(modelStatus.localOllamaAvailable && modelStatus.localOllamaVisionInstalled);
   }
@@ -297,7 +310,10 @@ function brainModeAvailable(mode) {
 }
 
 function brainModeTitle(mode) {
-  if (mode === "modal") return modelStatus.modalOmniConfigured ? "Use Modal MiniCPM-o" : "Modal endpoint is not configured";
+  if (mode === "modal") {
+    if (modelStatus.vlaRouter?.enabled) return "Use Modal MiniCPM-V VLA router";
+    return modelStatus.modalOmniConfigured ? "Use Modal MiniCPM-o" : "Modal endpoint is not configured";
+  }
   if (mode === "ollama-vision") {
     if (!modelStatus.localOllamaAvailable) return `Ollama offline at ${modelStatus.localOllamaEndpoint || "localhost"}`;
     if (!modelStatus.localOllamaVisionInstalled) return `Pull ${modelStatus.localOllamaVisionModel || "MiniCPM-V"}`;
@@ -326,6 +342,14 @@ function renderBrainModeControl() {
 }
 
 function chooseInitialBrainMode() {
+  if (modelStatus.vlaRouter?.enabled) {
+    selectedBrainMode = "modal";
+    brainModePinned = false;
+    try {
+      localStorage.setItem(BRAIN_MODE_STORAGE_KEY, "modal");
+    } catch {}
+    return;
+  }
   if (brainModePinned) return;
   if (brainModeAvailable(selectedBrainMode)) return;
   if (brainModeAvailable("ollama-vision")) {
@@ -351,7 +375,7 @@ for (const spec of AGENT_SPECS) {
     ...spec,
     pet,
     rig,
-    needs: { hunger: 52, curiosity: 48, energy: 74, social: 44 },
+    needs: { hunger: 42, curiosity: 48, energy: 74, social: 44, playfulness: 58 },
     memories: [],
     lastIntent: "waking",
     lastSpell: "",
@@ -363,10 +387,15 @@ for (const spec of AGENT_SPECS) {
     proceduralHitMeshes: [...pet.hitMeshes],
     rigVisual: null,
     rigHelper: null,
+    rigBones: {},
+    rigBoneBases: {},
+    rigRetarget: null,
     rigMixer: null,
     rigActions: {},
     rigActiveClip: "",
     rigStatus: "loading",
+    controlToken: 0,
+    energyState: "ok",
     inFlight: false,
   };
   agents.set(spec.kind, agent);
@@ -381,6 +410,7 @@ syncAgentDock();
 setActiveAgent(activeKind);
 updateModeButton();
 updateRigButton();
+renderRoomToolMode();
 refreshModelStatus();
 refreshTrainingStatus();
 refreshJudgeStatus();
@@ -410,6 +440,26 @@ function showToast(text) {
   dom.toast.textContent = text;
   dom.toast.classList.add("visible");
   setTimeout(() => dom.toast.classList.remove("visible"), 2300);
+}
+
+function setRoomToolMode(mode) {
+  roomToolMode = ["food", "pet"].includes(mode) ? mode : "hand";
+  renderRoomToolMode();
+  const messages = {
+    food: "Food mode: click the floor to drop grapes.",
+    pet: "Pet mode: touch or drag Fire Boy like a ragdoll.",
+    hand: "Hand mode: drag toys and pet Fire Boy.",
+  };
+  showToast(messages[roomToolMode] || messages.hand);
+}
+
+function renderRoomToolMode() {
+  if (!IS_V3_MODE) return;
+  dom.handToolButton?.classList.toggle("active", roomToolMode === "hand");
+  dom.foodToolButton?.classList.toggle("active", roomToolMode === "food");
+  dom.petToolButton?.classList.toggle("active", roomToolMode === "pet");
+  if (dom.canvas) dom.canvas.dataset.toolMode = roomToolMode;
+  document.body.dataset.roomToolMode = roomToolMode;
 }
 
 function syncAgentDock() {
@@ -458,6 +508,47 @@ function renderAbilityDock(agent = activeAgent()) {
     dom.abilityDock.appendChild(button);
   }
   createIcons({ icons: LUCIDE_ICONS });
+}
+
+function maybeRunUrlCommand() {
+  if (!IS_V3_MODE) return;
+  let command = "";
+  try {
+    command = new URLSearchParams(window.location.search).get("autocmd") || "";
+  } catch {
+    command = "";
+  }
+  command = command.replace(/\s+/g, " ").trim();
+  if (!command) return;
+  document.body.dataset.urlAutoCommand = command;
+  setTimeout(() => {
+    const agent = activeAgent();
+    if (!agent?.inFlight) requestAction(agent, command);
+  }, 900);
+}
+
+function maybeApplyUrlPetState() {
+  if (!IS_V3_MODE) return;
+  let params;
+  try {
+    params = new URLSearchParams(window.location.search);
+  } catch {
+    return;
+  }
+  const agent = activeAgent();
+  let changed = false;
+  for (const [queryKey, needKey] of [["hunger", "hunger"], ["energy", "energy"], ["playfulness", "playfulness"]]) {
+    if (!params.has(queryKey)) continue;
+    const value = Number(params.get(queryKey));
+    if (!Number.isFinite(value)) continue;
+    agent.needs[needKey] = clampNeed(value);
+    changed = true;
+  }
+  if (changed) {
+    agent.energyState = Number(agent.needs.energy || 0) > 32 ? "ok" : agent.energyState;
+    renderPetMeters(agent);
+    document.body.dataset.urlPetStateApplied = "true";
+  }
 }
 
 function triggerAbility(kind, ability) {
@@ -656,6 +747,7 @@ function setProceduralPetOpacity(agent, opacity) {
 }
 
 function setupRigAnimations(agent, root, clips) {
+  setupRigRetargetBones(agent, root);
   agent.rigMixer = null;
   agent.rigActions = {};
   agent.rigActiveClip = "";
@@ -667,6 +759,7 @@ function setupRigAnimations(agent, root, clips) {
 }
 
 function playRigMotion(agent, requestedName, { immediate = false } = {}) {
+  if (agent?.rigRetarget?.active && !immediate) return;
   if (!agent?.rigMixer || !agent.rigActions) return;
   const clipName = resolveRigClip(agent, requestedName);
   const next = agent.rigActions[clipName];
@@ -676,6 +769,7 @@ function playRigMotion(agent, requestedName, { immediate = false } = {}) {
     agent.rigActions[agent.rigActiveClip].crossFadeTo(next, immediate ? 0.01 : 0.22, true);
   }
   agent.rigActiveClip = clipName;
+  document.body.dataset.activeRigClip = clipName;
 }
 
 function resolveRigClip(agent, requestedName) {
@@ -710,6 +804,179 @@ function resolveRigClip(agent, requestedName) {
     if (lowered.includes(needle) && actions[clip]) return clip;
   }
   return actions.Idle ? "Idle" : Object.keys(actions)[0];
+}
+
+function setupRigRetargetBones(agent, root) {
+  const aliases = {
+    hips: ["hips"],
+    spine: ["spine"],
+    chest: ["chest"],
+    neck: ["neck"],
+    head: ["head"],
+    crown: ["crown"],
+    shoulderL: ["shoulderl"],
+    shoulderR: ["shoulderr"],
+    upperArmL: ["upperarml"],
+    upperArmR: ["upperarmr"],
+    lowerArmL: ["lowerarml"],
+    lowerArmR: ["lowerarmr"],
+    handL: ["handl"],
+    handR: ["handr"],
+    upperLegL: ["upperlegl"],
+    upperLegR: ["upperlegr"],
+    lowerLegL: ["lowerlegl"],
+    lowerLegR: ["lowerlegr"],
+    footL: ["footl"],
+    footR: ["footr"],
+  };
+  const found = {};
+  root.traverse((node) => {
+    if (!node.isBone) return;
+    const name = canonicalBoneName(node.name);
+    for (const [key, names] of Object.entries(aliases)) {
+      if (!found[key] && names.includes(name)) found[key] = node;
+    }
+  });
+  agent.rigBones = found;
+  agent.rigBoneBases = {};
+  for (const [key, bone] of Object.entries(found)) {
+    agent.rigBoneBases[key] = bone.quaternion.clone();
+  }
+  document.body.dataset.rigRetargetBones = String(Object.keys(found).length);
+}
+
+function canonicalBoneName(name) {
+  return String(name || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+function startRigRetarget(agent, action = {}, skill = "") {
+  const trajectory = action.debug?.mujocoPolicy?.retargetTrajectory;
+  const frames = Array.isArray(trajectory?.frames) ? trajectory.frames : [];
+  const jointNames = Array.isArray(trajectory?.joint_names) ? trajectory.joint_names : [];
+  if (!agent?.rigBones || !frames.length || !jointNames.length) {
+    document.body.dataset.rigRetargetActive = "false";
+    document.body.dataset.rigRetargetReason = "missing-trajectory";
+    return false;
+  }
+  const jointIndex = {};
+  jointNames.forEach((name, index) => {
+    jointIndex[name] = index;
+  });
+  const durationMs = Number(
+    trajectory.duration_ms
+      || action.interaction?.durationMs
+      || (frames.length * 1000 / Number(trajectory.fps || 24)),
+  );
+  agent.rigRetarget = {
+    active: true,
+    startedAt: performance.now(),
+    durationMs: THREE.MathUtils.clamp(durationMs, 900, 7200),
+    frames,
+    jointIndex,
+    skill,
+    task: trajectory.task || skill,
+    source: trajectory.source || "mujoco",
+  };
+  for (const rigAction of Object.values(agent.rigActions || {})) rigAction.paused = true;
+  document.body.dataset.rigRetargetActive = "true";
+  document.body.dataset.rigRetargetSkill = skill;
+  document.body.dataset.rigRetargetTask = agent.rigRetarget.task;
+  document.body.dataset.rigRetargetFrames = String(frames.length);
+  document.body.dataset.rigRetargetSource = agent.rigRetarget.source;
+  return true;
+}
+
+function updateRigRetarget(agent, now) {
+  const clip = agent?.rigRetarget;
+  if (!clip?.active) return false;
+  const frames = clip.frames || [];
+  if (!frames.length) {
+    finishRigRetarget(agent);
+    return false;
+  }
+  const progress = THREE.MathUtils.clamp((now - clip.startedAt) / Math.max(1, clip.durationMs), 0, 1);
+  const framePosition = progress * Math.max(0, frames.length - 1);
+  const index = Math.min(frames.length - 1, Math.floor(framePosition));
+  const nextIndex = Math.min(frames.length - 1, index + 1);
+  const alpha = framePosition - index;
+  const values = interpolateRetargetValues(frames[index]?.values, frames[nextIndex]?.values, alpha);
+  applyRetargetPose(agent, values, clip.jointIndex, alpha);
+  document.body.dataset.rigRetargetFrame = String(index);
+  document.body.dataset.rigRetargetStage = frames[index]?.stage || "";
+  if (progress >= 1) finishRigRetarget(agent);
+  return true;
+}
+
+function interpolateRetargetValues(a = [], b = [], alpha = 0) {
+  const count = Math.max(a.length || 0, b.length || 0);
+  const values = new Array(count);
+  for (let i = 0; i < count; i += 1) {
+    const av = Number(a[i] ?? b[i] ?? 0);
+    const bv = Number(b[i] ?? a[i] ?? av);
+    values[i] = THREE.MathUtils.lerp(av, bv, alpha);
+  }
+  return values;
+}
+
+function finishRigRetarget(agent) {
+  if (!agent) return;
+  resetRigRetargetPose(agent);
+  agent.rigRetarget = null;
+  for (const rigAction of Object.values(agent.rigActions || {})) rigAction.paused = false;
+  document.body.dataset.rigRetargetActive = "false";
+  document.body.dataset.rigRetargetFrame = "";
+  document.body.dataset.rigRetargetStage = "done";
+  playRigMotion(agent, "Idle", { immediate: true });
+}
+
+function resetRigRetargetPose(agent) {
+  const bases = agent?.rigBoneBases || {};
+  for (const [key, bone] of Object.entries(agent?.rigBones || {})) {
+    if (bases[key]) bone.quaternion.copy(bases[key]);
+  }
+}
+
+function applyRetargetPose(agent, values, jointIndex) {
+  const get = (name, fallback = 0) => {
+    const index = jointIndex?.[name];
+    return Number.isFinite(index) ? Number(values[index] ?? fallback) : fallback;
+  };
+  const skill = agent.rigRetarget?.skill || "";
+  const t = THREE.MathUtils.clamp((performance.now() - agent.rigRetarget.startedAt) / Math.max(1, agent.rigRetarget.durationMs), 0, 1);
+  const runPhase = t * Math.PI * 8;
+  const berryPoseBoost = skill.includes("eat") || skill.includes("pick") ? 1 : 0;
+
+  setRetargetEuler(agent, "hips", 0.06 * Math.sin(runPhase) * (skill.includes("run") ? 1 : 0.35), get("root_yaw") * 0.12, 0);
+  setRetargetEuler(agent, "spine", -get("spine_pitch") * 0.55, 0, get("chest_yaw") * 0.22);
+  setRetargetEuler(agent, "chest", 0, get("chest_yaw") * 0.45, 0);
+  setRetargetEuler(agent, "neck", 0, get("neck_yaw") * 0.35, 0);
+  setRetargetEuler(agent, "head", -get("head_pitch") * 0.7, get("neck_yaw") * 0.18, 0);
+
+  setRetargetEuler(agent, "shoulderR", -get("shoulder_R_pitch") * 0.28, get("shoulder_R_yaw") * 0.18, -get("shoulder_R_roll") * 0.18);
+  setRetargetEuler(agent, "upperArmR", -0.18 - get("shoulder_R_pitch") * 0.78 - berryPoseBoost * 0.25, get("shoulder_R_yaw") * 0.36, -0.20 - get("shoulder_R_roll") * 0.48);
+  setRetargetEuler(agent, "lowerArmR", -get("elbow_R") * 0.72 - berryPoseBoost * 0.42, 0, get("wrist_R_roll") * 0.22);
+  setRetargetEuler(agent, "handR", -get("wrist_R_pitch") * 0.62, 0, get("wrist_R_roll") * 0.5);
+
+  setRetargetEuler(agent, "shoulderL", -get("shoulder_L_pitch") * 0.22, get("shoulder_L_yaw") * 0.16, get("shoulder_L_roll") * 0.16);
+  setRetargetEuler(agent, "upperArmL", -0.14 - get("shoulder_L_pitch") * 0.72, get("shoulder_L_yaw") * 0.34, 0.18 + get("shoulder_L_roll") * 0.46);
+  setRetargetEuler(agent, "lowerArmL", -get("elbow_L") * 0.68, 0, -get("wrist_L_roll") * 0.2);
+  setRetargetEuler(agent, "handL", -get("wrist_L_pitch") * 0.58, 0, -get("wrist_L_roll") * 0.48);
+
+  const runBoost = skill.includes("run") ? 1.25 : skill.includes("walk") ? 0.85 : 0.35;
+  setRetargetEuler(agent, "upperLegR", -get("hip_R_pitch") * 0.92 * runBoost, get("hip_R_yaw") * 0.3, 0);
+  setRetargetEuler(agent, "lowerLegR", get("knee_R") * 0.76 * runBoost, 0, 0);
+  setRetargetEuler(agent, "footR", -get("ankle_R") * 0.75 * runBoost, 0, 0);
+  setRetargetEuler(agent, "upperLegL", -get("hip_L_pitch") * 0.92 * runBoost, get("hip_L_yaw") * 0.3, 0);
+  setRetargetEuler(agent, "lowerLegL", get("knee_L") * 0.76 * runBoost, 0, 0);
+  setRetargetEuler(agent, "footL", -get("ankle_L") * 0.75 * runBoost, 0, 0);
+}
+
+function setRetargetEuler(agent, key, x = 0, y = 0, z = 0) {
+  const bone = agent?.rigBones?.[key];
+  const base = agent?.rigBoneBases?.[key];
+  if (!bone || !base) return;
+  const delta = new THREE.Quaternion().setFromEuler(new THREE.Euler(x, y, z, "XYZ"));
+  bone.quaternion.copy(base).multiply(delta);
 }
 
 function rigClipForAction(action = {}) {
@@ -749,13 +1016,44 @@ function pointerToNdc(event) {
   pointer.y = -((event.clientY - rect.top) / rect.height) * 2 + 1;
 }
 
+function floorPointFromPointer() {
+  if (!raycaster.ray.intersectPlane(floorPlane, dragHit)) return null;
+  return clampAgentPosition(dragHit.clone()).setY(0.31);
+}
+
+function dropFoodAtPointer(event) {
+  const point = floorPointFromPointer();
+  if (!point) return false;
+  event.preventDefault();
+  const entry = room.spawnFood(point, { name: "Dropped grapes", energy: 15, nutrition: 15 });
+  updateGeneratedMarker();
+  effects.hearts(bodyToVector(entry.body.position).add(new THREE.Vector3(0, 0.34, 0)), 0x8c7ac0, 7);
+  audio.play("soft_pop", 0.76);
+  recordInteraction({ kind: "drop_food", pet: activeKind, objectId: entry.id, objectName: entry.name || entry.id });
+  document.body.dataset.lastDroppedFood = entry.id;
+  showToast("Dropped grapes for Fire Boy.");
+  return true;
+}
+
 function onPointerDown(event) {
   audio.unlock();
   if (dragged) return;
   pointerToNdc(event);
   raycaster.setFromCamera(pointer, camera);
 
+  if (IS_V3_MODE && roomToolMode === "food") {
+    dropFoodAtPointer(event);
+    return;
+  }
+
   const agentHit = findAgentHit();
+  if (IS_V3_MODE && roomToolMode === "pet") {
+    const targetAgent = agentHit?.agent || activeAgent();
+    const hitPoint = agentHit?.point || targetAgent.pet.group.position.clone().add(new THREE.Vector3(0, 1.05, 0.08));
+    beginAgentDrag(event, targetAgent, hitPoint, { playMode: true, touchType: "pet" });
+    return;
+  }
+
   if (agentHit) {
     beginAgentDrag(event, agentHit.agent, agentHit.point);
     return;
@@ -796,7 +1094,7 @@ function beginObjectDrag(event, entry, hitPoint) {
   startleNearbyAgents(bodyPosition, 0.25);
 }
 
-function beginAgentDrag(event, agent, hitPoint) {
+function beginAgentDrag(event, agent, hitPoint, options = {}) {
   event.preventDefault();
   setActiveAgent(agent.kind);
   stopAgentLocomotion(agent);
@@ -813,7 +1111,9 @@ function beginAgentDrag(event, agent, hitPoint) {
     offset: dragOffset.clone(),
     startClient: { x: event.clientX, y: event.clientY },
     startPoint: hitPoint.clone(),
-    touchType: event.altKey ? "poke" : "pet",
+    touchType: options.touchType || (event.altKey ? "poke" : "pet"),
+    playMode: Boolean(options.playMode || roomToolMode === "pet"),
+    lastPetTrailAt: 0,
     moved: false,
   };
   dragHistory.length = 0;
@@ -863,6 +1163,15 @@ function updateAgentDrag(event) {
   if (!raycaster.ray.intersectPlane(dragged.plane, dragHit)) return;
   const next = clampAgentPosition(dragHit.clone().add(dragged.offset));
   dragged.agent.rig.moveTo(new CANNON.Vec3(next.x, next.y, next.z));
+  if (dragged.playMode) {
+    const now = performance.now();
+    if (now - dragged.lastPetTrailAt > 240) {
+      dragged.lastPetTrailAt = now;
+      petPointerReaction(dragged.agent.pet, "pet");
+      dragged.agent.rig.twist(new CANNON.Vec3(0.02, 0.09, -0.03), 0.28);
+      effects.hearts(dragged.agent.pet.group.position.clone().add(new THREE.Vector3(0, 1.18, 0.2)), PET_LOOKS[dragged.agent.kind].cheeks, 4);
+    }
+  }
   dragHistory.push({ t: performance.now(), x: next.x, y: next.y, z: next.z });
   while (dragHistory.length > 6) dragHistory.shift();
 }
@@ -923,7 +1232,19 @@ function releaseAgentDrag(event, { skipPointerRelease = false } = {}) {
       audio.play("soft_pop", 0.72);
       playRigMotion(agent, "Walk");
     }
-    recordInteraction({ kind: "pet_move", pet: agent.kind, pointer: pointerSnapshot(event, new THREE.Vector3(placed.x, placed.y, placed.z)) });
+    const pointer = pointerSnapshot(event, new THREE.Vector3(placed.x, placed.y, placed.z));
+    if (dragged.playMode) {
+      petPointerReaction(agent.pet, "pet");
+      effects.hearts(agent.pet.group.position.clone().add(new THREE.Vector3(0, 1.34, 0.25)), PET_LOOKS[agent.kind].cheeks, 10);
+      audio.play("pet_touch", 0.86);
+      audio.play("purr", 0.42);
+      showSpeech(`${agent.label}: whee, gentle play.`);
+      showToast("Pet/ragdoll play recorded.");
+      document.body.dataset.lastPetPlay = "ragdoll-drag";
+      recordInteraction({ kind: "pet_ragdoll_play", pet: agent.kind, pointer });
+    } else {
+      recordInteraction({ kind: "pet_move", pet: agent.kind, pointer });
+    }
   } else {
     handleAgentTouch(agent, dragged.touchType, event, dragged.startPoint);
   }
@@ -971,8 +1292,88 @@ function pointerSnapshot(event, worldPoint) {
   };
 }
 
+function isStopCommand(message = "") {
+  const text = ` ${String(message).toLowerCase().replace(/[^a-z0-9]+/g, " ")} `;
+  return /\b(stop|pause|idle|halt|freeze|stay)\b/.test(text) || text.includes(" hold still ");
+}
+
+function isDemandingCommand(message = "") {
+  const text = String(message || "").toLowerCase();
+  return /\b(run|walk|go|move|pick|grab|hold|bring|fetch|jump|dance|catch|throw|toss|play)\b/.test(text);
+}
+
+function shouldEatBeforeCommand(agent, message = "") {
+  if (!IS_V3_MODE || !agent || !isDemandingCommand(message)) return false;
+  if (/\b(eat|berry|berries|grape|grapes|food|snack|stop|idle|rest|sit)\b/i.test(message)) return false;
+  return Number(agent.needs.energy || 0) < 35;
+}
+
+function applyCommandNeedNudges(agent, message = "") {
+  if (!agent?.needs) return;
+  const text = String(message || "").toLowerCase();
+  let energyCost = 0;
+  let playDelta = 0;
+  if (/\b(run|dash|sprint|jump|dance)\b/.test(text)) {
+    energyCost += 8;
+    playDelta += 7;
+  }
+  if (/\b(walk|go|move|pick|grab|hold|bring|fetch)\b/.test(text)) {
+    energyCost += 3;
+  }
+  if (/\b(play|catch|throw|toss|ball)\b/.test(text)) {
+    energyCost += 4;
+    playDelta += 10;
+  }
+  if (/\b(good|cute|nice|love|fun|yay|hello|hi|wave)\b/.test(text)) {
+    playDelta += 6;
+  }
+  if (/\b(stop|idle|rest|sit|calm)\b/.test(text)) {
+    energyCost = Math.max(0, energyCost - 3);
+    playDelta -= 4;
+  }
+  if (energyCost) agent.needs.energy = clampNeed(agent.needs.energy - energyCost);
+  if (playDelta) agent.needs.playfulness = clampNeed((agent.needs.playfulness ?? 50) + playDelta);
+  document.body.dataset.lastNeedEnergyCost = String(energyCost);
+  document.body.dataset.lastNeedPlayDelta = String(playDelta);
+}
+
+function eatBeforeCommand(agent, message = "") {
+  const target = nearestEntryToAgent(agent, objects.filter((entry) => entry.consumable || entry.kind === "berry" || entry.affordances?.includes("eat")));
+  if (!target) {
+    showToast("Fire Boy needs energy, but no berries are available.");
+    return false;
+  }
+  cancelAgentActions(agent);
+  const actionToken = agent.controlToken;
+  const action = {
+    interaction: { durationMs: 2600 },
+    debug: {
+      clientCommand: message,
+      vlaRouter: { skill: "find_and_eat_berry", policyKind: "local_energy_gate" },
+      mujocoPolicy: { success: true, skill: "find_and_eat_berry" },
+    },
+  };
+  document.body.dataset.energyGate = "eat-first";
+  showToast("Fire Boy is low energy, so he eats first.");
+  runVlaLiveEat(agent, target, action);
+  window.setTimeout(() => {
+    if (!agentActionAlive(agent, actionToken)) return;
+    if (message && Number(agent.needs.energy || 0) > 10) requestAction(agent, message);
+  }, 3400);
+  return true;
+}
+
 async function requestAction(agent, message = "") {
   if (!agent || agent.inFlight) return;
+  if (IS_V3_MODE && isStopCommand(message)) {
+    performIdleStop(agent, "command_stop");
+    return;
+  }
+  applyCommandNeedNudges(agent, message);
+  if (shouldEatBeforeCommand(agent, message) && eatBeforeCommand(agent, message)) {
+    updateAgentPanel();
+    return;
+  }
   agent.inFlight = true;
   agent.lastIntent = message ? "listening" : "watching";
   updateAgentPanel();
@@ -1009,6 +1410,7 @@ async function requestAction(agent, message = "") {
     const action = await response.json();
     action.debug = action.debug || {};
     action.debug.clientRoundTripMs = Number((performance.now() - startedAt).toFixed(1));
+    action.debug.clientCommand = message;
     setAgentTrace(agent, compactBrainTrace(payload, action, action.debug?.policy || "model"), { remember: true });
     applyAgentAction(agent, action);
   } catch {
@@ -1036,13 +1438,21 @@ function setAgentTrace(agent, trace, options = {}) {
 }
 
 function applyAgentAction(agent, action) {
+  cancelAgentActions(agent);
   const emotion = action.emotion || "happy";
   const line = spokenLineForAgent(agent, action.speech || "I have a tiny plan.", action);
+  const vlaLiveAction = isVlaPolicyAction(action);
   setPetEmotion(agent.pet, emotion);
   applyPetBlendshape(agent.pet, action.blendshape);
-  agent.pet.animation = action.animation || "bounce";
-  agent.pet.actionUntil = performance.now() + 1900;
-  playRigMotion(agent, rigClipForAction(action));
+  if (vlaLiveAction) {
+    agent.pet.animation = "think";
+    agent.pet.actionUntil = performance.now() + 900;
+    playRigMotion(agent, "Idle");
+  } else {
+    agent.pet.animation = action.animation || "bounce";
+    agent.pet.actionUntil = performance.now() + 1900;
+    playRigMotion(agent, rigClipForAction(action));
+  }
   agent.lastIntent = action.intent || "playful action";
   agent.lastSpell = action.spell?.spellName || action.power?.name || "";
   showSpeech(`${agent.label}: ${line}`);
@@ -1050,7 +1460,14 @@ function applyAgentAction(agent, action) {
   audio.play(action.sound || "happy_chirp", hasSoundRecipe ? 0.44 : 0.82);
   audio.playRecipe(action.soundRecipe, 0.9);
   audio.speak(agent.kind, agent.label, line);
-  executeInteraction(agent, action.interaction || {}, action);
+  const livePolicyExecuted = executeVlaLivePolicy(agent, action);
+  if (vlaLiveAction && action.debug?.mujocoPolicy?.retargetTrajectory?.frames?.length) {
+    hideMujocoPolicyRollout("retargeted-on-fireboy");
+  } else {
+    showMujocoPolicyRollout(action);
+  }
+  const interactionExecuted = livePolicyExecuted || executeInteraction(agent, action.interaction || {}, action);
+  scheduleSocialCombo(agent, action, { livePolicyExecuted, interactionExecuted });
   applyObjectRecipe(agent, action.objectRecipe);
   const projectileLaunched = maybeLaunchFireball(agent, action);
   const executableSpell = executableSpellForAction(action, action.spell || spellFromPower(action.power, agent), { projectileLaunched });
@@ -1077,11 +1494,165 @@ function applyAgentAction(agent, action) {
   refreshAiEvidence();
 }
 
+function scheduleSocialCombo(agent, action = {}, options = {}) {
+  const combo = socialComboForAction(action, agent);
+  if (!agent || !combo.length) return false;
+  const now = performance.now();
+  const locomotionDelay = agent.locomotion?.until ? Math.max(0, agent.locomotion.until - now) : 0;
+  const retargetDelay = agent.rigRetarget?.active ? Math.max(0, (agent.rigRetarget.startedAt + agent.rigRetarget.durationMs) - now) : 0;
+  const interactionDelay = !options.livePolicyExecuted && action.interaction?.verb === "look_at"
+    ? Math.min(850, Math.max(260, Number(action.interaction.durationMs || 900) * 0.42))
+    : 0;
+  const startDelay = Math.max(locomotionDelay, retargetDelay, interactionDelay, options.interactionExecuted ? 280 : 0) + 180;
+  const actionToken = agent.controlToken;
+  document.body.dataset.pendingSocialCombo = combo.map((item) => item.kind).join(",");
+  window.setTimeout(() => {
+    if (agentActionAlive(agent, actionToken)) runSocialCombo(agent, combo, actionToken);
+  }, startDelay);
+  return true;
+}
+
+function socialComboForAction(action = {}, agent = activeAgent()) {
+  const command = String(action.debug?.clientCommand || action.debug?.originalCommand || "").toLowerCase();
+  const debugCombo = String(action.debug?.postActionCombo || "").toLowerCase();
+  const combo = [];
+  const playful = Number(agent?.needs?.playfulness ?? 50) > 78;
+  const wantsWave = debugCombo.includes("wave") || greetingCommand(command);
+  const wantsDance = debugCombo.includes("dance") || danceCommand(command);
+  const wantsSit = debugCombo.includes("sit") || sitCommand(command);
+  const wantsThrow = debugCombo.includes("throw") || throwCommand(command);
+  if (wantsSit) combo.push({ kind: "sit", clip: "Sit", durationMs: 2600 });
+  if (wantsWave) combo.push({ kind: "wave", clip: "Wave", durationMs: 1700 });
+  if (wantsDance) combo.push({ kind: "dance", clip: "Dance", durationMs: 2500 });
+  if (wantsDance && playful) combo.push({ kind: "dance", clip: "Spin", durationMs: 1500 });
+  if (wantsThrow) combo.push({ kind: "throw", clip: "Throw", durationMs: 1450 });
+  return combo;
+}
+
+function greetingCommand(command) {
+  if (!command) return false;
+  if (/\b(walk|run|go|move|pick|grab|eat)\b/.test(command) && !/\b(wave|say hi|say hello|greet)\b/.test(command)) return false;
+  return /\b(say hi|say hello|hello|hi|hey|greet|wave)\b/.test(command);
+}
+
+function danceCommand(command) {
+  return /\b(dance|boogie|celebrate)\b/.test(command);
+}
+
+function sitCommand(command) {
+  return (/\bsit\b/.test(command) || /\bsit down\b/.test(command) || /\btake a seat\b/.test(command)) && !/\bthrow|catch|toss\b/.test(command);
+}
+
+function throwCommand(command) {
+  return /\b(throw|toss|catch)\b/.test(command) || /\bplay catch\b/.test(command);
+}
+
+function runSocialCombo(agent, combo = [], actionToken = agent?.controlToken) {
+  if (!agentActionAlive(agent, actionToken) || !combo.length) return;
+  const [current, ...rest] = combo;
+  if (current.kind === "throw") {
+    runThrowCombo(agent, current);
+    if (rest.length) window.setTimeout(() => runSocialCombo(agent, rest, actionToken), Math.max(700, current.durationMs - 250));
+    return;
+  }
+  if (current.kind === "sit") {
+    runSitCombo(agent, current);
+    if (rest.length) window.setTimeout(() => runSocialCombo(agent, rest, actionToken), Math.max(900, current.durationMs - 350));
+    return;
+  }
+  stopAgentLocomotion(agent);
+  if (agent.rigRetarget?.active) finishRigRetarget(agent);
+  setFacingToward(agent, camera.position.clone().sub(agent.pet.group.position));
+  runPetGesture(agent, current.kind, { durationMs: current.durationMs });
+  playRigMotion(agent, current.clip, { immediate: true });
+  const color = current.kind === "dance" ? 0xffb347 : PET_LOOKS[agent.kind].power;
+  effects.stars(agent.pet.group.position.clone().add(new THREE.Vector3(0, 1.18, 0.16)), color, current.kind === "dance" ? 14 : 8);
+  document.body.dataset.lastSocialCombo = current.kind;
+  document.body.dataset.lastSocialComboTarget = "player-camera";
+  document.body.dataset.lastLookTarget = "player-camera";
+  document.body.dataset.pendingSocialCombo = rest.map((item) => item.kind).join(",");
+  showToast(current.kind === "dance" ? "Fire Boy is doing the dance clip." : "Fire Boy is waving hello.");
+  if (rest.length) {
+    window.setTimeout(() => runSocialCombo(agent, rest, actionToken), Math.max(700, current.durationMs - 250));
+  }
+}
+
+function runSitCombo(agent, current = {}) {
+  stopAgentLocomotion(agent);
+  if (agent.rigRetarget?.active) finishRigRetarget(agent);
+  const chair = nearestEntryToAgent(agent, objects.filter((entry) => entry.kind === "chair" || entry.affordances?.includes("sit")));
+  if (chair) {
+    const chairPosition = bodyToVector(chair.body.position);
+    const agentPosition = agent.rig.position();
+    const fromChair = agentPosition.clone().sub(chairPosition);
+    fromChair.y = 0;
+    if (fromChair.lengthSq() < 0.01) fromChair.set(0, 0, 1);
+    fromChair.normalize().multiplyScalar(0.32);
+    const sitPoint = clampAgentPosition(chairPosition.clone().add(fromChair));
+    agent.rig.steerTo(new CANNON.Vec3(sitPoint.x, 0.06, sitPoint.z), { settleOnFloor: true });
+    document.body.dataset.lastSitTarget = chair.id;
+  } else {
+    document.body.dataset.lastSitTarget = "";
+  }
+  setFacingToward(agent, camera.position.clone().sub(agent.pet.group.position));
+  runPetGesture(agent, "sit", { durationMs: current.durationMs || 2600 });
+  playRigMotion(agent, "Sit", { immediate: true });
+  document.body.dataset.lastSocialCombo = "sit";
+  document.body.dataset.lastSocialComboTarget = document.body.dataset.lastSitTarget || "self";
+  showToast(chair ? `Fire Boy is sitting by ${chair.name || chair.id}.` : "Fire Boy is sitting.");
+}
+
+function runThrowCombo(agent, current = {}) {
+  stopAgentLocomotion(agent);
+  if (agent.rigRetarget?.active) finishRigRetarget(agent);
+  const target = agent.heldObject?.entry || nearestEntryToAgent(agent, objects.filter((entry) => entry.kind === "ball" || entry.affordances?.includes("throw") || entry.affordances?.includes("play")));
+  if (!target) {
+    document.body.dataset.lastThrowTarget = "";
+    showToast("No throwable toy is close enough.");
+    return;
+  }
+  setFacingToward(agent, camera.position.clone().sub(agent.pet.group.position));
+  runPetGesture(agent, "throw", { durationMs: current.durationMs || 1450 });
+  playRigMotion(agent, "Throw", { immediate: true });
+  const actionToken = agent.controlToken;
+  window.setTimeout(() => {
+    if (agentActionAlive(agent, actionToken)) throwObjectTowardViewer(agent, target);
+  }, 360);
+  document.body.dataset.lastSocialCombo = "throw";
+  document.body.dataset.lastSocialComboTarget = "player-camera";
+  document.body.dataset.lastLookTarget = "player-camera";
+  document.body.dataset.lastThrowTarget = target.id;
+}
+
+function throwObjectTowardViewer(agent, entry) {
+  if (!agent || !entry) return;
+  const hold = agent.heldObject?.entry === entry ? agent.heldObject : null;
+  if (hold) agent.heldObject = null;
+  document.body.dataset.heldObject = "";
+  document.body.dataset.heldObjectAnchor = "";
+  entry.body.type = hold?.originalType ?? CANNON.Body.DYNAMIC;
+  entry.body.mass = Number.isFinite(hold?.originalMass) ? hold.originalMass : Math.max(0.5, Number(entry.body.mass || 1));
+  entry.body.updateMassProperties();
+  const handPosition = heldObjectWorldPosition(agent, entry);
+  placeObject(entry, new CANNON.Vec3(handPosition.x, handPosition.y, handPosition.z));
+  const viewer = playerCameraFloorTarget();
+  const direction = viewer.clone().sub(handPosition);
+  direction.y = 0;
+  if (direction.lengthSq() < 0.01) direction.copy(agentForwardVector(agent));
+  direction.normalize();
+  const impulse = new CANNON.Vec3(direction.x * 3.4, 1.15, direction.z * 3.4);
+  entry.body.applyImpulse(impulse, entry.body.position);
+  entry.body.angularVelocity.set(direction.z * 6, 0.8, -direction.x * 6);
+  entry.body.wakeUp();
+  effects.ring(handPosition.clone().add(new THREE.Vector3(0, 0.15, 0)), PET_LOOKS[agent.kind].power, 0.8, 0.55);
+  showToast(`Fire Boy threw ${entry.name || entry.id} toward you.`);
+}
+
 function executableSpellForAction(action = {}, spell = {}, options = {}) {
   if (!spell || !Array.isArray(spell.ops)) return null;
   if (options.projectileLaunched) return null;
   const verb = action.interaction?.verb || "none";
-  if (!["walk", "run", "pickup", "carry", "bring", "turn", "look_at", "point", "reach", "release"].includes(verb)) return spell;
+  if (!["walk", "run", "pickup", "carry", "bring", "turn", "look_at", "point", "reach", "release", "stop"].includes(verb)) return spell;
   const ops = spell.ops.filter((op) => ["spawn_particle", "set_light"].includes(op?.op));
   if (!ops.length) return null;
   return { ...spell, ops };
@@ -1120,9 +1691,381 @@ function applyObjectRecipe(agent, recipe) {
   return entry;
 }
 
+function isVlaPolicyAction(action = {}) {
+  return Boolean(action?.debug?.vlaRouter && action?.debug?.mujocoPolicy?.success);
+}
+
+function executeVlaLivePolicy(agent, action = {}) {
+  if (!isVlaPolicyAction(action)) return false;
+  const skill = vlaSkillForAction(action);
+  const now = performance.now();
+  document.body.dataset.vlaLiveBridge = `${skill}:started`;
+  document.body.dataset.vlaLivePolicy = action.debug?.vlaRouter?.policyKind || "";
+  document.body.dataset.vlaLiveDispatch = action.debug?.vlaRouterDispatchMessage || action.debug?.vlaRouter?.dispatch || "";
+  startRigRetarget(agent, action, skill);
+
+  if (skill === "run_around") {
+    runVlaLiveRoute(agent, action);
+    return true;
+  }
+
+  const target = resolveVlaLiveTarget(agent, action);
+  if (!target) {
+    document.body.dataset.vlaLiveBridge = `${skill}:no-target`;
+    return false;
+  }
+
+  if (skill === "pick_up") {
+    runVlaLivePickup(agent, target, action);
+    return true;
+  }
+
+  if (skill === "find_and_eat_berry" || skill === "go_eat_berry") {
+    runVlaLiveEat(agent, target, action);
+    return true;
+  }
+
+  if (skill === "walk_to" || skill === "go_to_point") {
+    runVlaLiveWalkTo(agent, target, action);
+    return true;
+  }
+
+  document.body.dataset.vlaLiveBridge = `${skill || "unknown"}:fallback`;
+  agent.pet.actionUntil = Math.max(agent.pet.actionUntil || 0, now + 1200);
+  return false;
+}
+
+function vlaSkillForAction(action = {}) {
+  return String(
+    action.debug?.vlaRouter?.skill
+      || action.debug?.mujocoPolicy?.skill
+      || action.interaction?.verb
+      || "",
+  );
+}
+
+function resolveVlaLiveTarget(agent, action = {}) {
+  const skill = vlaSkillForAction(action);
+  const targetId = action.interaction?.targetId && action.interaction.targetId !== "self"
+    ? String(action.interaction.targetId)
+    : "";
+  const exact = targetId ? objects.find((entry) => entry.id === targetId) : null;
+  const virtualExact = targetId ? virtualTargetEntryForId(agent, targetId) : null;
+  const commandTarget = commandTargetForLiveVla(agent, action, skill);
+  if (commandTarget) return commandTarget;
+  if (virtualExact) return virtualExact;
+  if (exact) return exact;
+
+  const edible = objects.filter((entry) => entry.consumable || entry.kind === "berry" || entry.affordances?.includes("eat"));
+  if (skill === "find_and_eat_berry" || skill === "go_eat_berry") {
+    return nearestEntryToAgent(agent, edible) || nearestObjectFor(agent);
+  }
+
+  if (skill === "pick_up") {
+    const grabbable = objects.filter((entry) => (
+      entry.kind === "berry"
+      || entry.kind === "ball"
+      || entry.affordances?.includes("play")
+      || entry.affordances?.includes("lift")
+      || entry.affordances?.includes("eat")
+    ));
+    return nearestEntryToAgent(agent, grabbable) || nearestObjectFor(agent);
+  }
+
+  return nearestObjectFor(agent);
+}
+
+function commandTargetForLiveVla(agent, action = {}, skill = "") {
+  const command = String(action.debug?.clientCommand || action.debug?.originalCommand || "").toLowerCase();
+  if (!command && skill !== "find_and_eat_berry" && skill !== "go_eat_berry") return null;
+  if (/\b(me|camera|viewer|player|user|here)\b/.test(command) || /\bcome (to )?me\b/.test(command)) {
+    document.body.dataset.vlaLiveGrounding = "player-camera";
+    return virtualTargetEntryForId(agent, "player-camera");
+  }
+  const requested = requestedTargetGroups(command, skill);
+  let candidates = objects.slice();
+  if (requested.categories.size) {
+    const matching = candidates.filter((entry) => [...requested.categories].some((group) => entryMatchesTargetGroup(entry, group)));
+    if (matching.length) candidates = matching;
+  }
+  if (!candidates.length) return null;
+  const origin = agent?.pet?.group?.position || new THREE.Vector3();
+  const scored = candidates
+    .map((entry) => ({
+      entry,
+      score: liveTargetCommandScore(entry, command, requested),
+      distance: bodyToVector(entry.body.position).distanceTo(origin),
+    }))
+    .filter((item) => item.score > 0 || requested.categories.size || requested.colors.size)
+    .sort((a, b) => b.score - a.score || a.distance - b.distance);
+  const winner = scored[0]?.entry || null;
+  if (winner) document.body.dataset.vlaLiveGrounding = `${winner.id}:${Math.max(0, scored[0].score).toFixed(0)}`;
+  return winner;
+}
+
+const TARGET_GROUP_ALIASES = {
+  berry: ["berry", "berries", "food", "snack"],
+  ball: ["ball", "sphere", "orb", "round"],
+  cube: ["cube", "block", "box"],
+  chair: ["chair", "seat", "stool", "sit"],
+  table: ["table", "desk"],
+  lamp: ["lamp", "light"],
+  plant: ["plant", "fern", "sprout", "pot"],
+  book: ["book", "notes", "story"],
+  clock: ["clock", "timer"],
+  bottle: ["bottle"],
+  can: ["can", "tin"],
+  paper: ["paper"],
+  waste: ["waste", "trash", "garbage", "peel"],
+  bin: ["bin", "recycle"],
+  ramp: ["ramp"],
+  domino: ["domino"],
+};
+
+const TARGET_COLOR_ALIASES = {
+  blue: ["blue", "cyan", "teal"],
+  mint: ["mint", "green", "teal"],
+  green: ["green", "mint", "leaf", "fern"],
+  yellow: ["yellow", "amber", "honey", "gold", "golden"],
+  orange: ["orange", "coral", "ember", "fire"],
+  red: ["red", "rose", "pink"],
+  purple: ["purple", "violet", "moon"],
+  white: ["white", "pale", "cream"],
+  black: ["black", "dark"],
+  brown: ["brown", "wood", "wooden"],
+};
+
+function requestedTargetGroups(command, skill = "") {
+  const terms = tokenizeTargetText(command);
+  const categories = new Set();
+  const colors = new Set();
+  for (const [group, aliases] of Object.entries(TARGET_GROUP_ALIASES)) {
+    if (aliases.some((alias) => terms.has(alias))) categories.add(group);
+  }
+  for (const [color, aliases] of Object.entries(TARGET_COLOR_ALIASES)) {
+    if (aliases.some((alias) => terms.has(alias))) colors.add(color);
+  }
+  if (skill === "find_and_eat_berry" || skill === "go_eat_berry") categories.add("berry");
+  return { terms, categories, colors };
+}
+
+function liveTargetCommandScore(entry, command, requested = requestedTargetGroups(command)) {
+  const terms = targetTermsForEntry(entry);
+  let score = 0;
+  for (const word of requested.terms) {
+    if (word.length >= 3 && terms.has(word)) score += 12;
+  }
+  for (const group of requested.categories) {
+    if (entryMatchesTargetGroup(entry, group)) score += 24;
+  }
+  for (const color of requested.colors) {
+    if (entryMatchesTargetColor(entry, color)) score += 18;
+  }
+  if (/\bsoft ball\b/.test(command) && terms.has("soft") && terms.has("ball")) score += 12;
+  if (/\bmoon ball\b/.test(command) && terms.has("moon") && terms.has("ball")) score += 12;
+  if (/\breading lamp\b/.test(command) && entry.id === "reading-lamp") score += 12;
+  if (/\btea table\b/.test(command) && entry.id === "tea-table") score += 12;
+  return score;
+}
+
+function entryMatchesTargetGroup(entry, group) {
+  const terms = targetTermsForEntry(entry);
+  const aliases = TARGET_GROUP_ALIASES[group] || [group];
+  return aliases.some((alias) => terms.has(alias));
+}
+
+function entryMatchesTargetColor(entry, color) {
+  const terms = targetTermsForEntry(entry);
+  const aliases = TARGET_COLOR_ALIASES[color] || [color];
+  return aliases.some((alias) => terms.has(alias));
+}
+
+function targetTermsForEntry(entry = {}) {
+  const terms = new Set(tokenizeTargetText([
+    entry.id,
+    entry.kind,
+    entry.name || "",
+    ...(entry.tags || []),
+    ...(entry.affordances || []),
+  ].join(" ")));
+  const kind = String(entry.kind || "").toLowerCase();
+  const id = String(entry.id || "").toLowerCase();
+  if (kind === "ball") addTerms(terms, "sphere orb round toy");
+  if (kind === "berry") addTerms(terms, "berry berries food snack sphere round");
+  if (kind === "cube") addTerms(terms, "cube block box");
+  if (kind === "chair") addTerms(terms, "chair seat furniture");
+  if (kind === "table") addTerms(terms, "table desk furniture");
+  if (kind === "lamp") addTerms(terms, "lamp light");
+  if (kind === "plant") addTerms(terms, "plant fern sprout pot green");
+  if (kind === "recycle-bin") addTerms(terms, "bin recycle trash waste");
+  if (id.includes("blue")) addTerms(terms, "blue cyan teal");
+  if (id.includes("mint")) addTerms(terms, "mint green teal");
+  if (id.includes("coral")) addTerms(terms, "coral orange red");
+  if (id.includes("honey")) addTerms(terms, "honey yellow gold golden");
+  if (id.includes("amber")) addTerms(terms, "amber yellow orange gold golden");
+  if (id.includes("ember") || id.includes("fire")) addTerms(terms, "ember fire orange red warm");
+  if (id.includes("moon")) addTerms(terms, "moon purple violet blue pale");
+  if (id.includes("rose")) addTerms(terms, "rose red pink");
+  if (id.includes("beach")) addTerms(terms, "beach white pale sphere orb");
+  if (id.includes("reading-lamp")) addTerms(terms, "blue cyan reading lamp light");
+  if (id.includes("lamp") && !id.includes("reading")) addTerms(terms, "yellow warm lamp light");
+  if (id.includes("fern") || id.includes("sprout")) addTerms(terms, "green plant leaf");
+  if (id.includes("paper")) addTerms(terms, "paper white waste trash sphere");
+  if (id.includes("can")) addTerms(terms, "can tin metal waste");
+  if (id.includes("bottle")) addTerms(terms, "bottle blue waste");
+  if (id.includes("peel")) addTerms(terms, "peel banana yellow waste");
+  return terms;
+}
+
+function addTerms(set, text) {
+  for (const term of tokenizeTargetText(text)) set.add(term);
+}
+
+function tokenizeTargetText(value) {
+  return new Set(String(value || "").toLowerCase().replace(/[^a-z0-9]+/g, " ").split(/\s+/).filter(Boolean));
+}
+
+function nearestEntryToAgent(agent, entries = []) {
+  if (!agent || !entries.length) return null;
+  const origin = agent.pet.group.position;
+  return [...entries].sort((a, b) => (
+    bodyToVector(a.body.position).distanceTo(origin) - bodyToVector(b.body.position).distanceTo(origin)
+  ))[0] || null;
+}
+
+function runVlaLiveRoute(agent, action = {}) {
+  const center = roomCenterPoint();
+  const current = agent.rig.position();
+  const radius = THREE.MathUtils.clamp(Number(action.debug?.vlaRouter?.params?.radius || 1.35), 0.9, 2.2);
+  const direction = current.clone().sub(center);
+  direction.y = 0;
+  if (direction.lengthSq() < 0.01) direction.set(1, 0, 0);
+  direction.normalize();
+  const tangent = new THREE.Vector3(-direction.z, 0, direction.x);
+  const route = [
+    center.clone().add(direction.clone().multiplyScalar(radius)),
+    center.clone().add(direction.clone().multiplyScalar(0.35)).add(tangent.clone().multiplyScalar(radius * 0.85)),
+    center.clone().add(direction.clone().multiplyScalar(-radius * 0.9)).add(tangent.clone().multiplyScalar(radius * 0.35)),
+    center.clone().add(tangent.clone().multiplyScalar(-radius * 0.9)),
+    current.clone(),
+  ].map((point) => clampAgentPosition(point));
+  const durationMs = Number(action.interaction?.durationMs || 5200);
+  startAgentLocomotion(agent, route, Math.max(3600, durationMs), { walk: false, loop: false, stopAtEnd: true, speed: 2.35 });
+  document.body.dataset.vlaLiveBridge = "run_around:live-route";
+  document.body.dataset.vlaLiveTarget = `${route[0].x.toFixed(2)},${route[0].z.toFixed(2)}`;
+  showToast("VLA is driving Fire Boy's live run.");
+}
+
+function runVlaLiveWalkTo(agent, target, action = {}) {
+  const targetPosition = bodyToVector(target.body.position);
+  const approach = target.virtualDirect ? clampAgentPosition(targetPosition.clone()) : approachPointForObject(agent, target);
+  const distance = agent.rig.position().distanceTo(approach);
+  const shouldRun = commandRequestsRun(action);
+  const durationMs = THREE.MathUtils.clamp(distance * (shouldRun ? 520 : 900), shouldRun ? 620 : 900, Number(action.interaction?.durationMs || (shouldRun ? 2600 : 3600)));
+  setFacingToward(agent, targetPosition.clone().sub(agent.pet.group.position));
+  startAgentLocomotion(agent, [approach], durationMs, { walk: !shouldRun, stopAtEnd: true, speed: shouldRun ? 2.22 : 1.24 });
+  document.body.dataset.vlaLiveBridge = shouldRun ? "run_to:live-route" : "walk_to:live-route";
+  document.body.dataset.vlaLiveTarget = target.id;
+  document.body.dataset.vlaLiveTargetKind = target.kind || "";
+  document.body.dataset.vlaLiveTargetPosition = `${approach.x.toFixed(2)},${approach.z.toFixed(2)}`;
+  const verb = shouldRun ? "running" : "walking";
+  showToast(target.id === "player-camera" ? `VLA is ${verb} Fire Boy toward the viewer.` : `VLA is ${verb} Fire Boy toward ${target.name || target.id}.`);
+}
+
+function commandRequestsRun(action = {}) {
+  const command = String(action.debug?.clientCommand || action.debug?.originalCommand || action.interaction?.verb || action.intent || "").toLowerCase();
+  return /\b(run|running|dash|sprint|race|zoom)\b/.test(command) || action.interaction?.verb === "run";
+}
+
+function runVlaLivePickup(agent, target, action = {}) {
+  const actionToken = agent.controlToken;
+  const targetPosition = bodyToVector(target.body.position);
+  const approach = approachPointForObject(agent, target);
+  const distance = agent.rig.position().distanceTo(approach);
+  const approachMs = THREE.MathUtils.clamp(distance * 760, 640, 1900);
+  setFacingToward(agent, targetPosition.clone().sub(agent.pet.group.position));
+  startAgentLocomotion(agent, [approach], approachMs, { walk: true, stopAtEnd: true, speed: 1.22 });
+  playRigMotion(agent, "Walk");
+  document.body.dataset.vlaLiveBridge = "pick_up:approach";
+  document.body.dataset.vlaLiveTarget = target.id;
+  setTimeout(() => {
+    if (!agentActionAlive(agent, actionToken)) return;
+    if (!objects.includes(target)) return;
+    setFacingToward(agent, bodyToVector(target.body.position).sub(agent.pet.group.position));
+    runPetGesture(agent, "reach", { durationMs: 680 });
+    playRigMotion(agent, "Cheer");
+    setTimeout(() => {
+      if (!agentActionAlive(agent, actionToken)) return;
+      if (!objects.includes(target)) return;
+      pickUpObject(agent, target, "pickup", Math.max(Number(action.interaction?.durationMs || 3600), 6400));
+      runPetGesture(agent, "hold", { durationMs: 2600 });
+      document.body.dataset.vlaLiveBridge = "pick_up:grasped";
+    }, 520);
+  }, approachMs + 120);
+}
+
+function runVlaLiveEat(agent, target, action = {}) {
+  const actionToken = agent.controlToken;
+  const targetPosition = bodyToVector(target.body.position);
+  const approach = approachPointForObject(agent, target);
+  const distance = agent.rig.position().distanceTo(approach);
+  const approachMs = THREE.MathUtils.clamp(distance * 820, 760, 2300);
+  setFacingToward(agent, targetPosition.clone().sub(agent.pet.group.position));
+  startAgentLocomotion(agent, [approach], approachMs, { walk: true, stopAtEnd: true, speed: 1.28 });
+  playRigMotion(agent, "Walk");
+  document.body.dataset.vlaLiveBridge = "find_and_eat_berry:approach";
+  document.body.dataset.vlaLiveTarget = target.id;
+  setTimeout(() => {
+    if (!agentActionAlive(agent, actionToken)) return;
+    if (!objects.includes(target)) return;
+    setFacingToward(agent, bodyToVector(target.body.position).sub(agent.pet.group.position));
+    runPetGesture(agent, "reach", { durationMs: 620 });
+    playRigMotion(agent, "Cheer");
+    setTimeout(() => {
+      if (!agentActionAlive(agent, actionToken)) return;
+      if (!objects.includes(target)) return;
+      pickUpObject(agent, target, "pickup", 2600);
+      runPetGesture(agent, "hold", { durationMs: 1700 });
+      document.body.dataset.vlaLiveBridge = "find_and_eat_berry:grasped";
+      setTimeout(() => {
+        if (!agentActionAlive(agent, actionToken)) return;
+        if (!objects.includes(target)) return;
+        effects.hearts(bodyToVector(target.body.position).add(new THREE.Vector3(0, 0.24, 0)), PET_LOOKS[agent.kind].cheeks, 8);
+        room.consumeObject(target.id);
+        agent.heldObject = null;
+        document.body.dataset.heldObject = "";
+        document.body.dataset.heldObjectAnchor = "";
+        agent.needs.hunger = clampNeed(agent.needs.hunger - Number(target.nutrition || 24));
+        agent.needs.energy = clampNeed(agent.needs.energy + Number(target.energy || 15));
+        agent.needs.playfulness = clampNeed((agent.needs.playfulness ?? 50) + 4);
+        runPetGesture(agent, "hold", { durationMs: 900 });
+        playRigMotion(agent, "Cheer");
+        document.body.dataset.vlaLiveBridge = "find_and_eat_berry:eaten";
+        document.body.dataset.lastInteractionVerb = "eat";
+        recordInteraction({ kind: "vla_live_eat", pet: agent.kind, objectId: target.id });
+      }, 900);
+    }, 460);
+  }, approachMs + 120);
+}
+
+function roomCenterPoint() {
+  const candidates = objects
+    .filter((entry) => ["cube", "ball", "berry"].includes(entry.kind))
+    .map((entry) => bodyToVector(entry.body.position));
+  if (!candidates.length) return new THREE.Vector3(0, 0.06, 0);
+  const center = candidates.reduce((acc, point) => acc.add(point), new THREE.Vector3()).multiplyScalar(1 / candidates.length);
+  center.y = 0.06;
+  return clampAgentPosition(center);
+}
+
 function executeInteraction(agent, interaction = {}, action = {}) {
   const verb = interaction.verb || "none";
   if (verb === "none") return false;
+  if (verb === "stop") {
+    performIdleStop(agent, "command_stop");
+    recordInteraction({ kind: verb, pet: agent.kind, objectId: interaction.targetId || "" });
+    return true;
+  }
   if (verb === "release") {
     releaseHeldObject(agent);
     runPetGesture(agent, "release", { durationMs: Number(interaction.durationMs || 1200) });
@@ -1160,7 +2103,7 @@ function executeInteraction(agent, interaction = {}, action = {}) {
   if (!target) return false;
 
   if (verb === "look_at") {
-    const playerTarget = action.intent === "grounded_look_at_player" || action.debug?.commandCoercion === "look_at_player";
+    const playerTarget = isPlayerFacingAction(action, interaction);
     if (playerTarget) performLookAtPlayer(agent, interaction);
     else performLookAtObject(agent, target, interaction);
     return true;
@@ -1204,8 +2147,15 @@ function executeInteraction(agent, interaction = {}, action = {}) {
 
   if (verb === "eat" && target.consumable) {
     effects.hearts(bodyToVector(target.body.position).add(new THREE.Vector3(0, 0.24, 0)), PET_LOOKS[agent.kind].cheeks, 6);
-    setTimeout(() => room.consumeObject(target.id), 520);
+    setTimeout(() => {
+      room.consumeObject(target.id);
+      if (agent.heldObject?.entry === target) agent.heldObject = null;
+      document.body.dataset.heldObject = "";
+      document.body.dataset.heldObjectAnchor = "";
+    }, 520);
     agent.needs.hunger = clampNeed(agent.needs.hunger - Number(target.nutrition || 18));
+    agent.needs.energy = clampNeed(agent.needs.energy + Number(target.energy || 15));
+    agent.needs.playfulness = clampNeed((agent.needs.playfulness ?? 50) + 4);
     return true;
   }
 
@@ -1228,7 +2178,7 @@ function runPetGesture(agent, animation, options = {}) {
 }
 
 function turnAgent(agent, action = {}) {
-  const turnToPlayer = action.intent === "grounded_look_at_player" || action.debug?.commandCoercion === "look_at_player";
+  const turnToPlayer = isPlayerFacingAction(action, action.interaction || {});
   if (turnToPlayer) {
     setFacingToward(agent, camera.position.clone().sub(agent.pet.group.position));
   } else {
@@ -1239,6 +2189,16 @@ function turnAgent(agent, action = {}) {
   playRigMotion(agent, "Spin");
   effects.ring(agent.pet.group.position.clone().add(new THREE.Vector3(0, 0.28, 0)), PET_LOOKS[agent.kind].power, 0.72, 0.42);
   document.body.dataset.lastTurnYaw = String(Number(agent.pet.targetFacingYaw || 0).toFixed(3));
+}
+
+function isPlayerFacingAction(action = {}, interaction = {}) {
+  return action.intent === "grounded_look_at_player"
+    || action.intent === "grounded_greet_player"
+    || action.intent === "grounded_dance_player"
+    || action.debug?.commandCoercion === "look_at_player"
+    || action.debug?.commandCoercion === "greet_player"
+    || action.debug?.commandCoercion === "dance_player"
+    || interaction.targetId === "player-camera";
 }
 
 function performLookAtPlayer(agent, interaction = {}) {
@@ -1271,6 +2231,7 @@ function performPointAtObject(agent, target, interaction = {}) {
 }
 
 function performReachForObject(agent, target, interaction = {}) {
+  const actionToken = agent.controlToken;
   const position = bodyToVector(target.body.position);
   const distance = agent.rig.position().distanceTo(position);
   const durationMs = Number(interaction.durationMs || 1900);
@@ -1288,7 +2249,9 @@ function performReachForObject(agent, target, interaction = {}) {
     const approachMs = THREE.MathUtils.clamp(distance * 680, 420, 1200);
     setFacingToward(agent, position.clone().sub(agent.pet.group.position));
     startAgentLocomotion(agent, [approach], approachMs, { walk: true, stopAtEnd: true });
-    setTimeout(reach, approachMs);
+    setTimeout(() => {
+      if (agentActionAlive(agent, actionToken)) reach();
+    }, approachMs);
   } else {
     stopAgentLocomotion(agent);
     reach();
@@ -1348,6 +2311,7 @@ function runAgentRoute(agent, durationMs = 2600, options = {}) {
 }
 
 function approachAndPickUpObject(agent, target, verb, durationMs = 2400) {
+  const actionToken = agent.controlToken;
   const targetPosition = bodyToVector(target.body.position);
   const approach = approachPointForObject(agent, target);
   const distance = agent.rig.position().distanceTo(approach);
@@ -1355,6 +2319,7 @@ function approachAndPickUpObject(agent, target, verb, durationMs = 2400) {
   setFacingToward(agent, targetPosition.clone().sub(agent.pet.group.position));
   startAgentLocomotion(agent, [approach], approachMs + 180, { walk: true, stopAtEnd: true });
   setTimeout(() => {
+    if (!agentActionAlive(agent, actionToken)) return;
     if (!objects.includes(target)) return;
     setFacingToward(agent, bodyToVector(target.body.position).sub(agent.pet.group.position));
     pickUpObject(agent, target, verb, durationMs);
@@ -1369,13 +2334,14 @@ function startAgentLocomotion(agent, route, durationMs = 2400, options = {}) {
   const now = performance.now();
   const walk = options.walk !== false;
   const startPosition = agent.rig.position();
-  const duration = Math.max(500, durationMs);
+  const moodSpeed = petSpeedMultiplier(agent);
+  const duration = Math.max(420, durationMs / moodSpeed);
   agent.locomotion = {
     route: points,
     index: 0,
     until: now + duration,
     startPosition,
-    speed: Number(options.speed || (walk ? 1.24 : 2.08)),
+    speed: Number(options.speed || (walk ? 1.24 : 2.08)) * moodSpeed,
     walk,
     loop: Boolean(options.loop),
     stopAtEnd: options.stopAtEnd !== false,
@@ -1390,6 +2356,14 @@ function startAgentLocomotion(agent, route, durationMs = 2400, options = {}) {
   document.body.dataset.lastLocomotionMode = walk ? "walk" : "run";
   document.body.dataset.lastLocomotionTravel = "0.00";
   playRigMotion(agent, walk ? "Walk" : "Run");
+}
+
+function petSpeedMultiplier(agent) {
+  const playfulness = Number(agent?.needs?.playfulness ?? 50);
+  const energy = Number(agent?.needs?.energy ?? 60);
+  const playBoost = THREE.MathUtils.clamp(0.82 + playfulness / 180, 0.78, 1.34);
+  const energyDrag = energy < 25 ? 0.72 : energy < 45 ? 0.9 : 1;
+  return Number((playBoost * energyDrag).toFixed(3));
 }
 
 function updateAgentLocomotion(agent, now, dt) {
@@ -1465,6 +2439,36 @@ function stopAgentLocomotion(agent, current = agent?.rig?.position?.()) {
   }
 }
 
+function cancelAgentActions(agent) {
+  if (!agent) return 0;
+  agent.controlToken = Number(agent.controlToken || 0) + 1;
+  document.body.dataset.agentControlToken = String(agent.controlToken);
+  return agent.controlToken;
+}
+
+function agentActionAlive(agent, token) {
+  return Boolean(agent && Number(agent.controlToken || 0) === Number(token));
+}
+
+function performIdleStop(agent, reason = "command_stop", options = {}) {
+  if (!agent) return;
+  cancelAgentActions(agent);
+  stopAgentLocomotion(agent);
+  if (agent.rigRetarget?.active) finishRigRetarget(agent);
+  agent.pet.animation = "idle";
+  agent.pet.actionUntil = performance.now() + 800;
+  playRigMotion(agent, "Idle", { immediate: true });
+  document.body.dataset.lastStopReason = reason;
+  document.body.dataset.lastGesture = "idle";
+  document.body.dataset.lastSocialCombo = "";
+  document.body.dataset.pendingSocialCombo = "";
+  if (!options.quiet) {
+    showSpeech(`${agent.label}: me stop.`);
+    showToast("Fire Boy stopped and idled.");
+  }
+  updateAgentPanel();
+}
+
 function approachPointForObject(agent, target) {
   const targetPosition = bodyToVector(target.body.position);
   const fromTarget = agent.rig.position().sub(targetPosition);
@@ -1505,6 +2509,7 @@ function releaseHeldObject(agent, options = {}) {
   const entry = hold.entry;
   agent.heldObject = null;
   document.body.dataset.heldObject = "";
+  document.body.dataset.heldObjectAnchor = "";
   entry.body.type = hold.originalType ?? CANNON.Body.DYNAMIC;
   entry.body.mass = Number.isFinite(hold.originalMass) ? hold.originalMass : 1;
   entry.body.updateMassProperties();
@@ -1519,9 +2524,31 @@ function releaseHeldObject(agent, options = {}) {
 }
 
 function heldObjectWorldPosition(agent, entry) {
+  const hands = rigHandHoldWorldPosition(agent);
+  if (hands) {
+    const halfY = objectHalfHeight(entry);
+    hands.y = Math.max(hands.y, halfY + 0.34);
+    document.body.dataset.heldObjectAnchor = "fireboy-hands";
+    return hands;
+  }
   const halfY = objectHalfHeight(entry);
   const local = new THREE.Vector3(0.42, Math.max(0.78, halfY + 0.68), 0.74);
+  document.body.dataset.heldObjectAnchor = "pet-offset";
   return agent.pet.group.localToWorld(local);
+}
+
+function rigHandHoldWorldPosition(agent) {
+  const bones = agent?.rigBones || {};
+  const left = bones.handL;
+  const right = bones.handR;
+  if (!left && !right) return null;
+  const points = [];
+  if (left) points.push(left.getWorldPosition(new THREE.Vector3()));
+  if (right) points.push(right.getWorldPosition(new THREE.Vector3()));
+  if (!points.length) return null;
+  const center = points.reduce((acc, point) => acc.add(point), new THREE.Vector3()).multiplyScalar(1 / points.length);
+  const forward = agentForwardVector(agent);
+  return center.add(forward.multiplyScalar(0.18)).add(new THREE.Vector3(0, 0.04, 0));
 }
 
 function heldObjectDropPosition(agent, entry) {
@@ -1537,6 +2564,21 @@ function objectHalfHeight(entry) {
 function agentForwardVector(agent) {
   const yaw = Number.isFinite(agent?.pet?.facingYaw) ? agent.pet.facingYaw : agent?.pet?.group?.rotation?.y || 0;
   return new THREE.Vector3(Math.sin(yaw), 0, Math.cos(yaw)).normalize();
+}
+
+function directionLabelForAgent(agent, position) {
+  const toTarget = position.clone ? position.clone() : new THREE.Vector3(position.x || 0, position.y || 0, position.z || 0);
+  toTarget.sub(agent?.pet?.group?.position || new THREE.Vector3());
+  toTarget.y = 0;
+  if (toTarget.lengthSq() < 0.001) return "here";
+  toTarget.normalize();
+  const forward = agentForwardVector(agent);
+  const right = new THREE.Vector3(forward.z, 0, -forward.x).normalize();
+  const frontDot = forward.dot(toTarget);
+  const sideDot = right.dot(toTarget);
+  if (frontDot > 0.72) return "front";
+  if (frontDot < -0.72) return "behind";
+  return sideDot > 0 ? "right" : "left";
 }
 
 function setFacingToward(agent, vector) {
@@ -1795,6 +2837,7 @@ function collectSceneState(agent) {
       distanceToPet: Number(item.pet.group.position.distanceTo(petPos).toFixed(2)),
       position: vectorPayload(item.pet.group.position),
     })),
+    viewer: playerCameraVirtualTarget(agent)?.scene || null,
     objects: objects.map((entry) => {
       const pos = entry.body.position;
       const speed = entry.body.velocity.length();
@@ -1805,36 +2848,105 @@ function collectSceneState(agent) {
         name: entry.name || "",
         generated: Boolean(entry.generated),
         position: { x: Number(pos.x.toFixed(2)), y: Number(pos.y.toFixed(2)), z: Number(pos.z.toFixed(2)) },
+        x: Number(pos.x.toFixed(2)),
+        y: Number(pos.y.toFixed(2)),
+        z: Number(pos.z.toFixed(2)),
         speed: Number(speed.toFixed(2)),
         distanceToPet: Number(distanceToPet.toFixed(2)),
         moving: speed > 0.5,
         affordances: Array.isArray(entry.affordances) ? entry.affordances.slice(0, 6) : [],
-        tags: Array.isArray(entry.tags) ? entry.tags.slice(0, 6) : [],
+        tags: sceneTagsForEntry(entry),
         nutrition: Number(entry.nutrition || 0),
         readable: Boolean(entry.readable),
         comfort: Number(entry.comfort || 0),
         social: Number(entry.social || 0),
       };
-    }),
+    }).concat(virtualSceneObjects(agent)),
   };
+}
+
+function virtualSceneObjects(agent) {
+  const target = playerCameraVirtualTarget(agent);
+  return target ? [target.scene] : [];
+}
+
+function virtualTargetEntries(agent) {
+  const target = playerCameraVirtualTarget(agent);
+  return target ? [target.entry] : [];
+}
+
+function virtualTargetEntryForId(agent, id) {
+  const cleanId = String(id || "");
+  return virtualTargetEntries(agent).find((entry) => entry.id === cleanId) || null;
+}
+
+function playerCameraVirtualTarget(agent) {
+  if (!agent?.pet?.group) return null;
+  const position = playerCameraFloorTarget();
+  const distance = position.distanceTo(agent.pet.group.position);
+  const payload = vectorPayload(position);
+  const affordances = ["go_to", "follow", "look_at"];
+  const tags = ["me", "camera", "viewer", "player", "user", "here"];
+  const sceneTarget = {
+    id: "player-camera",
+    kind: "viewer",
+    name: "player camera",
+    virtual: true,
+    position: payload,
+    x: payload.x,
+    y: payload.y,
+    z: payload.z,
+    speed: 0,
+    distanceToPet: Number(distance.toFixed(2)),
+    moving: false,
+    affordances,
+    tags,
+  };
+  return {
+    scene: sceneTarget,
+    entry: {
+      ...sceneTarget,
+      radius: 0.48,
+      virtualDirect: true,
+      body: { position: { x: payload.x, y: payload.y, z: payload.z } },
+    },
+  };
+}
+
+function playerCameraFloorTarget() {
+  const target = camera.position.clone();
+  target.y = 0.06;
+  return clampAgentPosition(target);
 }
 
 function detectObjects(agent) {
   const origin = agent.pet.group.position;
-  return objects
+  return objects.concat(virtualTargetEntries(agent))
     .map((entry) => {
       const pos = bodyToVector(entry.body.position);
+      const speed = entry.body.velocity?.length?.() || 0;
       return {
         id: entry.id,
         kind: entry.kind,
+        name: entry.name || "",
+        virtual: Boolean(entry.virtual),
+        position: vectorPayload(pos),
         distance: Number(pos.distanceTo(origin).toFixed(2)),
-        moving: entry.body.velocity.length() > 0.5,
+        direction: directionLabelForAgent(agent, pos),
+        moving: speed > 0.5,
         affordances: Array.isArray(entry.affordances) ? entry.affordances.slice(0, 4) : [],
+        tags: sceneTagsForEntry(entry).slice(0, 8),
       };
     })
-    .filter((item) => item.distance < 5.2)
+    .filter((item) => item.distance < (item.virtual ? 9.0 : 5.2))
     .sort((a, b) => a.distance - b.distance)
     .slice(0, 10);
+}
+
+function sceneTagsForEntry(entry = {}) {
+  const base = Array.isArray(entry.tags) ? entry.tags.map((tag) => String(tag || "")) : [];
+  const inferred = [...targetTermsForEntry(entry)].filter((term) => term.length >= 3 && term !== String(entry.id || "").toLowerCase());
+  return [...new Set([...base, ...inferred])].slice(0, 16);
 }
 
 function compactBrainTrace(payload, action, policy) {
@@ -1855,6 +2967,7 @@ function compactBrainTrace(payload, action, policy) {
     memory: summarizeTraceMemory(memories),
     action: summarizeTraceAction(action),
     model: summarizeTraceModel(action),
+    vla: summarizeTraceVla(action),
     json: traceActionJson(action, policy),
   };
 }
@@ -1862,6 +2975,16 @@ function compactBrainTrace(payload, action, policy) {
 function summarizeTraceModel(action) {
   if (!action) return "waiting";
   const debug = action.debug || {};
+  if (debug.vlaRouter) {
+    const router = debug.vlaRouter;
+    return [
+      "Modal MiniCPM-V VLA",
+      router.skill ? `skill:${router.skill}` : "",
+      router.neuralSkill ? `neural:${router.neuralSkill}` : "",
+      router.device ? `device:${router.device}` : "",
+      router.latencyMs ? `${router.latencyMs}ms` : "",
+    ].filter(Boolean).join(" | ");
+  }
   const pieces = [
     debug.provider || debug.policy || "policy",
     debug.model ? shortRuntimeLabel(debug.model) : "",
@@ -1878,18 +3001,47 @@ function summarizeTraceModel(action) {
 }
 
 function summarizeTraceBrain(payload, action) {
+  if (action?.debug?.vlaRouter) {
+    const actual = action?.debug?.provider || "local_mujoco";
+    return `MiniCPM-V VLA -> ${actual}`;
+  }
   const requested = action?.debug?.requestedBrainMode || payload.brainMode || selectedBrainMode || "auto";
   const actual = action?.debug?.provider || action?.debug?.policy || "pending";
   return `${BRAIN_MODE_LABELS[requested] || requested} -> ${actual}`;
+}
+
+function summarizeTraceVla(action) {
+  const router = action?.debug?.vlaRouter;
+  if (!router) return "";
+  const params = router.params || {};
+  const target = Number.isFinite(Number(params.target_x)) && Number.isFinite(Number(params.target_y))
+    ? `target:${Number(params.target_x).toFixed(2)},${Number(params.target_y).toFixed(2)}`
+    : "";
+  return [
+    router.policyKind || "minicpm_vla",
+    router.skill ? `skill:${router.skill}` : "",
+    router.neuralSkill ? `neural:${router.neuralSkill}` : "",
+    router.device ? `device:${router.device}` : "",
+    router.dispatch ? `dispatch:${router.dispatch}` : "",
+    target,
+  ].filter(Boolean).join(" | ");
 }
 
 function summarizeTraceVision(source, detected) {
   if (!detected.length) return `${source || "view"}: soft floor, quiet walls`;
   const objectsText = detected
     .slice(0, 4)
-    .map((item) => `${item.kind}${item.moving ? "/moving" : ""}@${item.distance ?? "?"}m`)
+    .map((item) => `${item.kind}${item.moving ? "/moving" : ""}@${item.distance ?? "?"}m${item.direction ? ` ${item.direction}` : ""}`)
     .join(", ");
   return `${source || "view"}: ${objectsText}`;
+}
+
+function seenItemLabel(item) {
+  const label = item.kind === "viewer" ? "viewer" : (item.kind || item.id || "object");
+  const distance = Number.isFinite(Number(item.distance)) ? `${Number(item.distance).toFixed(1)}m` : "";
+  const direction = item.direction || "";
+  const moving = item.moving ? " moving" : "";
+  return [label, distance, direction].filter(Boolean).join(" ") + moving;
 }
 
 function summarizeTraceAudio(summary = {}) {
@@ -1976,7 +3128,63 @@ function traceActionJson(action, policy) {
     commandCoercion: action.debug?.commandCoercion || null,
     groundedTargetId: action.debug?.groundedTargetId || null,
     modalEvents: action.debug?.modalEvents || null,
+    vlaRouter: action.debug?.vlaRouter || null,
+    vlaRouterUrl: action.debug?.vlaRouterUrl || null,
+    vlaRouterDispatchMessage: action.debug?.vlaRouterDispatchMessage || null,
+    mujocoPolicy: action.debug?.mujocoPolicy || null,
   }, null, 2);
+}
+
+function showMujocoPolicyRollout(action = {}) {
+  const policy = action.debug?.mujocoPolicy;
+  const gifUrl = policy?.gifUrl;
+  const mp4Url = policy?.mp4Url || policy?.registryProofMp4Url || "";
+  if (!mp4Url && !gifUrl) return;
+  let panel = document.getElementById("mujocoPolicyPanel");
+  if (!panel) {
+    panel = document.createElement("aside");
+    panel.id = "mujocoPolicyPanel";
+    panel.style.position = "fixed";
+    panel.style.right = "16px";
+    panel.style.bottom = "16px";
+    panel.style.width = "min(360px, calc(100vw - 32px))";
+    panel.style.zIndex = "60";
+    panel.style.padding = "10px";
+    panel.style.border = "1px solid rgba(255,255,255,0.52)";
+    panel.style.borderRadius = "8px";
+    panel.style.background = "rgba(22, 24, 28, 0.82)";
+    panel.style.boxShadow = "0 14px 34px rgba(0,0,0,0.28)";
+    panel.style.backdropFilter = "blur(14px)";
+    panel.innerHTML = `
+      <button type="button" aria-label="Close MuJoCo rollout" style="position:absolute;right:8px;top:6px;border:0;background:rgba(255,255,255,0.14);color:white;border-radius:999px;width:24px;height:24px;cursor:pointer;">×</button>
+      <div style="font:600 12px/1.2 system-ui,sans-serif;color:#fff;margin:0 28px 8px 0;">MuJoCo policy rollout</div>
+      <div data-mujoco-media></div>
+      <div data-mujoco-status style="font:500 11px/1.35 system-ui,sans-serif;color:rgba(255,255,255,0.76);margin-top:7px;"></div>
+    `;
+    panel.querySelector("button")?.addEventListener("click", () => panel.remove());
+    document.body.appendChild(panel);
+  }
+  const media = panel.querySelector("[data-mujoco-media]");
+  if (media) {
+    const src = `${mp4Url || gifUrl}?t=${Date.now()}`;
+    media.innerHTML = mp4Url
+      ? `<video src="${src}" aria-label="MuJoCo learned policy rollout" autoplay loop muted playsinline controls style="display:block;width:100%;border-radius:6px;background:#111;aspect-ratio:4/3;object-fit:contain;"></video>`
+      : `<img src="${src}" alt="MuJoCo learned policy rollout" style="display:block;width:100%;border-radius:6px;background:#111;aspect-ratio:4/3;object-fit:contain;" />`;
+  }
+  const status = panel.querySelector("[data-mujoco-status]");
+  if (status) {
+    const source = policy.mediaSource === "registry_proof_mp4" ? "registry MP4 proof" : "runtime rollout";
+    status.textContent = policy.success
+      ? `learned control passed · ${source} · grasped ${String(Boolean(policy.grasped))} · eaten ${String(Boolean(policy.eaten))}`
+      : `policy unavailable · ${shortTraceText(policy.reason || "fallback used", 80)}`;
+  }
+  panel.hidden = false;
+}
+
+function hideMujocoPolicyRollout(reason = "hidden") {
+  const panel = document.getElementById("mujocoPolicyPanel");
+  if (panel) panel.remove();
+  document.body.dataset.mujocoPolicyPanel = reason;
 }
 
 function shortTraceText(value, max = 72) {
@@ -1986,11 +3194,55 @@ function shortTraceText(value, max = 72) {
 
 function updateAgentNeeds(dt) {
   for (const agent of agents.values()) {
-    agent.needs.hunger = clampNeed(agent.needs.hunger + dt * 0.34);
-    agent.needs.curiosity = clampNeed(agent.needs.curiosity + dt * 0.18);
-    agent.needs.energy = clampNeed(agent.needs.energy - dt * 0.06);
-    agent.needs.social = clampNeed(agent.needs.social + dt * 0.04);
+    agent.needs.hunger = clampNeed(agent.needs.hunger + dt * 0.12);
+    agent.needs.curiosity = clampNeed(agent.needs.curiosity + dt * 0.12);
+    agent.needs.energy = clampNeed(agent.needs.energy - dt * 0.04);
+    agent.needs.social = clampNeed(agent.needs.social + dt * 0.03);
+    agent.needs.playfulness = clampNeed((agent.needs.playfulness ?? 50) - dt * 0.025);
+    enforceEnergyState(agent);
   }
+}
+
+function enforceEnergyState(agent) {
+  if (!IS_V3_MODE || !agent || agent.inFlight) return;
+  const energy = Number(agent.needs.energy || 0);
+  if (energy <= 10 && agent.energyState !== "exhausted") {
+    agent.energyState = "exhausted";
+    cancelAgentActions(agent);
+    runSitCombo(agent, { durationMs: 2800 });
+    showToast("Fire Boy is exhausted and sitting.");
+    return;
+  }
+  if (energy < 25 && agent.energyState === "ok") {
+    agent.energyState = "low";
+    performIdleStop(agent, "energy_low", { quiet: true });
+    showToast("Fire Boy is low energy. Feed him grapes or berries.");
+    return;
+  }
+  if (energy > 32 && agent.energyState !== "ok") {
+    agent.energyState = "ok";
+  }
+}
+
+function renderPetMeters(agent = activeAgent()) {
+  if (!dom.petMeters || !agent) return;
+  const hunger = clampNeed(agent.needs.hunger);
+  const energy = clampNeed(agent.needs.energy);
+  const playfulness = clampNeed(agent.needs.playfulness ?? 50);
+  const rows = [
+    ["Hunger", hunger, "hunger", hunger > 70 ? "hungry" : hunger < 25 ? "full" : "snacky"],
+    ["Energy", energy, "energy", energy < 25 ? "low" : energy > 72 ? "charged" : "steady"],
+    ["Playfulness", playfulness, "playfulness", playfulness > 72 ? "zoomy" : playfulness < 28 ? "calm" : "ready"],
+  ];
+  dom.petMeters.innerHTML = rows.map(([label, value, kind, state]) => `
+    <div class="pet-meter">
+      <div class="pet-meter-row"><span>${label}</span><span>${Math.round(value)}% · ${state}</span></div>
+      <div class="pet-meter-track"><div class="pet-meter-fill ${kind}" style="width:${value}%"></div></div>
+    </div>
+  `).join("");
+  document.body.dataset.petHunger = String(Math.round(hunger));
+  document.body.dataset.petEnergy = String(Math.round(energy));
+  document.body.dataset.petPlayfulness = String(Math.round(playfulness));
 }
 
 function updateAgentPanel() {
@@ -1998,8 +3250,9 @@ function updateAgentPanel() {
   const seen = detectObjects(agent);
   dom.perceptionTitle.textContent = `${agent.label} sees`;
   dom.perceptionReadout.textContent = seen.length
-    ? seen.slice(0, 4).map((item) => `${item.kind}${item.moving ? " moving" : ""}`).join(", ")
+    ? seen.slice(0, 4).map(seenItemLabel).join(", ")
     : "soft floor, quiet walls";
+  renderPetMeters(agent);
   const policy = modelStatus.enabled || modelStatus.visionEnabled
     ? `${providerPrefix()}${modelStatus.model || "model"}${modelStatus.visionEnabled ? " + vision" : ""}`
     : policyFallbackLabel();
@@ -2098,6 +3351,10 @@ function renderRuntimeStack(agent = activeAgent()) {
 }
 
 function brainRuntimeState() {
+  if (modelStatus.vlaRouter?.enabled) {
+    const loaded = modelStatus.vlaRouter?.health?.model_loaded ? "warm" : "cold";
+    return { label: `Modal MiniCPM-V VLA ${loaded}`, state: modelStatus.vlaRouter?.healthOk ? "ok" : "warn" };
+  }
   if (selectedBrainMode === "ollama-vision") {
     const label = `Ollama MiniCPM-V ${modelStatus.localOllamaVisionModel || ""}`;
     return { label: shortRuntimeLabel(label), state: brainModeAvailable("ollama-vision") ? "ok" : "warn" };
@@ -2538,6 +3795,7 @@ function renderBrainTrace(agent) {
     ["memory", trace.memory],
     ["action", trace.action],
   ];
+  if (trace.vla) rows.push(["vla", trace.vla]);
   for (const [label, value] of rows) appendTraceRow(label, value);
   appendTraceRow("json", trace.json, { code: true });
   const history = Array.isArray(agent.traceHistory) ? agent.traceHistory.filter((item) => item !== trace) : [];
@@ -2591,9 +3849,10 @@ function traceCopyBlock(trace, index, total) {
     `force: ${trace.force}`,
     `memory: ${trace.memory}`,
     `action: ${trace.action}`,
+    trace.vla ? `vla: ${trace.vla}` : "",
     "json:",
     trace.json,
-  ].join("\n");
+  ].filter(Boolean).join("\n");
 }
 
 function renderMemories(agent) {
@@ -2638,12 +3897,16 @@ async function refreshModelStatus() {
     renderBrainModeControl();
     const defaultBrain = modelStatus.modalOmniEnabled
       ? `Modal MiniCPM-o action: ${modelStatus.modalOmniModel || modelStatus.model}`
+      : modelStatus.vlaRouter?.enabled
+        ? "Modal MiniCPM-V VLA router"
       : modelStatus.modalOmniRequested && !modelStatus.modalOmniConfigured
         ? "Modal URL missing"
         : modelStatus.visionActionEnabled
       ? `MiniCPM-V action: ${modelStatus.visionModel || modelStatus.model}`
       : (modelStatus.enabled ? `${providerPrefix()}${modelStatus.model}` : policyFallbackLabel());
-    const brain = selectedBrainMode === "ollama-vision"
+    const brain = modelStatus.vlaRouter?.enabled
+      ? "Modal MiniCPM-V VLA router"
+      : selectedBrainMode === "ollama-vision"
       ? `Ollama MiniCPM-V: ${modelStatus.localOllamaVisionModel || "local vision"}`
       : selectedBrainMode === "ollama-text"
         ? `Ollama MiniCPM5: ${modelStatus.localOllamaTextModel || "local text"}`
@@ -2655,6 +3918,7 @@ async function refreshModelStatus() {
       (modelStatus.configured && !modelStatus.enabled)
       || (modelStatus.visionActionConfigured && !modelStatus.visionActionEnabled)
       || (modelStatus.modalOmniRequested && !modelStatus.modalOmniEnabled)
+      || (modelStatus.vlaRouter?.configured && !modelStatus.vlaRouter?.healthOk)
       || !brainModeAvailable(selectedBrainMode)
     );
     dom.modelStatus.classList.toggle("active", active);
@@ -2662,6 +3926,7 @@ async function refreshModelStatus() {
     document.body.dataset.llmMode = modelStatus.mode || "fallback";
     document.body.dataset.llmProvider = modelStatus.provider || "";
     document.body.dataset.modalOmniEnabled = String(Boolean(modelStatus.modalOmniEnabled));
+    document.body.dataset.vlaRouterEnabled = String(Boolean(modelStatus.vlaRouter?.enabled));
     document.body.dataset.localOllamaAvailable = String(Boolean(modelStatus.localOllamaAvailable));
     document.body.dataset.visionMode = modelStatus.visionMode || "none";
     document.body.dataset.visionActionEnabled = String(Boolean(modelStatus.visionActionEnabled));
@@ -2799,7 +4064,9 @@ function resetV2Room() {
   document.body.dataset.lastLowLevelAction = "";
   for (const spec of AGENT_SPECS) {
     const agent = agents.get(spec.kind);
-    Object.assign(agent.needs, { hunger: 52, curiosity: 48, energy: 74, social: 44 });
+    Object.assign(agent.needs, { hunger: 42, curiosity: 48, energy: 74, social: 44, playfulness: 58 });
+    cancelAgentActions(agent);
+    agent.energyState = "ok";
     agent.rig.moveTo(spec.home, { settleOnFloor: true });
     agent.lastIntent = "reset";
     agent.lastSpell = "";
@@ -3245,7 +4512,11 @@ function animate(now) {
   checkRecyclingChallenge(now);
   for (const agent of agents.values()) {
     agent.rig.afterStep(agent.pet, now, dt);
-    if (agent.rigMixer) agent.rigMixer.update(dt);
+    if (agent.rigRetarget?.active) {
+      updateRigRetarget(agent, now);
+    } else if (agent.rigMixer) {
+      agent.rigMixer.update(dt);
+    }
     updatePet(agent.pet, now, dt);
     updateHeldObject(agent, now, dt);
   }
@@ -3564,6 +4835,21 @@ if (dom.brainModeControl) {
   renderBrainModeControl();
 }
 
+dom.handToolButton?.addEventListener("click", () => {
+  audio.unlock();
+  setRoomToolMode("hand");
+});
+
+dom.foodToolButton?.addEventListener("click", () => {
+  audio.unlock();
+  setRoomToolMode("food");
+});
+
+dom.petToolButton?.addEventListener("click", () => {
+  audio.unlock();
+  setRoomToolMode("pet");
+});
+
 if (dom.demoButton) {
   dom.demoButton.addEventListener("click", () => {
     runJudgeDemo();
@@ -3645,6 +4931,16 @@ window.__toyboxV2Debug = {
       } : null,
       heldObject: agent.heldObject?.entry?.id || "",
     };
+  },
+  petNeeds: () => ({ ...activeAgent().needs, energyState: activeAgent().energyState }),
+  setPetNeeds: (values = {}) => {
+    const agent = activeAgent();
+    for (const key of ["hunger", "energy", "playfulness", "curiosity", "social"]) {
+      if (Number.isFinite(Number(values[key]))) agent.needs[key] = clampNeed(Number(values[key]));
+    }
+    agent.energyState = Number(agent.needs.energy || 0) > 32 ? "ok" : agent.energyState;
+    renderPetMeters(agent);
+    return { ...agent.needs, energyState: agent.energyState };
   },
   sceneState: () => collectSceneState(activeAgent()),
   requestAll: (message = "improvise together") => [...agents.values()].forEach((agent) => requestAction(agent, message)),
@@ -3744,12 +5040,20 @@ window.__toyboxV2Debug = {
       status: agent.rigStatus,
       visible: Boolean(agent.rigVisual?.visible),
       skeleton: Boolean(agent.rigHelper),
+      retarget: agent.rigRetarget ? {
+        active: Boolean(agent.rigRetarget.active),
+        frames: agent.rigRetarget.frames?.length || 0,
+        skill: agent.rigRetarget.skill || "",
+        task: agent.rigRetarget.task || "",
+      } : null,
     })),
   }),
 };
 
 mountV3ViewDock();
 resize();
+maybeApplyUrlPetState();
+maybeRunUrlCommand();
 requestAnimationFrame(animate);
 if (!IS_V3_MODE) {
   setTimeout(() => {

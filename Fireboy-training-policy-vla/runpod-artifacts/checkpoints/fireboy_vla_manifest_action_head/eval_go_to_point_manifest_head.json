@@ -1,0 +1,196 @@
+{
+  "checkpoint": "/workspace/fireboy-vla-physics/build/checkpoints/fireboy_vla_manifest_action_head/vla_manifest_action_head.pt",
+  "task": "go_to_point",
+  "episodes": 8,
+  "successes": 7,
+  "success_rate": 0.875,
+  "smooth_alpha": 0.0,
+  "replan_interval": 5,
+  "chunk_steps": 10,
+  "reports": [
+    {
+      "episode": 0,
+      "task": "go_to_point",
+      "success": true,
+      "grasped": false,
+      "eaten": false,
+      "final_berry_pos": [
+        0.3203,
+        0.2825,
+        0.0546
+      ],
+      "final_root_xy": [
+        0.2339,
+        0.2327
+      ],
+      "target_xy": [
+        0.3203,
+        0.2825
+      ],
+      "min_mouth_dist": 0.2639,
+      "gif_path": "/workspace/fireboy-vla-physics/build/runpod_artifacts/vla_manifest_head/faithful_chunk_go_to_point_policy_ep000.gif",
+      "mp4_path": "/workspace/fireboy-vla-physics/build/runpod_artifacts/vla_manifest_head/faithful_chunk_go_to_point_policy_ep000.mp4"
+    },
+    {
+      "episode": 1,
+      "task": "go_to_point",
+      "success": true,
+      "grasped": false,
+      "eaten": false,
+      "final_berry_pos": [
+        0.3305,
+        -0.2469,
+        0.0546
+      ],
+      "final_root_xy": [
+        0.3016,
+        -0.1521
+      ],
+      "target_xy": [
+        0.3305,
+        -0.2469
+      ],
+      "min_mouth_dist": 0.3248,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 2,
+      "task": "go_to_point",
+      "success": true,
+      "grasped": false,
+      "eaten": false,
+      "final_berry_pos": [
+        0.397,
+        -0.1429,
+        0.2946
+      ],
+      "final_root_xy": [
+        0.3073,
+        -0.1237
+      ],
+      "target_xy": [
+        0.397,
+        -0.1429
+      ],
+      "min_mouth_dist": 0.166,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 3,
+      "task": "go_to_point",
+      "success": true,
+      "grasped": false,
+      "eaten": false,
+      "final_berry_pos": [
+        0.3537,
+        -0.267,
+        0.0546
+      ],
+      "final_root_xy": [
+        0.2629,
+        -0.1999
+      ],
+      "target_xy": [
+        0.3537,
+        -0.2313
+      ],
+      "min_mouth_dist": 0.3152,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 4,
+      "task": "go_to_point",
+      "success": true,
+      "grasped": false,
+      "eaten": false,
+      "final_berry_pos": [
+        0.3444,
+        0.0681,
+        0.0546
+      ],
+      "final_root_xy": [
+        0.2679,
+        0.0307
+      ],
+      "target_xy": [
+        0.3444,
+        0.0177
+      ],
+      "min_mouth_dist": 0.2326,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 5,
+      "task": "go_to_point",
+      "success": true,
+      "grasped": false,
+      "eaten": false,
+      "final_berry_pos": [
+        0.4164,
+        0.2183,
+        0.0546
+      ],
+      "final_root_xy": [
+        0.3203,
+        0.2032
+      ],
+      "target_xy": [
+        0.4164,
+        0.2183
+      ],
+      "min_mouth_dist": 0.2778,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 6,
+      "task": "go_to_point",
+      "success": true,
+      "grasped": false,
+      "eaten": false,
+      "final_berry_pos": [
+        0.3961,
+        0.2124,
+        0.0546
+      ],
+      "final_root_xy": [
+        0.3002,
+        0.1905
+      ],
+      "target_xy": [
+        0.3961,
+        0.2124
+      ],
+      "min_mouth_dist": 0.2686,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 7,
+      "task": "go_to_point",
+      "success": false,
+      "grasped": false,
+      "eaten": false,
+      "final_berry_pos": [
+        0.4224,
+        -0.1923,
+        0.2932
+      ],
+      "final_root_xy": [
+        0.1772,
+        -0.0355
+      ],
+      "target_xy": [
+        0.4224,
+        -0.1922
+      ],
+      "min_mouth_dist": 0.1782,
+      "gif_path": null,
+      "mp4_path": null
+    }
+  ]
+}

@@ -4,7 +4,7 @@ import random
 from typing import Any
 
 
-VALID_EMOTIONS = ["happy", "curious", "surprised", "glee", "focused", "sleepy", "petted", "startled", "dizzy", "shy"]
+VALID_EMOTIONS = ["happy", "curious", "surprised", "glee", "focused", "sleepy", "petted", "startled", "dizzy", "shy", "confused"]
 
 FACE_BLENDSHAPE_KEYS = ["eye", "smile", "mouth", "brow", "cheek", "squash", "tilt", "sparkle"]
 
@@ -27,7 +27,35 @@ PET_PROFILES = {
         "name": "Fire Boy",
         "traits": "warm, babyish, brave, dramatic, tries to be safe but loves a tiny flourish",
         "powers": ["fireball", "ember_jump", "smoke_poof"],
-        "animations": ["flame_wiggle", "bounce", "walk", "run", "turn", "look", "point", "reach", "look_left_right", "nuzzle", "startle"],
+        "animations": [
+            "flame_wiggle",
+            "bounce",
+            "walk",
+            "run",
+            "listen",
+            "think",
+            "nod",
+            "shake",
+            "confused",
+            "turn",
+            "look",
+            "wave",
+            "dance",
+            "sit",
+            "throw",
+            "search",
+            "point",
+            "reach",
+            "hold",
+            "place",
+            "push",
+            "kick",
+            "cast",
+            "recover",
+            "look_left_right",
+            "nuzzle",
+            "startle",
+        ],
         "sounds": ["whoosh", "soft_pop", "pet_touch", "happy_chirp", "startle", "purr", "ember_purr", "tiny_giggle"],
     },
     "shark_girl": {

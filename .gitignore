@@ -29,15 +29,36 @@ yarn-error.log*
 
 # Local app runtime state
 .toybox.pid
+.toybox-*.pid
 .toybox.log
 *.log
 data/traces/*.jsonl
 data/memories/*.jsonl
 data/*.sqlite3
 data/*.sqlite3-*
+output/
 
 # Generated Blender scratch files
 *.blend
 *.blend1
 *.blend2
 *.blend@
+
+# Heavy VLA training artifacts. Keep JSON summaries, screenshots, PDFs, and
+# compressed proof media in git; keep raw datasets/checkpoints local or on
+# external artifact storage.
+Fireboy-training-policy-vla/**/*.tgz
+Fireboy-training-policy-vla/**/*.jsonl
+Fireboy-training-policy-vla/**/*.npz
+Fireboy-training-policy-vla/**/*.pt
+Fireboy-training-policy-vla/**/*.pth
+Fireboy-training-policy-vla/**/*.safetensors
+Fireboy-training-policy-vla/**/*.gif
+Fireboy-training-policy-vla/runpod-artifacts/runpod_artifacts/**/tmp_*frames/
+Fireboy-training-policy-vla/vla-rollouts/**/datasets/**/images/
+fireboy-vla-physics/**/*.tgz
+fireboy-vla-physics/**/*.jsonl
+fireboy-vla-physics/**/*.npz
+fireboy-vla-physics/**/*.pt
+fireboy-vla-physics/**/*.pth
+fireboy-vla-physics/**/*.safetensors

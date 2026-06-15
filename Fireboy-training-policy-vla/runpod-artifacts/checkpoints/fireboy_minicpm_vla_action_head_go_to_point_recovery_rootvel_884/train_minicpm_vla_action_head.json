@@ -1,0 +1,80 @@
+{"encoded": 25, "total": 884, "cache_hits": 0}
+{"encoded": 50, "total": 884, "cache_hits": 0}
+{"encoded": 75, "total": 884, "cache_hits": 0}
+{"encoded": 100, "total": 884, "cache_hits": 0}
+{"encoded": 125, "total": 884, "cache_hits": 0}
+{"encoded": 150, "total": 884, "cache_hits": 0}
+{"encoded": 175, "total": 884, "cache_hits": 0}
+{"encoded": 200, "total": 884, "cache_hits": 0}
+{"encoded": 225, "total": 884, "cache_hits": 0}
+{"encoded": 250, "total": 884, "cache_hits": 0}
+{"encoded": 275, "total": 884, "cache_hits": 0}
+{"encoded": 300, "total": 884, "cache_hits": 0}
+{"encoded": 325, "total": 884, "cache_hits": 0}
+{"encoded": 350, "total": 884, "cache_hits": 0}
+{"encoded": 375, "total": 884, "cache_hits": 0}
+{"encoded": 400, "total": 884, "cache_hits": 0}
+{"encoded": 425, "total": 884, "cache_hits": 0}
+{"encoded": 450, "total": 884, "cache_hits": 0}
+{"encoded": 475, "total": 884, "cache_hits": 0}
+{"encoded": 500, "total": 884, "cache_hits": 0}
+{"encoded": 525, "total": 884, "cache_hits": 0}
+{"encoded": 550, "total": 884, "cache_hits": 0}
+{"encoded": 575, "total": 884, "cache_hits": 0}
+{"encoded": 600, "total": 884, "cache_hits": 0}
+{"encoded": 625, "total": 884, "cache_hits": 0}
+{"encoded": 650, "total": 884, "cache_hits": 0}
+{"encoded": 675, "total": 884, "cache_hits": 0}
+{"encoded": 700, "total": 884, "cache_hits": 0}
+{"encoded": 725, "total": 884, "cache_hits": 0}
+{"encoded": 750, "total": 884, "cache_hits": 0}
+{"encoded": 775, "total": 884, "cache_hits": 0}
+{"encoded": 800, "total": 884, "cache_hits": 0}
+{"encoded": 825, "total": 884, "cache_hits": 0}
+{"encoded": 850, "total": 884, "cache_hits": 0}
+{"encoded": 875, "total": 884, "cache_hits": 0}
+{
+  "checkpoint": "/workspace/fireboy-vla-physics/build/checkpoints/fireboy_minicpm_vla_action_head_go_to_point_recovery_rootvel_884/minicpm_vla_action_head.pt",
+  "model_id": "openbmb/MiniCPM-V-4.6",
+  "rows": 884,
+  "train_rows": 778,
+  "val_rows": 106,
+  "device": "cuda",
+  "task_filter": [
+    "go_to_point"
+  ],
+  "vl_dim": 1024,
+  "state_dim": 42,
+  "output_dim": 32,
+  "chunk_steps": 1,
+  "head_architecture": "state_residual_fusion_v1",
+  "vl_residual_scale": 0.0,
+  "action_std_floor": 0.01,
+  "action_target_mode": "root_velocity_v1",
+  "root_velocity_max_step_m": 0.035,
+  "cache_hits": 0,
+  "losses": [
+    0.0016615521162748337,
+    0.0016143046086654067,
+    0.00127738481387496,
+    0.0013620960526168346,
+    0.0015474514802917838,
+    0.001989291748031974,
+    0.0016052692662924528,
+    0.0013547504786401987,
+    0.0013194270431995392,
+    0.001267559826374054
+  ],
+  "val_losses": [
+    0.0038158439565449953,
+    0.00386895053088665,
+    0.003677563276141882,
+    0.0035258587449789047,
+    0.003623496275395155,
+    0.003989017102867365,
+    0.0037604435347020626,
+    0.0035876042675226927,
+    0.0035199017729610205,
+    0.0034720280673354864
+  ]
+}

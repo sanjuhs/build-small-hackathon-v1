@@ -1,0 +1,31 @@
+{
+  "checkpoint": "/workspace/fireboy-vla-physics/build/checkpoints/fireboy_minicpm_vla_lora_residual_512/minicpm_vla_lora_action_head.pt",
+  "task": "pick_up",
+  "episodes": 1,
+  "successes": 1,
+  "success_rate": 1.0,
+  "replan_interval": 8,
+  "smooth_alpha": 0.0,
+  "reports": [
+    {
+      "episode": 0,
+      "task": "pick_up",
+      "success": true,
+      "grasped": true,
+      "eaten": false,
+      "final_berry_pos": [
+        0.375,
+        -0.0495,
+        0.361
+      ],
+      "final_root_xy": [
+        0.4542,
+        0.4114
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.2456,
+      "gif_path": "/workspace/fireboy-vla-physics/build/runpod_artifacts/fireboy_minicpm_vla_lora_residual_512/minicpm_vla_pick_up_policy_ep000.gif",
+      "mp4_path": "/workspace/fireboy-vla-physics/build/runpod_artifacts/fireboy_minicpm_vla_lora_residual_512/minicpm_vla_pick_up_policy_ep000.mp4"
+    }
+  ]
+}

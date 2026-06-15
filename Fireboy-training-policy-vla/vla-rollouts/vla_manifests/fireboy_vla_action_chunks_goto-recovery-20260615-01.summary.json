@@ -1,0 +1,14 @@
+{
+  "run_id": "goto-recovery-20260615-01",
+  "dataset": "/Users/sanju/Desktop/coding/hackathons/build-small-hackathon-v1/Fireboy-training-policy-vla/vla-rollouts/datasets/fireboy_vla_images_goto-recovery-20260615-01",
+  "manifest": "/Users/sanju/Desktop/coding/hackathons/build-small-hackathon-v1/Fireboy-training-policy-vla/vla-rollouts/vla_manifests/fireboy_vla_action_chunks_goto-recovery-20260615-01.jsonl",
+  "episodes": 96,
+  "images": 884,
+  "manifest_rows": 884,
+  "num_episodes_per_task": 96,
+  "tasks": "go_to_point",
+  "image_stride": 4,
+  "manifest_stride": 1,
+  "chunk_steps": 1,
+  "go_to_point_recovery": true
+}

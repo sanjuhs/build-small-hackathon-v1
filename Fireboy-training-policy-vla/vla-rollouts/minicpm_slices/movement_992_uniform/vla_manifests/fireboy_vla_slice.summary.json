@@ -1,0 +1,12 @@
+{
+  "source_manifest": "Fireboy-training-policy-vla/vla-rollouts/vla_manifests/fireboy_vla_action_chunks_20260615-021838.jsonl",
+  "manifest": "/Users/sanju/Desktop/coding/hackathons/build-small-hackathon-v1/Fireboy-training-policy-vla/vla-rollouts/minicpm_slices/movement_992_uniform/vla_manifests/fireboy_vla_slice.jsonl",
+  "dataset": "/Users/sanju/Desktop/coding/hackathons/build-small-hackathon-v1/Fireboy-training-policy-vla/vla-rollouts/minicpm_slices/movement_992_uniform/datasets/fireboy_vla_slice",
+  "rows": 992,
+  "counts": {
+    "run_around": 512,
+    "go_to_point": 480
+  },
+  "image_size": 320,
+  "sample_mode": "uniform"
+}

@@ -1,0 +1,26 @@
+{
+  "task": "fireboy_articulated_go_to_point",
+  "simulator": "mujoco",
+  "action_type": "normalized_joint_targets",
+  "camera_keys": [
+    "agent_rgb"
+  ],
+  "state_keys": [
+    "qpos",
+    "qvel",
+    "ctrl",
+    "previous_action",
+    "right_hand_pos",
+    "left_hand_pos",
+    "mouth_pos",
+    "ball_pos",
+    "task_flags",
+    "stage_flags"
+  ],
+  "language_templates": [
+    "walk to the target",
+    "go to that point",
+    "move over to the yellow marker"
+  ],
+  "image_stride": 4
+}

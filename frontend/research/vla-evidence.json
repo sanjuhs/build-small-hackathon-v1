@@ -1,0 +1,178 @@
+{
+  "pdf": "/frontend/research/minicpm-v46-fireboy-vla-research-paper.pdf",
+  "charts": {
+    "architecture": "/frontend/research/vla-architecture.png",
+    "success": "/frontend/research/vla-success-progression.png",
+    "mae": "/frontend/research/vla-router-param-mae.png",
+    "loss": "/frontend/research/vla-router-loss-curve.png",
+    "active": "/frontend/research/vla-active-skills.png",
+    "modeling": "/frontend/research/vla-modeling-pipeline.png",
+    "sync": "/frontend/research/vla-vm-sync.png",
+    "rollouts": "/frontend/research/vla-rollout-samples.png",
+    "parameters": "/frontend/research/vla-parameter-summary.png",
+    "training": "/frontend/research/vla-training-roadmap.png",
+    "future": "/frontend/research/vla-future-stack.png"
+  },
+  "router": {
+    "frozen_eval": {
+      "skill_accuracy": 1.0,
+      "param_mae": 0.017043352127075195,
+      "param_mae_by_name": {
+        "target_x": 0.032305024564266205,
+        "target_y": 0.0478343665599823,
+        "target_z": 0.006528750993311405,
+        "radius": 0.0038746832869946957,
+        "speed_hint": 0.004880381282418966,
+        "object_is_berry": 0.006836902815848589
+      },
+      "confusion": [
+        [
+          128,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          128,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          128,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          128
+        ]
+      ],
+      "skill_names": [
+        "walk_to",
+        "run_around",
+        "pick_up",
+        "find_and_eat_berry"
+      ]
+    },
+    "lora_eval": {
+      "skill_accuracy": 1.0,
+      "param_mae": 0.06290113925933838,
+      "param_mae_by_name": {
+        "target_x": 0.10424776375293732,
+        "target_y": 0.21497729420661926,
+        "target_z": 0.018535444512963295,
+        "radius": 0.009284647181630135,
+        "speed_hint": 0.014032401144504547,
+        "object_is_berry": 0.01632928103208542
+      },
+      "confusion": [
+        [
+          64,
+          0,
+          0,
+          0
+        ],
+        [
+          0,
+          64,
+          0,
+          0
+        ],
+        [
+          0,
+          0,
+          64,
+          0
+        ],
+        [
+          0,
+          0,
+          0,
+          64
+        ]
+      ],
+      "skill_names": [
+        "walk_to",
+        "run_around",
+        "pick_up",
+        "find_and_eat_berry"
+      ]
+    },
+    "frozen_rows": 768,
+    "lora_rows": 512
+  },
+  "param_counts": {
+    "frozen_skill_param_router_head": 814090,
+    "residual_action_head": {
+      "total": 1078912,
+      "state_head": 441152,
+      "vl_head": 328192,
+      "residual_head": 309568
+    },
+    "single_tower_action_head": 973120,
+    "lora_adapter": {
+      "total": 4743168,
+      "tensor_count": 360,
+      "layer_count": 24,
+      "min_layer": 0,
+      "max_layer": 23,
+      "modules": {
+        "down_proj": 884736,
+        "gate_proj": 884736,
+        "k_proj": 589824,
+        "o_proj": 147456,
+        "q_proj": 761856,
+        "up_proj": 884736,
+        "v_proj": 589824
+      }
+    }
+  },
+  "skill_manifest": {
+    "out_path": "/workspace/fireboy-vla-physics/build/vla_skill_params/fireboy_vla_skill_params_allskill.jsonl",
+    "rows_written": 3072,
+    "skipped": 0,
+    "require_images": true,
+    "limit_rows": null,
+    "skill_names": [
+      "walk_to",
+      "run_around",
+      "pick_up",
+      "find_and_eat_berry"
+    ],
+    "param_names": [
+      "target_x",
+      "target_y",
+      "target_z",
+      "radius",
+      "speed_hint",
+      "object_is_berry"
+    ],
+    "tasks": {
+      "pick_up": 1028,
+      "go_eat_berry": 1052,
+      "run_around": 512,
+      "go_to_point": 480
+    },
+    "skills": {
+      "pick_up": 1028,
+      "find_and_eat_berry": 1052,
+      "run_around": 512,
+      "walk_to": 480
+    },
+    "sources": {
+      "/workspace/fireboy-vla-physics/build/imported_vla_rollouts/vla_manifests/fireboy_vla_slice.jsonl": 3072
+    },
+    "action_type": "skill_parameters_v1"
+  },
+  "proof_validation": {
+    "registry": "/Users/sanju/Desktop/coding/hackathons/build-small-hackathon-v1/fireboy-vla-physics/policy_registry.json",
+    "checked_paths": 49,
+    "missing_count": 0,
+    "missing": [],
+    "ok": true
+  }
+}

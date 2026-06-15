@@ -1,0 +1,62 @@
+{"encoded": 25, "total": 480, "cache_hits": 0}
+{"encoded": 50, "total": 480, "cache_hits": 0}
+{"encoded": 75, "total": 480, "cache_hits": 0}
+{"encoded": 100, "total": 480, "cache_hits": 0}
+{"encoded": 125, "total": 480, "cache_hits": 0}
+{"encoded": 150, "total": 480, "cache_hits": 0}
+{"encoded": 175, "total": 480, "cache_hits": 0}
+{"encoded": 200, "total": 480, "cache_hits": 0}
+{"encoded": 225, "total": 480, "cache_hits": 0}
+{"encoded": 250, "total": 480, "cache_hits": 0}
+{"encoded": 275, "total": 480, "cache_hits": 0}
+{"encoded": 300, "total": 480, "cache_hits": 0}
+{"encoded": 325, "total": 480, "cache_hits": 0}
+{"encoded": 350, "total": 480, "cache_hits": 0}
+{"encoded": 375, "total": 480, "cache_hits": 0}
+{"encoded": 400, "total": 480, "cache_hits": 0}
+{"encoded": 425, "total": 480, "cache_hits": 0}
+{"encoded": 450, "total": 480, "cache_hits": 0}
+{"encoded": 475, "total": 480, "cache_hits": 0}
+{
+  "checkpoint": "/workspace/fireboy-vla-physics/build/checkpoints/fireboy_minicpm_vla_action_head_go_to_point_full_480/minicpm_vla_action_head.pt",
+  "model_id": "openbmb/MiniCPM-V-4.6",
+  "rows": 480,
+  "train_rows": 422,
+  "val_rows": 58,
+  "device": "cuda",
+  "task_filter": [
+    "go_to_point"
+  ],
+  "vl_dim": 1024,
+  "state_dim": 168,
+  "output_dim": 320,
+  "chunk_steps": 10,
+  "head_architecture": "state_residual_fusion_v1",
+  "vl_residual_scale": 0.08,
+  "action_std_floor": 0.01,
+  "cache_hits": 0,
+  "losses": [
+    9.484653674007859e-06,
+    9.751640391186811e-06,
+    9.53238759393571e-06,
+    9.205724381899927e-06,
+    8.376725418202113e-06,
+    8.207493920053821e-06,
+    8.62072192830965e-06,
+    7.883446414780337e-06,
+    9.998740097216796e-06,
+    1.2986492947675288e-05
+  ],
+  "val_losses": [
+    0.0005316063179634511,
+    0.0005292673595249653,
+    0.0005280943587422371,
+    0.0005266418447718024,
+    0.0005247374065220356,
+    0.0005261089536361396,
+    0.0005243516061455011,
+    0.000525692303199321,
+    0.000519801746122539,
+    0.0005289771943353117
+  ]
+}

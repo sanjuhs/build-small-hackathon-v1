@@ -1,0 +1,66 @@
+{
+  "mode": "body",
+  "success": true,
+  "frames": 88,
+  "gif_path": "/workspace/fireboy-vla-physics/build/runpod_artifacts/render_gate/fireboy_articulated_body.gif",
+  "mp4_path": "/workspace/fireboy-vla-physics/build/runpod_artifacts/render_gate/fireboy_articulated_body.mp4",
+  "report": {
+    "xml_path": "/workspace/fireboy-vla-physics/build/fireboy_articulated.xml",
+    "nbody": 23,
+    "njnt": 33,
+    "nu": 32,
+    "actuated_joints": [
+      "root_x",
+      "root_y",
+      "root_z",
+      "root_yaw",
+      "spine_pitch",
+      "chest_yaw",
+      "neck_yaw",
+      "head_pitch",
+      "shoulder_R_yaw",
+      "shoulder_R_pitch",
+      "shoulder_R_roll",
+      "elbow_R",
+      "wrist_R_pitch",
+      "wrist_R_roll",
+      "finger_R_a",
+      "finger_R_b",
+      "shoulder_L_yaw",
+      "shoulder_L_pitch",
+      "shoulder_L_roll",
+      "elbow_L",
+      "wrist_L_pitch",
+      "wrist_L_roll",
+      "finger_L_a",
+      "finger_L_b",
+      "hip_R_yaw",
+      "hip_R_pitch",
+      "knee_R",
+      "ankle_R",
+      "hip_L_yaw",
+      "hip_L_pitch",
+      "knee_L",
+      "ankle_L"
+    ],
+    "body_tree": [
+      "root slides/yaw -> pelvis",
+      "pelvis -> spine -> chest -> neck -> head/flame",
+      "chest -> right shoulder -> right elbow -> right wrist -> right gripper fingers",
+      "chest -> left shoulder -> left elbow -> left wrist -> left gripper fingers",
+      "pelvis -> hips -> knees -> ankles -> feet"
+    ],
+    "resembles_fireboy": [
+      "orange capsule/sphere body",
+      "round head and flame/crown",
+      "short broad body proportions",
+      "visible joint markers",
+      "hands attached through shoulder/elbow/wrist chains"
+    ],
+    "not_yet": [
+      "not using the original GLB mesh as a MuJoCo visual asset",
+      "not a free-balanced humanoid locomotion policy",
+      "not ProtoMotions yet"
+    ]
+  }
+}

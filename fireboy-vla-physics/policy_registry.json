@@ -1,0 +1,180 @@
+{
+  "version": "2026-06-15",
+  "fireboy_glb": "fire-boy-rig/fire-boy-rigged-full.glb",
+  "notes": "Hybrid Fire Boy pet policy registry. Use proven MuJoCo articulated policies for local movement. MiniCPM-V LoRA manipulation checkpoints are preserved for GPU VLA eval/training.",
+  "body_proofs": {
+    "articulated_body_render": {
+      "mode": "body",
+      "lane": "mujoco_articulated_body",
+      "runtime": "render_articulated_fireboy",
+      "report_path": "Fireboy-training-policy-vla/runpod-artifacts/runpod_artifacts/render_gate/articulated_report.json",
+      "proof_mp4": "Fireboy-training-policy-vla/runpod-artifacts/runpod_artifacts/render_gate/fireboy_articulated_body.mp4",
+      "proof_gif": "Fireboy-training-policy-vla/runpod-artifacts/runpod_artifacts/render_gate/fireboy_articulated_body.gif",
+      "note": "Fireboy-shaped connected MJCF body: 23 bodies, 33 joints, 32 actuators. This is the current physics body proof, not the original GLB mesh as a MuJoCo visual."
+    },
+    "controller_body_and_skill_report": {
+      "mode": "controller_report",
+      "lane": "mujoco_articulated_controller",
+      "runtime": "render_articulated_fireboy",
+      "report_path": "Fireboy-training-policy-vla/runpod-artifacts/runpod_artifacts/controller/articulated_report.json",
+      "proof_mp4": "Fireboy-training-policy-vla/runpod-artifacts/runpod_artifacts/controller/fireboy_articulated_body.mp4",
+      "proof_gif": "Fireboy-training-policy-vla/runpod-artifacts/runpod_artifacts/controller/fireboy_articulated_body.gif",
+      "note": "Controller proof bundle with body, go-to-point, run-around, pickup, and berry-eat rollouts for the connected articulated Fire Boy body."
+    }
+  },
+  "skills": {
+    "walk_to": {
+      "task": "go_to_point",
+      "lane": "mujoco_articulated_policy",
+      "runtime": "rollout_articulated_numpy_policy",
+      "policy_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_articulated_go_to_point_clock/faithful_articulated_policy.npz",
+      "eval_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_articulated_go_to_point_clock/eval_go_to_point_clock_fixed_target.json",
+      "proof_mp4": "Fireboy-training-policy-vla/runpod-artifacts/runpod_artifacts/learned_clock/faithful_learned_go_to_point.mp4",
+      "local_demo_mp4": "fireboy-vla-physics/build/toy-v3-policy/articulated/faithful_learned_go_to_point.mp4",
+      "successes": 20,
+      "episodes": 20,
+      "success_rate": 1.0,
+      "status": "active"
+    },
+    "run_to": {
+      "alias_of": "walk_to"
+    },
+    "walk_around": {
+      "alias_of": "run_around"
+    },
+    "run_around": {
+      "task": "run_around",
+      "lane": "mujoco_articulated_policy",
+      "runtime": "rollout_articulated_numpy_policy",
+      "policy_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_articulated_run_around/faithful_articulated_policy.npz",
+      "eval_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_articulated_run_around/eval_run_around.json",
+      "proof_mp4": "Fireboy-training-policy-vla/runpod-artifacts/runpod_artifacts/learned/faithful_learned_run_around.mp4",
+      "local_demo_mp4": "fireboy-vla-physics/build/toy-v3-policy/articulated/faithful_learned_run_around.mp4",
+      "successes": 20,
+      "episodes": 20,
+      "success_rate": 1.0,
+      "status": "active"
+    },
+    "pick_up": {
+      "task": "pick_up",
+      "lane": "minicpm_vla_lora_manipulation",
+      "runtime": "eval_minicpm_vla_policy_on_gpu",
+      "checkpoint_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_lora_residual_512/minicpm_vla_lora_action_head.pt",
+      "adapter_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_lora_residual_512/lora_adapter",
+      "eval_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_lora_residual_512_eval_3ep/eval_pick_up_minicpm_vla.json",
+      "proof_mp4": "Fireboy-training-policy-vla/runpod-artifacts/runpod_artifacts/fireboy_minicpm_vla_lora_residual_512_eval_3ep/minicpm_vla_pick_up_policy_ep000.mp4",
+      "successes": 3,
+      "episodes": 3,
+      "success_rate": 1.0,
+      "status": "gpu_vla_checkpoint_ready"
+    },
+    "find_and_eat_berry": {
+      "task": "go_eat_berry",
+      "lane": "minicpm_vla_lora_manipulation",
+      "runtime": "eval_minicpm_vla_policy_on_gpu",
+      "checkpoint_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_lora_residual_512/minicpm_vla_lora_action_head.pt",
+      "adapter_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_lora_residual_512/lora_adapter",
+      "eval_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_lora_residual_512_eval_3ep/eval_go_eat_berry_minicpm_vla.json",
+      "proof_mp4": "Fireboy-training-policy-vla/runpod-artifacts/runpod_artifacts/fireboy_minicpm_vla_lora_residual_512_eval_3ep/minicpm_vla_go_eat_berry_policy_ep000.mp4",
+      "local_fallback_policy_path": "fireboy-vla-physics/checkpoints/berry_eat_wide/state_policy.npz",
+      "successes": 3,
+      "episodes": 3,
+      "success_rate": 1.0,
+      "status": "gpu_vla_checkpoint_ready_local_fallback_used"
+    }
+  },
+  "vla_models": {
+    "minicpm_vla_skill_param_router": {
+      "task": "command_to_skill_parameters",
+      "lane": "minicpm_vla_skill_param_router",
+      "runtime": "minicpm_vla_frozen_encoder_skill_param_head",
+      "model_id": "openbmb/MiniCPM-V-4.6",
+      "checkpoint_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_skill_param_head/minicpm_vla_skill_param_head.pt",
+      "local_checkpoint_path": "fireboy-vla-physics/build/checkpoints/fireboy_minicpm_vla_skill_param_head/minicpm_vla_skill_param_head.pt",
+      "train_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_skill_param_head/train_minicpm_vla_skill_param_head.json",
+      "eval_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_skill_param_head/eval_minicpm_vla_skill_param_head.json",
+      "manifest_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_skill_param_head/fireboy_vla_skill_params_allskill.jsonl",
+      "manifest_summary_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_skill_param_head/fireboy_vla_skill_params_allskill.summary.json",
+      "local_manifest_path": "Fireboy-training-policy-vla/vla-rollouts/vla_skill_params/fireboy_vla_skill_params_allskill_3072.jsonl",
+      "local_manifest_summary_path": "Fireboy-training-policy-vla/vla-rollouts/vla_skill_params/fireboy_vla_skill_params_allskill_3072.summary.json",
+      "artifact_archive": "Fireboy-training-policy-vla/runpod-artifacts/fireboy-minicpm-skill-param-artifacts.tgz",
+      "skills": [
+        "walk_to",
+        "run_around",
+        "pick_up",
+        "find_and_eat_berry"
+      ],
+      "parameters": [
+        "target_x",
+        "target_y",
+        "target_z",
+        "radius",
+        "speed_hint",
+        "object_is_berry"
+      ],
+      "successes": 512,
+      "episodes": 512,
+      "success_rate": 1.0,
+      "status": "gpu_vla_router_checkpoint_ready",
+      "note": "Frozen MiniCPM-V 4.6 vision/language encoder plus trained state/action head. It maps image + command + Fire Boy robot state into a discrete pet skill and target parameters, then dispatches into the verified MuJoCo policy registry."
+    },
+    "minicpm_vla_lora_skill_param_router": {
+      "task": "command_to_skill_parameters",
+      "lane": "minicpm_vla_lora_skill_param_router",
+      "runtime": "minicpm_vla_lora_skill_param_head",
+      "model_id": "openbmb/MiniCPM-V-4.6",
+      "checkpoint_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_lora_skill_param_head/minicpm_vla_lora_skill_param_head.pt",
+      "local_checkpoint_path": "fireboy-vla-physics/build/checkpoints/fireboy_minicpm_vla_lora_skill_param_head/minicpm_vla_lora_skill_param_head.pt",
+      "adapter_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_lora_skill_param_head/lora_adapter",
+      "train_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_lora_skill_param_head/train_minicpm_vla_lora_skill_param_head.json",
+      "eval_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_lora_skill_param_head/eval_minicpm_vla_lora_skill_param_head.json",
+      "manifest_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_lora_skill_param_head/fireboy_vla_skill_params_allskill.jsonl",
+      "manifest_summary_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_lora_skill_param_head/fireboy_vla_skill_params_allskill.summary.json",
+      "artifact_archive": "Fireboy-training-policy-vla/runpod-artifacts/fireboy-minicpm-lora-skill-param-artifacts.tgz",
+      "seed_checkpoint_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_skill_param_head/minicpm_vla_skill_param_head.pt",
+      "skills": [
+        "walk_to",
+        "run_around",
+        "pick_up",
+        "find_and_eat_berry"
+      ],
+      "parameters": [
+        "target_x",
+        "target_y",
+        "target_z",
+        "radius",
+        "speed_hint",
+        "object_is_berry"
+      ],
+      "successes": 256,
+      "episodes": 256,
+      "success_rate": 1.0,
+      "status": "gpu_lora_router_checkpoint_ready_not_promoted",
+      "note": "MiniCPM-V 4.6 LoRA adapter trained from the promoted frozen router seed. It keeps 100% skill accuracy on the 256-row eval, but parameter MAE is worse than the frozen router, so it is preserved as an experimental LoRA checkpoint rather than the active router."
+    }
+  },
+  "failed_experiments": {
+    "minicpm_go_to_point_absolute_1step": {
+      "checkpoint_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_action_head_go_to_point_full_1step_480/minicpm_vla_action_head.pt",
+      "eval_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_action_head_go_to_point_full_1step_480/eval_go_to_point_minicpm_vla.json",
+      "successes": 0,
+      "episodes": 5,
+      "reason": "closed-loop root drift"
+    },
+    "minicpm_go_to_point_root_velocity": {
+      "checkpoint_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_action_head_go_to_point_rootvel_480/minicpm_vla_action_head.pt",
+      "eval_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_action_head_go_to_point_rootvel_480/eval_go_to_point_minicpm_vla.json",
+      "successes": 0,
+      "episodes": 5,
+      "reason": "closed-loop saturation"
+    },
+    "minicpm_go_to_point_recovery_root_velocity": {
+      "checkpoint_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_action_head_go_to_point_recovery_rootvel_884/minicpm_vla_action_head.pt",
+      "eval_path": "Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_action_head_go_to_point_recovery_rootvel_884/eval_go_to_point_minicpm_vla.json",
+      "proof_mp4": "Fireboy-training-policy-vla/runpod-artifacts/runpod_artifacts/fireboy_minicpm_vla_action_head_go_to_point_recovery_rootvel_884/minicpm_vla_go_to_point_policy_ep000.mp4",
+      "successes": 0,
+      "episodes": 5,
+      "reason": "closed-loop saturation after recovery-data training"
+    }
+  }
+}

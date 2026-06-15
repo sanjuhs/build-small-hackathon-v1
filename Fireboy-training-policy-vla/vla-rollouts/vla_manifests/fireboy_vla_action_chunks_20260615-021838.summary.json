@@ -1,0 +1,12 @@
+{
+  "run_id": "20260615-021838",
+  "dataset": "/Users/sanju/Desktop/coding/hackathons/build-small-hackathon-v1/Fireboy-training-policy-vla/vla-rollouts/datasets/fireboy_vla_images_20260615-021838",
+  "manifest": "/Users/sanju/Desktop/coding/hackathons/build-small-hackathon-v1/Fireboy-training-policy-vla/vla-rollouts/vla_manifests/fireboy_vla_action_chunks_20260615-021838.jsonl",
+  "episodes": 64,
+  "images": 2368,
+  "manifest_rows": 2368,
+  "num_episodes_per_task": 16,
+  "image_stride": 5,
+  "manifest_stride": 5,
+  "chunk_steps": 10
+}

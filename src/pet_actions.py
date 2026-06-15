@@ -24,11 +24,23 @@ INTERACTION_VERBS = [
     "play",
     "comfort",
     "talk",
+    "listen",
+    "think",
+    "stop",
+    "confirm",
+    "deny",
+    "confused",
     "turn",
     "look_at",
+    "search",
     "point",
     "reach",
     "release",
+    "place",
+    "push",
+    "roll",
+    "kick",
+    "throw",
     "pickup",
     "carry",
     "bring",
@@ -1073,7 +1085,7 @@ def object_from_message(
 def object_alias_text(item: dict[str, Any]) -> str:
     object_id = str(item.get("id") or "").lower()
     aliases = {
-        "soft-ball": "yellow amber gold golden soft ball",
+        "soft-ball": "yellow gold golden soft ball",
         "moon-ball": "moon pale mint ball",
         "beach-orb": "beach white orb ball",
     }
@@ -1278,7 +1290,10 @@ def clean_interaction(value: Any, payload: dict[str, Any]) -> dict[str, Any]:
         objects = scene.get("objects") or []
         target = next((item for item in objects if str(item.get("id")) == target_id), None)
         affordances = target.get("affordances") if isinstance(target, dict) else []
-        if not target or (target.get("kind") not in {"berry", "food"} and "eat" not in affordances):
+        if not isinstance(affordances, list):
+            affordances = []
+        target_kind = str(target.get("kind") or target.get("type") or "").lower() if isinstance(target, dict) else ""
+        if not target or (target_kind not in {"berry", "food"} and "eat" not in affordances):
             berry_target = nearest_object_with_affordance(objects, "eat")
             if berry_target:
                 target_id = str(berry_target.get("id"))

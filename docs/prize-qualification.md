@@ -5,6 +5,8 @@ Toy Room v3 is packaged for the Build Small Hackathon as a tiny-world virtual pe
 ## Public Links
 
 - Hugging Face Space: `https://build-small-hackathon-toy-room-v3.hf.space/toy-v3`
+- VLA research page: `https://build-small-hackathon-toy-room-v3.hf.space/vla-research`
+- In-depth demo evidence: `https://build-small-hackathon-toy-room-v3.hf.space/fireboy-policy-gallery`
 - GitHub repository: `https://github.com/sanjuhs/build-small-hackathon-v1`
 - Demo MP4: `demo/fire-boy-v3-demo.mp4`
 - Modal MiniCPM-o endpoint: `https://sanjuhs123--minicpm-omni-demo.modal.run`
@@ -13,9 +15,9 @@ Toy Room v3 is packaged for the Build Small Hackathon as a tiny-world virtual pe
 
 | Prize | Current evidence |
 | --- | --- |
-| Best MiniCPM Build | Toy Room v3 calls `openbmb/MiniCPM-o-4_5` through the deployed Modal `/ws/chat` gateway in `src/modal_omni_policy.py`; `src/vision_policy.py`, `minicpm-v-serverless/`, and MiniCPM5/Ollama remain documented secondary MiniCPM routes. |
-| Best Use of Modal | `modal-minicpm-omni/modal_minicpm_omni.py` builds the official MiniCPM-o demo into a Modal image, caches model weights in `minicpm-omni-cache`, loads them on an L40S GPU, and serves the web gateway through Modal. Toy Room v3 uses that live Modal gateway as its primary action brain. |
-| Best Use of Codex | The repository history contains Codex-attributed commits for the v3 toy room, Fire Boy command loop, MiniCPM-V helper, docs, and submission hardening. |
+| Best MiniCPM Build | Toy Room v3 calls `openbmb/MiniCPM-o-4_5` through the deployed Modal `/ws/chat` gateway in `src/modal_omni_policy.py`. The VLA research path documents `openbmb/MiniCPM-V-4_6` frozen-backbone action heads, LoRA adapters, residual action heads, and a skill-parameter router. `src/vision_policy.py`, `minicpm-v-serverless/`, and MiniCPM5/Ollama remain documented secondary MiniCPM routes. |
+| Best Use of Modal | `modal-minicpm-omni/modal_minicpm_omni.py` builds the official MiniCPM-o demo into a Modal image, caches model weights in `minicpm-omni-cache`, loads them on an L40S GPU, and serves the web gateway through Modal. Toy Room v3 uses that live Modal gateway as its primary action brain, and the Space README explicitly calls out Modal usage. |
+| Best Use of Codex | The connected GitHub repo contains Codex-attributed commits by `Codex <codex@openai.com>` for the v3 toy room, Fire Boy command loop, MiniCPM-V action brain, Modal MiniCPM routing, grounded physical actions, screenshots, research artifact, and submission hardening. |
 | Best Agent | The backend emits strict PET action JSON. The frontend executes it as character animation, speech, projectile fireballs, object pickup/carry, run routes, particles, physics updates, and loop metrics. |
 | Off Brand | The Space is a custom Three.js toy-room UI mounted inside a Gradio-compatible app, not a default chatbot. |
 | Best Demo | The MP4 demo shows direct commands, visible actions, speech, metrics, and toy-room controls in roughly 30 seconds. |
@@ -84,6 +86,28 @@ curl https://sanjuhs123--minicpm-omni-demo.modal.run/health
 ```
 
 The Modal path is a real runtime component for Toy Room v3. Verified local UI command metrics for "walk around": one `/api/pet-action` call, one Modal `/ws/chat` turn, `promptTokens: 1638`, `completionTokens: 9`, `tokensPerSecond: 2.35`, and `clientRoundTripMs: 3880.4`.
+
+## OpenAI Codex Evidence
+
+The Git history has a visible chain of commits authored by `Codex <codex@openai.com>`, including:
+
+- `45e75e8 feat: ship Fire Boy toy room v3`
+- `5ba01e4 feat: wire MiniCPM-V action brain`
+- `b7a60af feat: route toy v3 brain through Modal MiniCPM`
+- `1833553 fix: harden Modal websocket timeouts`
+- `474616f fix: keep MiniCPM-V toy loop live`
+- `5e9cd86 fix: make Fire Boy locomotion and pickup physical`
+- `9a2319f fix: ground Fire Boy pickup targets`
+- `093936f fix: add grounded Fire Boy gestures`
+
+The newer `/vla-research` page and generated PDF further explain how OpenAI Codex was used holistically: scaffolding routes and pages, generating/organizing evidence, debugging Modal and VLA action contracts, polishing screenshots, and packaging the research narrative.
+
+## MiniCPM / Modal Checklist
+
+- MiniCPM-o qualifies because `openbmb/MiniCPM-o-4_5` is the live Modal-hosted action brain for Toy Room v3.
+- MiniCPM-V qualifies because `openbmb/MiniCPM-V-4_6` is used in the VLA research lane for frozen embeddings, action heads, LoRA adapters, and the router analysis.
+- Modal qualifies because the runtime uses a deployed Modal app, Modal L40S GPU, Modal Volume cache, Modal Secret, public gateway, and Toy Room v3 calls the Modal WebSocket path during commands.
+- Nemotron is not claimed because the runtime does not use Nemotron models.
 
 ## Security Hygiene
 

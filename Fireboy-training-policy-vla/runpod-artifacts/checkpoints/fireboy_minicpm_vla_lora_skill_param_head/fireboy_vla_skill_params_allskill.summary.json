@@ -1,0 +1,37 @@
+{
+  "out_path": "/workspace/fireboy-vla-physics/build/vla_skill_params/fireboy_vla_skill_params_allskill.jsonl",
+  "rows_written": 3072,
+  "skipped": 0,
+  "require_images": true,
+  "limit_rows": null,
+  "skill_names": [
+    "walk_to",
+    "run_around",
+    "pick_up",
+    "find_and_eat_berry"
+  ],
+  "param_names": [
+    "target_x",
+    "target_y",
+    "target_z",
+    "radius",
+    "speed_hint",
+    "object_is_berry"
+  ],
+  "tasks": {
+    "pick_up": 1028,
+    "go_eat_berry": 1052,
+    "run_around": 512,
+    "go_to_point": 480
+  },
+  "skills": {
+    "pick_up": 1028,
+    "find_and_eat_berry": 1052,
+    "run_around": 512,
+    "walk_to": 480
+  },
+  "sources": {
+    "/workspace/fireboy-vla-physics/build/imported_vla_rollouts/vla_manifests/fireboy_vla_slice.jsonl": 3072
+  },
+  "action_type": "skill_parameters_v1"
+}

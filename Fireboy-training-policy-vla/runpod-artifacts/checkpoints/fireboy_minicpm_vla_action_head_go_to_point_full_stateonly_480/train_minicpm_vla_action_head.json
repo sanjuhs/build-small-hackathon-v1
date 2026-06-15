@@ -1,0 +1,62 @@
+{"encoded": 25, "total": 480, "cache_hits": 0}
+{"encoded": 50, "total": 480, "cache_hits": 0}
+{"encoded": 75, "total": 480, "cache_hits": 0}
+{"encoded": 100, "total": 480, "cache_hits": 0}
+{"encoded": 125, "total": 480, "cache_hits": 0}
+{"encoded": 150, "total": 480, "cache_hits": 0}
+{"encoded": 175, "total": 480, "cache_hits": 0}
+{"encoded": 200, "total": 480, "cache_hits": 0}
+{"encoded": 225, "total": 480, "cache_hits": 0}
+{"encoded": 250, "total": 480, "cache_hits": 0}
+{"encoded": 275, "total": 480, "cache_hits": 0}
+{"encoded": 300, "total": 480, "cache_hits": 0}
+{"encoded": 325, "total": 480, "cache_hits": 0}
+{"encoded": 350, "total": 480, "cache_hits": 0}
+{"encoded": 375, "total": 480, "cache_hits": 0}
+{"encoded": 400, "total": 480, "cache_hits": 0}
+{"encoded": 425, "total": 480, "cache_hits": 0}
+{"encoded": 450, "total": 480, "cache_hits": 0}
+{"encoded": 475, "total": 480, "cache_hits": 0}
+{
+  "checkpoint": "/workspace/fireboy-vla-physics/build/checkpoints/fireboy_minicpm_vla_action_head_go_to_point_full_stateonly_480/minicpm_vla_action_head.pt",
+  "model_id": "openbmb/MiniCPM-V-4.6",
+  "rows": 480,
+  "train_rows": 422,
+  "val_rows": 58,
+  "device": "cuda",
+  "task_filter": [
+    "go_to_point"
+  ],
+  "vl_dim": 1024,
+  "state_dim": 168,
+  "output_dim": 320,
+  "chunk_steps": 10,
+  "head_architecture": "state_residual_fusion_v1",
+  "vl_residual_scale": 0.0,
+  "action_std_floor": 0.01,
+  "cache_hits": 0,
+  "losses": [
+    3.753732016775757e-05,
+    3.631593790487386e-05,
+    3.1572970328852534e-05,
+    3.5115172067889944e-05,
+    3.434377504163422e-05,
+    3.176913014613092e-05,
+    3.640662907855585e-05,
+    3.3539599826326594e-05,
+    3.4405158658046275e-05,
+    4.942713349009864e-05
+  ],
+  "val_losses": [
+    0.00010568923607934266,
+    0.00011035550414817408,
+    0.000105208637251053,
+    0.0001039797643898055,
+    0.00010256240057060495,
+    9.437932021683082e-05,
+    9.515802230453119e-05,
+    9.211188444169238e-05,
+    0.00010554150503594428,
+    9.579290053807199e-05
+  ]
+}

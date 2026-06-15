@@ -1,0 +1,71 @@
+{
+  "checkpoint": "/workspace/checkpoint/minicpm_vla_lora_action_head.pt",
+  "task": "pick_up",
+  "episodes": 3,
+  "successes": 3,
+  "success_rate": 1.0,
+  "replan_interval": 8,
+  "smooth_alpha": 0.0,
+  "reports": [
+    {
+      "episode": 0,
+      "task": "pick_up",
+      "success": true,
+      "grasped": true,
+      "eaten": false,
+      "final_berry_pos": [
+        0.334,
+        -0.1151,
+        0.3696
+      ],
+      "final_root_xy": [
+        0.4216,
+        0.3569
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.2382,
+      "gif_path": "/workspace/fireboy-vla-physics/build/runpod_artifacts/fireboy_minicpm_vla_lora_residual_512_eval_3ep/minicpm_vla_pick_up_policy_ep000.gif",
+      "mp4_path": "/workspace/fireboy-vla-physics/build/runpod_artifacts/fireboy_minicpm_vla_lora_residual_512_eval_3ep/minicpm_vla_pick_up_policy_ep000.mp4"
+    },
+    {
+      "episode": 1,
+      "task": "pick_up",
+      "success": true,
+      "grasped": true,
+      "eaten": false,
+      "final_berry_pos": [
+        0.3866,
+        -0.0698,
+        0.3626
+      ],
+      "final_root_xy": [
+        0.4674,
+        0.3917
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.2482,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 2,
+      "task": "pick_up",
+      "success": true,
+      "grasped": true,
+      "eaten": false,
+      "final_berry_pos": [
+        0.3256,
+        -0.1293,
+        0.3701
+      ],
+      "final_root_xy": [
+        0.4162,
+        0.3194
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.2468,
+      "gif_path": null,
+      "mp4_path": null
+    }
+  ]
+}

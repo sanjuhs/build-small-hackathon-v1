@@ -172,7 +172,7 @@ export function createToyRoom({ scene, world, ui, recordForce, variant = "v1" })
   function resetRoomV2() {
     createBox("cube-blue", "cube", new THREE.Vector3(0.72, 0.72, 0.72), new THREE.Vector3(-2.1, 1.1, 0.3), palette.cubeBlue, 1.25, { affordances: ["stack", "boop"], tags: ["block", "blue"] });
     createBox("cube-coral", "cube", new THREE.Vector3(0.62, 0.62, 0.62), new THREE.Vector3(1.8, 1.2, -0.4), palette.cubeCoral, 1.0, { affordances: ["stack", "pretend"], tags: ["block", "coral"] });
-    createBall("soft-ball", "ball", 0.38, new THREE.Vector3(0.4, 1.0, 1.55), palette.cubeAmber, 0.76, { affordances: ["boop", "throw", "play"], tags: ["ball", "soft", "yellow", "amber"] });
+    createBall("soft-ball", "ball", 0.38, new THREE.Vector3(0.4, 1.0, 1.55), palette.cubeAmber, 0.76, { affordances: ["boop", "throw", "play"], tags: ["ball", "soft", "yellow", "gold"] });
     createBall("moon-ball", "ball", 0.3, new THREE.Vector3(-3.1, 1.0, 1.9), makeMat(0xd7eee8), 0.62, { affordances: ["lift", "roll", "play"], tags: ["moon", "ball"] });
     createBall("beach-orb", "ball", 0.42, new THREE.Vector3(3.4, 1.0, 1.55), makeMat(0xf5f7ff), 0.58, { affordances: ["play", "roll", "bounce"], tags: ["beach", "ball"] });
     for (let i = 0; i < 8; i += 1) {
@@ -205,7 +205,7 @@ export function createToyRoom({ scene, world, ui, recordForce, variant = "v1" })
     createBox("cube-blue", "cube", new THREE.Vector3(0.72, 0.72, 0.72), new THREE.Vector3(-2.45, 1.08, 0.45), palette.cubeBlue, 1.25, { affordances: ["stack", "boop", "push"], tags: ["block", "blue"] });
     createBox("cube-coral", "cube", new THREE.Vector3(0.62, 0.62, 0.62), new THREE.Vector3(1.82, 1.1, -0.44), palette.cubeCoral, 1.0, { affordances: ["stack", "pretend", "push"], tags: ["block", "coral"] });
     createBox("ember-block", "cube", new THREE.Vector3(0.48, 0.48, 0.48), new THREE.Vector3(-0.1, 1.0, -1.25), makeMat(0xff8a4a, { roughness: 0.62, emissive: 0xff704d, emissiveIntensity: 0.06 }), 0.8, { affordances: ["warm", "stack", "inspect"], tags: ["fire-boy", "block"] });
-    createBall("soft-ball", "ball", 0.38, new THREE.Vector3(0.72, 1.0, 1.95), palette.cubeAmber, 0.76, { affordances: ["boop", "throw", "play"], tags: ["ball", "soft", "yellow", "amber"] });
+    createBall("soft-ball", "ball", 0.38, new THREE.Vector3(0.72, 1.0, 1.95), palette.cubeAmber, 0.76, { affordances: ["boop", "throw", "play"], tags: ["ball", "soft", "yellow", "gold"] });
     createBall("moon-ball", "ball", 0.3, new THREE.Vector3(-2.9, 0.95, 2.0), makeMat(0xd7eee8), 0.62, { affordances: ["lift", "roll", "play"], tags: ["moon", "ball"] });
     createBall("beach-orb", "ball", 0.42, new THREE.Vector3(3.3, 0.95, 1.65), makeMat(0xf5f7ff), 0.58, { affordances: ["play", "roll", "bounce"], tags: ["beach", "ball"] });
     for (let i = 0; i < 7; i += 1) {
@@ -318,8 +318,34 @@ export function createToyRoom({ scene, world, ui, recordForce, variant = "v1" })
         group.add(meshSphere(0.065, leafMat, [-0.08, 0.19, 0.02], [1.6, 0.34, 0.78], 18));
         group.add(meshSphere(0.06, leafMat, [0.11, 0.18, 0.0], [1.45, 0.32, 0.72], 18));
       },
-      { affordances: ["eat", "sniff", "share"], tags: ["food", "hunger"], nutrition: 34, consumable: true, linearDamping: 0.24, angularDamping: 0.32 },
+      { affordances: ["eat", "sniff", "share"], tags: ["food", "hunger"], nutrition: 28, energy: 15, consumable: true, linearDamping: 0.24, angularDamping: 0.32 },
     );
+  }
+
+  function spawnFood(position, options = {}) {
+    const size = new THREE.Vector3(0.5, 0.5, 0.5);
+    const point = clampSpawnPosition(
+      new THREE.Vector3(
+        Number(position?.x || 0),
+        0.31,
+        Number(position?.z || 0),
+      ),
+      size,
+    );
+    point.y = 0.31;
+    const id = uniqueObjectId(options.id || "dropped-grapes");
+    const entry = createBerry(
+      id,
+      point,
+      colorFromRecipe(options.baseColor, 0x7d54c7),
+      colorFromRecipe(options.accentColor, 0xb892ff),
+    );
+    entry.name = String(options.name || "Dropped grapes").slice(0, 54);
+    entry.tags = [...new Set([...(entry.tags || []), "grape", "grapes", "player-dropped"])];
+    entry.nutrition = Number(options.nutrition || 15);
+    entry.energy = Number(options.energy || 15);
+    entry.generated = true;
+    return entry;
   }
 
   function createBook(id, position, coverColor, detailColor) {
@@ -654,7 +680,7 @@ export function createToyRoom({ scene, world, ui, recordForce, variant = "v1" })
     );
   }
 
-  return { bounds, consumeObject, objects, bodyHistory, frozenBodies, lights, nearestObject, resetRoom, spawnGeneratedObject, updatePhysics };
+  return { bounds, consumeObject, objects, bodyHistory, frozenBodies, lights, nearestObject, resetRoom, spawnFood, spawnGeneratedObject, updatePhysics };
 }
 
 function createPalette() {

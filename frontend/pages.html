@@ -136,6 +136,165 @@
       font-weight: 620;
     }
 
+    .demo-story {
+      margin: 0 0 18px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.66);
+      display: grid;
+      grid-template-columns: minmax(0, 0.82fr) minmax(420px, 1.18fr);
+      gap: 14px;
+      padding: 16px;
+      box-shadow: 0 12px 30px rgba(18, 50, 56, 0.08);
+    }
+
+    .story-copy {
+      min-width: 0;
+      display: grid;
+      align-content: start;
+      gap: 10px;
+    }
+
+    .story-eyebrow,
+    .graph-title {
+      color: var(--teal);
+      font-size: 11px;
+      line-height: 1.2;
+      font-weight: 860;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+    }
+
+    .story-copy h2 {
+      margin: 0;
+      max-width: 540px;
+      font-size: 26px;
+      line-height: 1.05;
+      letter-spacing: 0;
+      font-weight: 900;
+    }
+
+    .story-copy p,
+    .graph-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.5;
+      font-weight: 590;
+    }
+
+    .story-actions {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 10px;
+      margin-top: 2px;
+    }
+
+    .story-action {
+      min-width: 0;
+      min-height: 58px;
+      border: 1px solid var(--teal);
+      border-radius: 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 14px;
+      background: var(--teal);
+      color: #fff;
+      text-align: center;
+      text-decoration: none;
+      font-size: 15px;
+      line-height: 1.15;
+      font-weight: 900;
+      box-shadow: 0 10px 22px rgba(18, 50, 56, 0.14);
+    }
+
+    .story-action.secondary {
+      border-color: rgba(18, 50, 56, 0.2);
+      background: #fff;
+      color: var(--teal);
+    }
+
+    .proof-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 8px;
+      margin-top: 2px;
+    }
+
+    .proof-item {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      background: rgba(255, 250, 240, 0.82);
+      padding: 9px;
+      display: grid;
+      gap: 3px;
+    }
+
+    .proof-item strong {
+      font-size: 13px;
+      line-height: 1.15;
+      font-weight: 880;
+    }
+
+    .proof-item span {
+      color: var(--muted);
+      font-size: 11.5px;
+      line-height: 1.35;
+      font-weight: 620;
+    }
+
+    .architecture-graph {
+      min-width: 0;
+      display: grid;
+      gap: 10px;
+      align-content: start;
+      padding-top: 2px;
+    }
+
+    .graph-flow {
+      display: grid;
+      grid-template-columns: minmax(96px, 1fr) 18px minmax(96px, 1fr) 18px minmax(96px, 1fr);
+      gap: 7px;
+      align-items: stretch;
+    }
+
+    .graph-node {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      padding: 9px;
+      background: #fff;
+      display: grid;
+      gap: 4px;
+    }
+
+    .graph-node strong {
+      font-size: 12.5px;
+      line-height: 1.15;
+      font-weight: 880;
+    }
+
+    .graph-node span {
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.35;
+      font-weight: 620;
+    }
+
+    .graph-edge {
+      align-self: center;
+      justify-self: center;
+      color: var(--teal);
+      font-size: 16px;
+      font-weight: 900;
+    }
+
+    .graph-node.modal { border-color: rgba(102, 203, 216, 0.64); background: rgba(232, 250, 250, 0.8); }
+    .graph-node.vla { border-color: rgba(240, 188, 66, 0.7); background: rgba(255, 247, 223, 0.88); }
+    .graph-node.codex { border-color: rgba(239, 119, 88, 0.55); background: rgba(255, 238, 232, 0.86); }
+
     .page-grid {
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -252,9 +411,26 @@
       }
 
       .intro p,
+      .story-copy p,
+      .graph-note,
       .page-card p {
         max-width: 32ch;
         overflow-wrap: anywhere;
+      }
+
+      .demo-story {
+        grid-template-columns: minmax(0, 1fr);
+        padding: 12px;
+      }
+
+      .proof-grid,
+      .graph-flow,
+      .story-actions {
+        grid-template-columns: minmax(0, 1fr);
+      }
+
+      .graph-edge {
+        display: none;
       }
 
       .page-grid {
@@ -283,6 +459,8 @@
         <a class="nav-link" href="/toy-v3">Toy Room v3</a>
         <a class="nav-link" href="/toy-v2">Toy Room v2</a>
         <a class="nav-link" href="/toy">Toy Room</a>
+        <a class="nav-link" href="/vla-research">VLA Paper</a>
+        <a class="nav-link" href="/fireboy-policy-gallery">Policy Gallery</a>
         <a class="nav-link" href="/blender-models">Blender Models</a>
         <a class="nav-link" href="/parts-lab">Parts Lab</a>
       </div>
@@ -290,12 +468,50 @@
 
     <section class="intro">
       <h1>Tiny Toybox Pages</h1>
-      <p>Open the playable room, inspect character models, review Blender rigs, or browse the layered character kit assets.</p>
+      <p>Open the playable Fire Boy pet room, inspect the rig, and review the evidence trail behind the Modal, MiniCPM, VLA, and Codex-assisted build.</p>
+    </section>
+
+    <section class="demo-story" aria-label="Modal VLA and Codex demo explanation">
+      <div class="story-copy">
+        <span class="story-eyebrow">Demo story</span>
+        <h2>Fire Boy is a tiny model-backed toy with a real build trail.</h2>
+        <p>Toy Room v3 routes typed or spoken commands through a bounded PET action contract, then turns model output into speech, animation, physics, camera traces, and room objects.</p>
+        <p>Modal is used for serverless MiniCPM-o inference, while the VLA path keeps MiniCPM-V 4.6, policy heads, and RunPod rollout artifacts visible as training proof instead of hidden notes.</p>
+        <div class="proof-grid" aria-label="Demo proof points">
+          <div class="proof-item"><strong>Modal runtime</strong><span>Warm serverless gateway for MiniCPM-o action turns and token/latency traces.</span></div>
+          <div class="proof-item"><strong>VLA training</strong><span>MiniCPM-V 4.6 scaffolds, LoRA/action-head checkpoints, and MP4 eval proof.</span></div>
+          <div class="proof-item"><strong>Codex commits</strong><span>Repo history shows Codex-assisted implementation and docs across v3, Modal, VLA, and diagnostics.</span></div>
+          <div class="proof-item"><strong>Playable demo</strong><span>Drag, pet, feed, command, inspect vision, and open policy evidence from one page.</span></div>
+        </div>
+      </div>
+
+      <div class="architecture-graph" aria-label="Runtime and training graph">
+        <div class="graph-title">Runtime and training graph</div>
+        <div class="graph-flow">
+          <div class="graph-node"><strong>Player</strong><span>Types, speaks, drags, pets, or drops food in Toy Room v3.</span></div>
+          <div class="graph-edge">&gt;</div>
+          <div class="graph-node modal"><strong>Modal MiniCPM-o</strong><span>Serverless WebSocket turn returns a compact action JSON.</span></div>
+          <div class="graph-edge">&gt;</div>
+          <div class="graph-node"><strong>Fire Boy runtime</strong><span>Three.js rig, CANNON physics, voice, particles, and trace panel.</span></div>
+        </div>
+        <div class="graph-flow">
+          <div class="graph-node codex"><strong>Codex</strong><span>Scaffolded routes, UI, bridge code, docs, runbooks, and commit-sized fixes.</span></div>
+          <div class="graph-edge">&gt;</div>
+          <div class="graph-node vla"><strong>MiniCPM-V 4.6 VLA</strong><span>Vision-action manifests, action heads, LoRA adapters, and policy evals.</span></div>
+          <div class="graph-edge">&gt;</div>
+          <div class="graph-node"><strong>Evidence</strong><span>Policy gallery, training export, brain trace, judge status, and screenshots.</span></div>
+        </div>
+        <p class="graph-note">The point of the demo is visible causality: model call, action contract, embodied result, and training evidence are all inspectable.</p>
+        <div class="story-actions" aria-label="Judge demo links">
+          <a class="story-action" href="/vla-research">In-depth Research Paper</a>
+          <a class="story-action secondary" href="/toy-v3">Toy Room v3 Demo</a>
+        </div>
+      </div>
     </section>
 
     <section class="page-grid" aria-label="Available pages">
       <a class="page-card accent-coral" href="/toy-v3">
-        <div class="thumb"><img src="/fire-boy-rig/previews/fire-boy-fullrig-rest.png" alt="Fire Boy rigged character preview" /></div>
+        <div class="thumb"><img src="/frontend/page-shots/toy-v3-screen.png" alt="Toy Room v3 page screenshot with Fire Boy in the play room" /></div>
         <div class="card-body">
           <span class="route">/toy-v3</span>
           <h2>Toy Room v3</h2>
@@ -305,7 +521,7 @@
       </a>
 
       <a class="page-card accent-aqua" href="/toy">
-        <div class="thumb"><img src="/fire-boy-rig/previews/fire-boy-fullrig-rest.png" alt="Default Toy Room v3 Fire Boy preview" /></div>
+        <div class="thumb"><img src="/frontend/page-shots/toy-default-screen.png" alt="Default Toy Room page screenshot with Fire Boy status controls" /></div>
         <div class="card-body">
           <span class="route">/toy</span>
           <h2>Toy Room</h2>
@@ -315,11 +531,31 @@
       </a>
 
       <a class="page-card accent-coral" href="/toy-v2">
-        <div class="thumb"><img src="/toy-assets/generated/part-concepts/parts-individual-v2-contact.png" alt="Toy Room v2 character kit preview" /></div>
+        <div class="thumb"><img src="/frontend/page-shots/toy-v2-screen.png" alt="Toy Room v2 page screenshot with Squeaky, Fire Boy, Shark Girl, and Electraica" /></div>
         <div class="card-body">
           <span class="route">/toy-v2</span>
           <h2>Toy Room v2</h2>
           <p>The previous multi-agent prototype with Squeaky, Fire Boy, Shark Girl, Electraica, council scans, and the larger judge demo.</p>
+          <span class="open-link">Open</span>
+        </div>
+      </a>
+
+      <a class="page-card accent-teal" href="/fireboy-policy-gallery">
+        <div class="thumb"><img src="/fireboy-runpod-artifacts/runpod_artifacts/render_gate/fireboy_articulated_body.png" alt="Fire Boy articulated MuJoCo body proof" /></div>
+        <div class="card-body">
+          <span class="route">/fireboy-policy-gallery</span>
+          <h2>Policy Gallery</h2>
+          <p>RunPod MP4 proof board for the connected MuJoCo body, active movement policies, MiniCPM-V LoRA manipulation, and failed direct-navigation experiments.</p>
+          <span class="open-link">Open</span>
+        </div>
+      </a>
+
+      <a class="page-card accent-aqua" href="/vla-research">
+        <div class="thumb"><img src="/frontend/research/vla-architecture.png" alt="MiniCPM-V 4.6 Fire Boy VLA architecture graph" /></div>
+        <div class="card-body">
+          <span class="route">/vla-research</span>
+          <h2>VLA Research Paper</h2>
+          <p>A detailed PDF and page about freezing MiniCPM-V 4.6, adding the skill-parameter router, failed action-head experiments, Modal, RunPod, Newton, and Codex.</p>
           <span class="open-link">Open</span>
         </div>
       </a>
@@ -355,7 +591,7 @@
       </a>
 
       <a class="page-card accent-amber" href="/fireboy-rigged">
-        <div class="thumb"><img src="/fire-boy-rig/previews/fire-boy-fullrig-rest.png" alt="Fire Boy full rig preview" /></div>
+        <div class="thumb"><img src="/frontend/page-shots/fireboy-rigged-screen.png" alt="Fire Boy Rigged page screenshot with the motion clip viewer" /></div>
         <div class="card-body">
           <span class="route">/fireboy-rigged</span>
           <h2>Fire Boy Rigged</h2>

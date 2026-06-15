@@ -1,0 +1,71 @@
+{
+  "checkpoint": "/workspace/checkpoint/minicpm_vla_lora_action_head.pt",
+  "task": "go_eat_berry",
+  "episodes": 3,
+  "successes": 3,
+  "success_rate": 1.0,
+  "replan_interval": 8,
+  "smooth_alpha": 0.0,
+  "reports": [
+    {
+      "episode": 0,
+      "task": "go_eat_berry",
+      "success": true,
+      "grasped": true,
+      "eaten": true,
+      "final_berry_pos": [
+        0.9674,
+        -0.0656,
+        0.4569
+      ],
+      "final_root_xy": [
+        0.5986,
+        0.1532
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.1335,
+      "gif_path": "/workspace/fireboy-vla-physics/build/runpod_artifacts/fireboy_minicpm_vla_lora_residual_512_eval_3ep/minicpm_vla_go_eat_berry_policy_ep000.gif",
+      "mp4_path": "/workspace/fireboy-vla-physics/build/runpod_artifacts/fireboy_minicpm_vla_lora_residual_512_eval_3ep/minicpm_vla_go_eat_berry_policy_ep000.mp4"
+    },
+    {
+      "episode": 1,
+      "task": "go_eat_berry",
+      "success": true,
+      "grasped": true,
+      "eaten": true,
+      "final_berry_pos": [
+        0.8142,
+        0.2175,
+        0.4642
+      ],
+      "final_root_xy": [
+        0.4802,
+        0.4449
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.1344,
+      "gif_path": null,
+      "mp4_path": null
+    },
+    {
+      "episode": 2,
+      "task": "go_eat_berry",
+      "success": true,
+      "grasped": true,
+      "eaten": true,
+      "final_berry_pos": [
+        0.7278,
+        0.3672,
+        0.4692
+      ],
+      "final_root_xy": [
+        0.397,
+        0.5616
+      ],
+      "target_xy": null,
+      "min_mouth_dist": 0.14,
+      "gif_path": null,
+      "mp4_path": null
+    }
+  ]
+}

@@ -1,0 +1,68 @@
+{
+  "checkpoint": "/workspace/fireboy-vla-physics/build/checkpoints/fireboy_minicpm_vla_skill_param_head/minicpm_vla_skill_param_head.pt",
+  "manifests": [
+    "/workspace/fireboy-vla-physics/build/vla_skill_params/fireboy_vla_skill_params_allskill.jsonl"
+  ],
+  "rows": 512,
+  "cache_hits": 512,
+  "device": "cuda",
+  "policy_kind": "minicpm_vla_frozen_encoder_skill_param_head_v1",
+  "skill_names": [
+    "walk_to",
+    "run_around",
+    "pick_up",
+    "find_and_eat_berry"
+  ],
+  "param_names": [
+    "target_x",
+    "target_y",
+    "target_z",
+    "radius",
+    "speed_hint",
+    "object_is_berry"
+  ],
+  "metrics": {
+    "skill_accuracy": 1.0,
+    "param_mae": 0.017043352127075195,
+    "param_mae_by_name": {
+      "target_x": 0.032305024564266205,
+      "target_y": 0.0478343665599823,
+      "target_z": 0.006528750993311405,
+      "radius": 0.0038746832869946957,
+      "speed_hint": 0.004880381282418966,
+      "object_is_berry": 0.006836902815848589
+    },
+    "confusion": [
+      [
+        128,
+        0,
+        0,
+        0
+      ],
+      [
+        0,
+        128,
+        0,
+        0
+      ],
+      [
+        0,
+        0,
+        128,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        128
+      ]
+    ],
+    "skill_names": [
+      "walk_to",
+      "run_around",
+      "pick_up",
+      "find_and_eat_berry"
+    ]
+  }
+}

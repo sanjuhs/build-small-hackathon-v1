@@ -1,0 +1,51 @@
+{"encoded": 25, "total": 256, "cache_hits": 0}
+{"encoded": 50, "total": 256, "cache_hits": 0}
+{"encoded": 75, "total": 256, "cache_hits": 0}
+{"encoded": 100, "total": 256, "cache_hits": 0}
+{"encoded": 125, "total": 256, "cache_hits": 0}
+{"encoded": 150, "total": 256, "cache_hits": 0}
+{"encoded": 175, "total": 256, "cache_hits": 0}
+{"encoded": 200, "total": 256, "cache_hits": 0}
+{"encoded": 225, "total": 256, "cache_hits": 0}
+{"encoded": 250, "total": 256, "cache_hits": 0}
+{
+  "checkpoint": "/workspace/fireboy-vla-physics/build/checkpoints/fireboy_minicpm_vla_action_head_scaled/minicpm_vla_action_head.pt",
+  "model_id": "openbmb/MiniCPM-V-4.6",
+  "rows": 256,
+  "train_rows": 225,
+  "val_rows": 31,
+  "device": "cuda",
+  "task_filter": [
+    "pick_up",
+    "go_eat_berry"
+  ],
+  "vl_dim": 1024,
+  "state_dim": 27,
+  "output_dim": 320,
+  "chunk_steps": 10,
+  "cache_hits": 0,
+  "losses": [
+    0.00010637529339874163,
+    9.765751019585878e-05,
+    8.897372026694939e-05,
+    7.855326839489862e-05,
+    7.006172381807119e-05,
+    6.545520591316745e-05,
+    6.201166252139956e-05,
+    5.75927369936835e-05,
+    5.214343764237128e-05,
+    4.858642932958901e-05
+  ],
+  "val_losses": [
+    0.021274516358971596,
+    0.021215733140707016,
+    0.021172277629375458,
+    0.02114434726536274,
+    0.021103277802467346,
+    0.02105124108493328,
+    0.021067360416054726,
+    0.020957550033926964,
+    0.020944466814398766,
+    0.020921140909194946
+  ]
+}

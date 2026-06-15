@@ -1,0 +1,686 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fire Boy Policy Gallery</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #182023;
+      --muted: #5f6a6d;
+      --paper: #f5f7f3;
+      --panel: #ffffff;
+      --line: rgba(24, 32, 35, 0.14);
+      --ember: #d74735;
+      --mint: #1f7a6d;
+      --gold: #b1751c;
+      --blue: #375f9f;
+      --bad: #a93b4b;
+      --shadow: 0 14px 42px rgba(24, 32, 35, 0.1);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      color: var(--ink);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      background:
+        linear-gradient(180deg, #f7f3e8 0%, #edf4f2 42%, #f6f0e8 100%);
+    }
+
+    a {
+      color: inherit;
+    }
+
+    .shell {
+      width: min(1380px, calc(100vw - 28px));
+      margin: 0 auto;
+      padding: 14px 0 34px;
+    }
+
+    .topbar {
+      position: sticky;
+      top: 10px;
+      z-index: 10;
+      min-height: 54px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 9px 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      background: rgba(255, 255, 255, 0.88);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      -webkit-backdrop-filter: blur(14px);
+    }
+
+    .brand {
+      min-width: 0;
+    }
+
+    .brand strong {
+      display: block;
+      font-size: 15px;
+      line-height: 1.1;
+      font-weight: 880;
+      white-space: nowrap;
+    }
+
+    .brand span {
+      display: block;
+      margin-top: 2px;
+      color: var(--muted);
+      font-size: 11px;
+      line-height: 1.15;
+      font-weight: 760;
+      white-space: nowrap;
+    }
+
+    .links,
+    .command-row {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 7px;
+      flex-wrap: wrap;
+    }
+
+    .nav-link,
+    .command-button {
+      min-height: 34px;
+      border: 1px solid var(--line);
+      border-radius: 7px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      padding: 7px 10px;
+      background: var(--panel);
+      color: var(--ink);
+      text-decoration: none;
+      font: 780 12px/1.2 inherit;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+
+    .command-button {
+      background: #193035;
+      color: #fff;
+      border-color: #193035;
+    }
+
+    .command-button:disabled {
+      cursor: wait;
+      opacity: 0.72;
+    }
+
+    .intro {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+      gap: 18px;
+      align-items: end;
+      padding: 38px 0 18px;
+    }
+
+    h1 {
+      max-width: 800px;
+      margin: 0;
+      font-size: clamp(34px, 6vw, 72px);
+      line-height: 0.96;
+      letter-spacing: 0;
+      font-weight: 920;
+    }
+
+    .intro p,
+    .section-note,
+    .card p,
+    .run-result p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 13px;
+      line-height: 1.45;
+      font-weight: 560;
+    }
+
+    .status-strip {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.76);
+      padding: 12px;
+      display: grid;
+      gap: 8px;
+    }
+
+    .status-row {
+      display: grid;
+      grid-template-columns: 120px minmax(0, 1fr);
+      gap: 8px;
+      align-items: start;
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    .status-row span:first-child {
+      color: var(--muted);
+      font-weight: 830;
+      text-transform: uppercase;
+      font-size: 10px;
+      letter-spacing: 0.04em;
+    }
+
+    .status-row span:last-child {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      font-weight: 650;
+    }
+
+    section {
+      margin-top: 18px;
+    }
+
+    .section-head {
+      margin-bottom: 10px;
+      display: flex;
+      align-items: end;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    h2 {
+      margin: 0;
+      font-size: 22px;
+      line-height: 1.08;
+      letter-spacing: 0;
+      font-weight: 880;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 12px;
+    }
+
+    .card {
+      min-width: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+      background: rgba(255, 255, 255, 0.82);
+      box-shadow: 0 10px 26px rgba(24, 32, 35, 0.07);
+    }
+
+    .media {
+      min-height: 220px;
+      background: #111618;
+      display: grid;
+      place-items: center;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    video,
+    img {
+      display: block;
+      width: 100%;
+      max-height: 340px;
+      object-fit: contain;
+      background: #111618;
+    }
+
+    .empty-media {
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 12px;
+      font-weight: 760;
+      text-align: center;
+      padding: 18px;
+    }
+
+    .card-body {
+      padding: 12px;
+      display: grid;
+      gap: 10px;
+    }
+
+    .card-title {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    h3 {
+      margin: 0;
+      font-size: 17px;
+      line-height: 1.13;
+      letter-spacing: 0;
+    }
+
+    .badge {
+      width: max-content;
+      max-width: 100%;
+      border-radius: 999px;
+      padding: 4px 8px;
+      font-size: 10px;
+      line-height: 1.1;
+      font-weight: 880;
+      white-space: nowrap;
+      color: #143330;
+      background: rgba(31, 122, 109, 0.17);
+    }
+
+    .badge.ready {
+      color: #143330;
+      background: rgba(31, 122, 109, 0.17);
+    }
+
+    .badge.gpu {
+      color: #512d06;
+      background: rgba(177, 117, 28, 0.18);
+    }
+
+    .badge.fail {
+      color: #6b1726;
+      background: rgba(169, 59, 75, 0.16);
+    }
+
+    dl {
+      margin: 0;
+      display: grid;
+      grid-template-columns: minmax(82px, 120px) minmax(0, 1fr);
+      gap: 7px 10px;
+    }
+
+    dt {
+      color: var(--muted);
+      font-size: 10px;
+      line-height: 1.2;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-weight: 830;
+    }
+
+    dd {
+      min-width: 0;
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.35;
+      overflow-wrap: anywhere;
+    }
+
+    .path-link {
+      color: var(--blue);
+      font-weight: 760;
+    }
+
+    .command-panel,
+    .run-result {
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.78);
+    }
+
+    .command-panel {
+      display: grid;
+      gap: 10px;
+    }
+
+    .run-result {
+      margin-top: 12px;
+      display: grid;
+      grid-template-columns: minmax(260px, 560px) minmax(0, 1fr);
+      gap: 12px;
+      align-items: start;
+    }
+
+    pre {
+      margin: 0;
+      max-height: 420px;
+      overflow: auto;
+      border-radius: 7px;
+      background: #eef2f2;
+      padding: 10px;
+      font-size: 11px;
+      line-height: 1.36;
+      white-space: pre-wrap;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    @media (max-width: 860px) {
+      .topbar,
+      .intro,
+      .run-result {
+        grid-template-columns: 1fr;
+      }
+
+      .topbar {
+        align-items: flex-start;
+        flex-direction: column;
+      }
+
+      .links,
+      .command-row {
+        justify-content: flex-start;
+      }
+
+      h1 {
+        font-size: 34px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="shell">
+    <nav class="topbar">
+      <div class="brand">
+        <strong>Fire Boy Policy Gallery</strong>
+        <span>RunPod artifacts, MuJoCo body, MiniCPM-V router proofs</span>
+      </div>
+      <div class="links" aria-label="Page links">
+        <a class="nav-link" href="/toy-v3">Toy V3</a>
+        <a class="nav-link" href="/mujoco-policy">MuJoCo Viewer</a>
+        <a class="nav-link" href="/fireboy-rigged">GLB Rig</a>
+        <a class="nav-link" href="/pages">Pages</a>
+      </div>
+    </nav>
+
+    <section class="intro">
+      <div>
+        <h1>Fire Boy Policy Proofs</h1>
+        <p id="notes">Loading registry...</p>
+      </div>
+      <div class="status-strip" id="statusStrip"></div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div>
+          <h2>Command Runtime</h2>
+          <p class="section-note">These buttons call the same Toy V3 MuJoCo bridge used by chat commands.</p>
+        </div>
+      </div>
+      <div class="command-panel">
+        <div class="command-row">
+          <button class="command-button" type="button" data-command="walk to the yellow marker with mujoco policy">Walk To Marker</button>
+          <button class="command-button" type="button" data-command="run around with mujoco policy">Run Around</button>
+          <button class="command-button" type="button" data-command="pick up the berry with mujoco policy">Pick Up Berry</button>
+          <button class="command-button" type="button" data-command="go find berry and eat it with mujoco policy">Find Berry And Eat</button>
+          <button class="command-button" type="button" data-endpoint="pet-action" data-command="VLA router: go find berry and eat it">VLA Eat Berry</button>
+        </div>
+        <p id="commandStatus">Ready.</p>
+      </div>
+      <div class="run-result hidden" id="runResult">
+        <div class="media" id="runMedia"></div>
+        <div>
+          <h3>Bridge Result</h3>
+          <pre id="runRaw">{}</pre>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div>
+          <h2>Physics Body</h2>
+          <p class="section-note">The current connected MuJoCo body and controller proof bundle.</p>
+        </div>
+      </div>
+      <div class="grid" id="bodyGrid"></div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div>
+          <h2>VLA Router</h2>
+          <p class="section-note">MiniCPM-V maps image, command, and robot state to a pet skill plus target parameters.</p>
+        </div>
+      </div>
+      <div class="grid" id="vlaGrid"></div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div>
+          <h2>Active Skills</h2>
+          <p class="section-note">Policies currently allowed for the pet demo path.</p>
+        </div>
+      </div>
+      <div class="grid" id="skillGrid"></div>
+    </section>
+
+    <section>
+      <div class="section-head">
+        <div>
+          <h2>Failed Direct VLA Experiments</h2>
+          <p class="section-note">Archived MiniCPM navigation attempts that should not be used for demo routing.</p>
+        </div>
+      </div>
+      <div class="grid" id="failedGrid"></div>
+    </section>
+  </main>
+
+  <script>
+    const statusStrip = document.getElementById("statusStrip");
+    const notesEl = document.getElementById("notes");
+    const bodyGrid = document.getElementById("bodyGrid");
+    const vlaGrid = document.getElementById("vlaGrid");
+    const skillGrid = document.getElementById("skillGrid");
+    const failedGrid = document.getElementById("failedGrid");
+    const commandStatus = document.getElementById("commandStatus");
+    const runResult = document.getElementById("runResult");
+    const runMedia = document.getElementById("runMedia");
+    const runRaw = document.getElementById("runRaw");
+
+    function escapeHtml(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function titleize(value) {
+      return String(value || "")
+        .replaceAll("_", " ")
+        .replaceAll("-", " ")
+        .replace(/\b\w/g, (match) => match.toUpperCase());
+    }
+
+    function percent(value) {
+      if (value === null || value === undefined || value === "") return "";
+      const numeric = Number(value);
+      if (!Number.isFinite(numeric)) return String(value);
+      return `${Math.round(numeric * 1000) / 10}%`;
+    }
+
+    function compactNumber(value) {
+      if (value === null || value === undefined || value === "") return "";
+      const numeric = Number(value);
+      if (!Number.isFinite(numeric)) return String(value);
+      return String(Math.round(numeric * 10000) / 10000);
+    }
+
+    function score(item) {
+      const successes = item.successes ?? item.evalSummary?.successes;
+      const episodes = item.episodes ?? item.evalSummary?.episodes;
+      if (successes !== null && successes !== undefined && episodes) return `${successes}/${episodes}`;
+      if (item.evalSummary?.success !== undefined) return String(item.evalSummary.success);
+      return "";
+    }
+
+    function firstPath(item, keys) {
+      for (const key of keys) {
+        const path = item.paths?.[key];
+        if (path?.path) return path;
+      }
+      return null;
+    }
+
+    function renderMedia(media, title) {
+      if (media?.mp4Url) {
+        return `<video controls muted loop playsinline preload="metadata" src="${escapeHtml(media.mp4Url)}"></video>`;
+      }
+      if (media?.gifUrl) {
+        return `<img alt="${escapeHtml(title)}" src="${escapeHtml(media.gifUrl)}" />`;
+      }
+      return `<div class="empty-media">No preview media in registry</div>`;
+    }
+
+    function factsHtml(rows) {
+      return Object.entries(rows)
+        .filter(([, value]) => value !== null && value !== undefined && value !== "")
+        .map(([key, value]) => `<dt>${escapeHtml(key)}</dt><dd>${escapeHtml(Array.isArray(value) ? value.join(", ") : value)}</dd>`)
+        .join("");
+    }
+
+    function cardHtml(item, kind) {
+      const status = item.status || (kind === "failed" ? "failed" : "proof");
+      const badgeClass = kind === "failed" ? "fail" : status.includes("gpu") ? "gpu" : "ready";
+      const scoreText = score(item);
+      const rateText = percent(item.successRate ?? item.evalSummary?.success_rate);
+      const policyPath = firstPath(item, ["policy_path", "checkpoint_path", "local_checkpoint_path", "report_path"]);
+      const evalPath = firstPath(item, ["eval_path"]);
+      const trainPath = firstPath(item, ["train_path"]);
+      const manifestPath = firstPath(item, ["manifest_summary_path", "local_manifest_summary_path"]);
+      const mediaTitle = titleize(item.name);
+      const sample = item.evalSummary?.sampleReport || {};
+      const skillAccuracy = item.evalSummary?.skill_accuracy ?? item.trainSummary?.val_skill_accuracy;
+      const paramMae = item.evalSummary?.param_mae ?? item.trainSummary?.val_param_mae;
+      const rowCount = item.evalSummary?.rows ?? item.trainSummary?.rows ?? item.manifestSummary?.rows_written;
+      return `
+        <article class="card">
+          <div class="media">${renderMedia(item.media, mediaTitle)}</div>
+          <div class="card-body">
+            <div class="card-title">
+              <h3>${escapeHtml(mediaTitle)}</h3>
+              <span class="badge ${badgeClass}">${escapeHtml(status || kind)}</span>
+            </div>
+            ${item.note ? `<p>${escapeHtml(item.note)}</p>` : ""}
+            ${item.reason ? `<p>${escapeHtml(item.reason)}</p>` : ""}
+            <dl>
+              ${factsHtml({
+                task: item.task,
+                lane: item.lane,
+                runtime: item.runtime,
+                model: item.modelId || item.trainSummary?.model_id || item.evalSummary?.model_id,
+                device: item.evalSummary?.device || item.trainSummary?.device,
+                score: scoreText,
+                rate: rateText,
+                skillAccuracy: percent(skillAccuracy),
+                paramMAE: compactNumber(paramMae),
+                rows: rowCount,
+                skills: item.skills?.length ? item.skills : item.manifestSummary?.skill_names,
+                grasped: sample.grasped,
+                eaten: sample.eaten,
+                target: Array.isArray(sample.target_xy) ? sample.target_xy.join(", ") : "",
+                bodies: item.reportSummary?.nbody,
+                joints: item.reportSummary?.njnt,
+                actuators: item.reportSummary?.nu,
+              })}
+              ${policyPath ? `<dt>artifact</dt><dd>${escapeHtml(policyPath.path)}</dd>` : ""}
+              ${evalPath?.url ? `<dt>eval</dt><dd><a class="path-link" href="${escapeHtml(evalPath.url)}">open json</a></dd>` : ""}
+              ${trainPath?.url ? `<dt>train</dt><dd><a class="path-link" href="${escapeHtml(trainPath.url)}">open json</a></dd>` : ""}
+              ${manifestPath?.url ? `<dt>manifest</dt><dd><a class="path-link" href="${escapeHtml(manifestPath.url)}">open summary</a></dd>` : ""}
+              ${item.media?.mp4Url ? `<dt>mp4</dt><dd><a class="path-link" href="${escapeHtml(item.media.mp4Url)}">open video</a></dd>` : ""}
+            </dl>
+          </div>
+        </article>
+      `;
+    }
+
+    function renderStatus(payload) {
+      const active = payload.activeSkills || [];
+      const failed = payload.failedExperiments || [];
+      const vlaModels = payload.vlaModels || [];
+      const glb = payload.fireboyGlb || {};
+      statusStrip.innerHTML = `
+        <div class="status-row"><span>Registry</span><span>${escapeHtml(payload.registryPath || "missing")}</span></div>
+        <div class="status-row"><span>GLB</span><span>${glb.url ? `<a href="${escapeHtml(glb.url)}">${escapeHtml(glb.path)}</a>` : escapeHtml(glb.path || "missing")}</span></div>
+        <div class="status-row"><span>Active</span><span>${active.length} skills</span></div>
+        <div class="status-row"><span>VLA</span><span>${vlaModels.length} MiniCPM-V router model${vlaModels.length === 1 ? "" : "s"}</span></div>
+        <div class="status-row"><span>Rejected</span><span>${failed.length} direct MiniCPM navigation heads archived</span></div>
+      `;
+    }
+
+    function renderRegistry(payload) {
+      notesEl.textContent = payload.notes || "";
+      renderStatus(payload);
+      bodyGrid.innerHTML = (payload.bodyProofs || []).map((item) => cardHtml(item, "proof")).join("");
+      vlaGrid.innerHTML = (payload.vlaModels || []).map((item) => cardHtml(item, "vla")).join("");
+      skillGrid.innerHTML = (payload.activeSkills || []).map((item) => cardHtml(item, "active")).join("");
+      failedGrid.innerHTML = (payload.failedExperiments || []).map((item) => cardHtml(item, "failed")).join("");
+    }
+
+    async function loadRegistry() {
+      const response = await fetch("/api/fireboy-policy-registry");
+      const payload = await response.json();
+      if (!payload.ok) {
+        notesEl.textContent = payload.reason || "Registry unavailable.";
+        return;
+      }
+      renderRegistry(payload);
+    }
+
+    function renderRunMedia(policy) {
+      const mp4 = policy?.mp4Url || "";
+      const gif = policy?.gifUrl || "";
+      if (mp4) {
+        runMedia.innerHTML = `<video controls muted loop playsinline autoplay src="${escapeHtml(mp4)}?t=${Date.now()}"></video>`;
+      } else if (gif) {
+        runMedia.innerHTML = `<img alt="MuJoCo bridge rollout" src="${escapeHtml(gif)}?t=${Date.now()}" />`;
+      } else {
+        runMedia.innerHTML = `<div class="empty-media">No bridge media returned</div>`;
+      }
+    }
+
+    async function runCommand(command, button) {
+      commandStatus.textContent = `Running: ${command}`;
+      button.disabled = true;
+      const payload = {
+        pet: "fire_boy",
+        message: command,
+        scene: {
+          objects: [
+            { id: "berry-rose", kind: "berry", affordances: ["eat", "pick_up"], x: 0.42, y: -0.1 },
+            { id: "yellow-marker", kind: "marker", affordances: ["go_to"], x: 0.44, y: 0.02 }
+          ]
+        }
+      };
+      try {
+        const usePetAction = button.dataset.endpoint === "pet-action";
+        const response = await fetch(usePetAction ? "/api/pet-action" : "/api/mujoco-policy", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+        const result = await response.json();
+        const action = result.action || result;
+        runResult.classList.remove("hidden");
+        runRaw.textContent = JSON.stringify(result, null, 2);
+        renderRunMedia(action?.debug?.mujocoPolicy);
+        commandStatus.textContent = (result.enabled || action?.debug?.mujocoPolicy?.success) ? "Bridge rollout completed." : "Bridge did not route.";
+      } catch (error) {
+        commandStatus.textContent = `Bridge failed: ${error}`;
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    document.querySelectorAll("[data-command]").forEach((button) => {
+      button.addEventListener("click", () => runCommand(button.dataset.command, button));
+    });
+
+    loadRegistry();
+  </script>
+</body>
+</html>

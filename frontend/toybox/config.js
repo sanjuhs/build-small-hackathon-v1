@@ -56,6 +56,7 @@ export const EMOTION_SHAPES = {
   startled: { eye: 1.42, smile: -0.18, mouth: 0.56, brow: 0.75, cheek: 0.92, squash: -0.08, tilt: 0.18, sparkle: 0.9 },
   dizzy: { eye: 1.1, smile: 0.02, mouth: 0.25, brow: 0.35, cheek: 0.75, squash: -0.04, tilt: 0.24, sparkle: 0.15 },
   shy: { eye: 0.64, smile: 0.5, mouth: 0.03, brow: 0.15, cheek: 1.25, squash: 0.08, tilt: -0.1, sparkle: 0.4 },
+  confused: { eye: 1.05, smile: -0.04, mouth: 0.18, brow: 0.62, cheek: 0.72, squash: 0.02, tilt: 0.22, sparkle: 0.22 },
 };
 
 export const POWER_COLORS = {
