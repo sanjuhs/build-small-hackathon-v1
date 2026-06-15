@@ -9,6 +9,16 @@ tags:
   - robotics
   - synthetic-data
   - build-small-hackathon
+  - "track:wood"
+  - "sponsor:openbmb"
+  - "sponsor:openai"
+  - "sponsor:modal"
+  - "achievement:offgrid"
+  - "achievement:welltuned"
+  - "achievement:offbrand"
+  - "achievement:llama"
+  - "achievement:sharing"
+  - "achievement:fieldnotes"
 task_categories:
   - image-to-text
   - text-classification
@@ -18,9 +28,25 @@ size_categories:
 
 # Fire Boy VLA Rollout And Evidence Artifacts
 
+## Creator And Submission Links
+
+| Item | Link |
+| --- | --- |
+| Creator | **Sanjay Prasad H S** (`sanjuhs`) |
+| GitHub repo | [sanjuhs/build-small-hackathon-v1](https://github.com/sanjuhs/build-small-hackathon-v1) |
+| Canonical HF Space repo | [build-small-hackathon/toy-room-v3](https://huggingface.co/spaces/build-small-hackathon/toy-room-v3) |
+| Canonical live Space | [https://build-small-hackathon-toy-room-v3.hf.space/toy-v3](https://build-small-hackathon-toy-room-v3.hf.space/toy-v3) |
+| Personal HF Space mirror | [sanjuhs/toy-room-v3](https://huggingface.co/spaces/sanjuhs/toy-room-v3) |
+| Personal live Space mirror | [https://sanjuhs-toy-room-v3.hf.space/toy-v3](https://sanjuhs-toy-room-v3.hf.space/toy-v3) |
+| YouTube demo | [https://youtu.be/rwRIXLwaLmI](https://youtu.be/rwRIXLwaLmI) |
+| Canonical dataset repo | [build-small-hackathon/fireboy-vla-rollout-artifacts](https://huggingface.co/datasets/build-small-hackathon/fireboy-vla-rollout-artifacts) |
+| Personal dataset mirror | [sanjuhs/fireboy-vla-rollout-artifacts](https://huggingface.co/datasets/sanjuhs/fireboy-vla-rollout-artifacts) |
+
 This dataset stores the public rollout, media, and proof artifacts for the Fire Boy MiniCPM-V 4.6 VLA demo.
 
 - Space: https://build-small-hackathon-toy-room-v3.hf.space/toy-v3
+- GitHub: https://github.com/sanjuhs/build-small-hackathon-v1
+- YouTube demo: https://youtu.be/rwRIXLwaLmI
 - Research page: https://build-small-hackathon-toy-room-v3.hf.space/vla-research
 - Policy gallery: https://build-small-hackathon-toy-room-v3.hf.space/fireboy-policy-gallery
 - Model artifacts: https://huggingface.co/build-small-hackathon/fireboy-minicpm-v-4-6-vla

@@ -1,9 +1,9 @@
 ---
-title: Toy Room V3
+title: Toy Room V3 - Sanjay Prasad H S
 sdk: docker
 app_port: 7860
 pinned: false
-short_description: Fire Boy MiniCPM-V VLA virtual pet toy room.
+short_description: Fire Boy MiniCPM-V VLA virtual pet by Sanjay Prasad H S.
 license: mit
 tags:
   - build-small-hackathon
@@ -26,6 +26,16 @@ tags:
   - custom-ui
   - research-demo
   - serverless-inference
+  - "track:wood"
+  - "sponsor:openbmb"
+  - "sponsor:openai"
+  - "sponsor:modal"
+  - "achievement:offgrid"
+  - "achievement:welltuned"
+  - "achievement:offbrand"
+  - "achievement:llama"
+  - "achievement:sharing"
+  - "achievement:fieldnotes"
 models:
   - openbmb/MiniCPM-o-4_5
   - openbmb/MiniCPM-V-4_6
@@ -63,7 +73,21 @@ models:
   </a>
 </p>
 
-`minicpm-v` `vision-language-action` `virtual-pet` `threejs` `mujoco` `modal` `codex` `gradio` `hackathon` `serverless-inference` `research-demo`
+`minicpm-v` `vision-language-action` `virtual-pet` `threejs` `mujoco` `modal` `codex` `gradio` `hackathon` `serverless-inference` `research-demo` `track:wood` `sponsor:openbmb` `sponsor:openai` `sponsor:modal`
+
+## Creator And Submission Links
+
+| Item | Link |
+| --- | --- |
+| Creator | **Sanjay Prasad H S** (`sanjuhs`) |
+| GitHub repo | [sanjuhs/build-small-hackathon-v1](https://github.com/sanjuhs/build-small-hackathon-v1) |
+| Canonical HF Space repo | [build-small-hackathon/toy-room-v3](https://huggingface.co/spaces/build-small-hackathon/toy-room-v3) |
+| Canonical live Space | [https://build-small-hackathon-toy-room-v3.hf.space/toy-v3](https://build-small-hackathon-toy-room-v3.hf.space/toy-v3) |
+| Personal HF Space mirror | [sanjuhs/toy-room-v3](https://huggingface.co/spaces/sanjuhs/toy-room-v3) |
+| Personal live Space mirror | [https://sanjuhs-toy-room-v3.hf.space/toy-v3](https://sanjuhs-toy-room-v3.hf.space/toy-v3) |
+| YouTube demo | [https://youtu.be/rwRIXLwaLmI](https://youtu.be/rwRIXLwaLmI) |
+| HF model repo | [build-small-hackathon/fireboy-minicpm-v-4-6-vla](https://huggingface.co/build-small-hackathon/fireboy-minicpm-v-4-6-vla) |
+| HF dataset repo | [build-small-hackathon/fireboy-vla-rollout-artifacts](https://huggingface.co/datasets/build-small-hackathon/fireboy-vla-rollout-artifacts) |
 
 ## What This Is
 

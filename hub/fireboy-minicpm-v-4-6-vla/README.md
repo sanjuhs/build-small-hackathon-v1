@@ -13,15 +13,41 @@ tags:
   - modal
   - codex
   - build-small-hackathon
+  - "track:wood"
+  - "sponsor:openbmb"
+  - "sponsor:openai"
+  - "sponsor:modal"
+  - "achievement:offgrid"
+  - "achievement:welltuned"
+  - "achievement:offbrand"
+  - "achievement:llama"
+  - "achievement:sharing"
+  - "achievement:fieldnotes"
 datasets:
   - build-small-hackathon/fireboy-vla-rollout-artifacts
 ---
 
 # Fire Boy MiniCPM-V 4.6 VLA Router Artifacts
 
+## Creator And Submission Links
+
+| Item | Link |
+| --- | --- |
+| Creator | **Sanjay Prasad H S** (`sanjuhs`) |
+| GitHub repo | [sanjuhs/build-small-hackathon-v1](https://github.com/sanjuhs/build-small-hackathon-v1) |
+| Canonical HF Space repo | [build-small-hackathon/toy-room-v3](https://huggingface.co/spaces/build-small-hackathon/toy-room-v3) |
+| Canonical live Space | [https://build-small-hackathon-toy-room-v3.hf.space/toy-v3](https://build-small-hackathon-toy-room-v3.hf.space/toy-v3) |
+| Personal HF Space mirror | [sanjuhs/toy-room-v3](https://huggingface.co/spaces/sanjuhs/toy-room-v3) |
+| Personal live Space mirror | [https://sanjuhs-toy-room-v3.hf.space/toy-v3](https://sanjuhs-toy-room-v3.hf.space/toy-v3) |
+| YouTube demo | [https://youtu.be/rwRIXLwaLmI](https://youtu.be/rwRIXLwaLmI) |
+| Canonical model repo | [build-small-hackathon/fireboy-minicpm-v-4-6-vla](https://huggingface.co/build-small-hackathon/fireboy-minicpm-v-4-6-vla) |
+| Personal model mirror | [sanjuhs/fireboy-minicpm-v-4-6-vla](https://huggingface.co/sanjuhs/fireboy-minicpm-v-4-6-vla) |
+
 This repository backs the Toy Room v3 embodied-action demo:
 
 - Space: https://build-small-hackathon-toy-room-v3.hf.space/toy-v3
+- GitHub: https://github.com/sanjuhs/build-small-hackathon-v1
+- YouTube demo: https://youtu.be/rwRIXLwaLmI
 - VLA research page: https://build-small-hackathon-toy-room-v3.hf.space/vla-research
 - Policy gallery: https://build-small-hackathon-toy-room-v3.hf.space/fireboy-policy-gallery
 - Dataset/artifacts: https://huggingface.co/datasets/build-small-hackathon/fireboy-vla-rollout-artifacts
