@@ -3,7 +3,7 @@ title: Toy Room V3
 sdk: docker
 app_port: 7860
 pinned: false
-short_description: Fire Boy MiniCPM virtual pet toy room.
+short_description: Fire Boy MiniCPM-V VLA virtual pet toy room.
 license: mit
 tags:
   - build-small-hackathon
@@ -11,45 +11,229 @@ tags:
   - minicpm
   - minicpm-v
   - minicpm-o
+  - vla
+  - vision-language-action
+  - virtual-pet
+  - tamagotchi
+  - toy-room
+  - threejs
+  - mujoco
   - modal
   - codex
+  - openai-codex
   - agents
   - gradio
   - custom-ui
+  - research-demo
+  - serverless-inference
 models:
   - openbmb/MiniCPM-o-4_5
   - openbmb/MiniCPM-V-4_6
 ---
 
-# Tiny Toybox
+# Tiny Toybox: Fire Boy MiniCPM-V VLA
 
-A Gradio-hosted Three.js virtual pet room for the Build Small Hackathon.
+<p align="center">
+  <a href="https://build-small-hackathon-toy-room-v3.hf.space/toy-v3"><img alt="Hugging Face Space" src="https://img.shields.io/badge/Hugging%20Face-Space-ffcc4d?logo=huggingface&logoColor=black"></a>
+  <a href="https://huggingface.co/build-small-hackathon/fireboy-minicpm-v-4-6-vla"><img alt="MiniCPM-V 4.6 VLA model" src="https://img.shields.io/badge/MiniCPM--V%204.6-VLA-4c8bf5"></a>
+  <a href="https://modal.com"><img alt="Modal runtime" src="https://img.shields.io/badge/Modal-serverless%20inference-111111"></a>
+  <a href="https://openai.com/codex"><img alt="OpenAI Codex assisted" src="https://img.shields.io/badge/OpenAI%20Codex-assisted-10a37f"></a>
+  <a href="LICENSE"><img alt="MIT license" src="https://img.shields.io/badge/license-MIT-blue"></a>
+</p>
 
-**Toy Room v3** is the shipped hackathon cut: one controllable Fire Boy virtual pet using the unclothed generated rig as the live body. Fire Boy can be dragged, lifted, dropped, asked to act, asked what he sees, and prompted to create or interact with room objects. The room keeps the MiniCPM/OpenBMB-compatible brain hooks, MiniCPM-V vision hook, browser speech synthesis, WebAudio effects, trace logging, and readiness evidence from v2, but focuses the demo on one character.
+<p align="center">
+  <b>A playable AI-age virtual toy:</b> Fire Boy sees a toy room, receives natural language, routes commands through a MiniCPM-V 4.6 VLA head, then acts inside a Three.js/physics world with inspectable traces.
+</p>
 
-Local ship route:
+<p align="center">
+  <a href="https://youtu.be/rwRIXLwaLmI">Watch demo</a>
+  &nbsp;|&nbsp;
+  <a href="https://build-small-hackathon-toy-room-v3.hf.space/toy-v3">Play Toy Room v3</a>
+  &nbsp;|&nbsp;
+  <a href="https://build-small-hackathon-toy-room-v3.hf.space/vla-research">Read research page</a>
+  &nbsp;|&nbsp;
+  <a href="https://build-small-hackathon-toy-room-v3.hf.space/frontend/research/minicpm-v46-fireboy-vla-research-paper.pdf">Open PDF</a>
+  &nbsp;|&nbsp;
+  <a href="https://huggingface.co/datasets/build-small-hackathon/fireboy-vla-rollout-artifacts">Dataset</a>
+</p>
 
-- `http://localhost:65372/toy-v3`
-- `http://localhost:65372/toy` also opens v3
+<p align="center">
+  <a href="https://youtu.be/rwRIXLwaLmI">
+    <img src="demo/fire-boy-v3-demo-thumbnail.png" alt="Fire Boy Toy Room v3 demo thumbnail" width="760">
+  </a>
+</p>
 
-**Toy Room v2** is the hackathon build: a larger shared physics room with Squeaky, Fire Boy, Shark Girl, and Electraica active at the same time. The agents have draggable/drop-able balance bodies, toggleable generated GLB rig meshes, opt-in microphone hearing, generated WebAudio sound recipes, live room/agent vision panes, generated spell operations, waste/recycling interactions, persistent JSONL memories, and MiniCPM/OpenBMB-compatible model hooks.
+`minicpm-v` `vision-language-action` `virtual-pet` `threejs` `mujoco` `modal` `codex` `gradio` `hackathon` `serverless-inference` `research-demo`
 
-Hosted Space:
+## What This Is
 
-- v3 target: `https://build-small-hackathon-toy-room-v3.hf.space/toy-v3`
-- VLA research artifact: `https://build-small-hackathon-toy-room-v3.hf.space/vla-research`
-- in-depth policy evidence: `https://build-small-hackathon-toy-room-v3.hf.space/fireboy-policy-gallery`
-- MiniCPM-V VLA model artifacts: `https://huggingface.co/build-small-hackathon/fireboy-minicpm-v-4-6-vla`
-- rollout/media artifact dataset: `https://huggingface.co/datasets/build-small-hackathon/fireboy-vla-rollout-artifacts`
-- previous v2 build: `https://build-small-hackathon-toy-room-v2.hf.space/toy-v2`
-- demo video: [`demo/fire-boy-v3-demo.mp4`](demo/fire-boy-v3-demo.mp4)
-- demo thumbnail: [`demo/fire-boy-v3-demo-thumbnail.png`](demo/fire-boy-v3-demo-thumbnail.png)
+Tiny Toybox is a Build Small Hackathon project about making a small virtual creature feel less like a chatbot and more like a toy that lives in a room. The inspiration is a mix of Tamagotchi, Talking Tom, Pokemon-style companion play, and the dream of tiny embodied agents that can observe, decide, remember, and form habits over time.
 
-Key docs:
+The shipped demo focuses on **Fire Boy**, a small rigged character in **Toy Room v3**. You can drag him, pet/touch him, drop toys into the scene, ask him to pick up a ball, run around, or find and eat a berry. The point of the demo is visible causality: model call, action contract, physics result, retargeted animation, and training evidence are all inspectable.
+
+This repo is also a research artifact for the question: **how do we turn a compact vision-language model such as MiniCPM-V 4.6 into a vision-language-action controller for a virtual pet?**
+
+## Demo Links
+
+| Artifact | Link |
+| --- | --- |
+| Playable HF Space | [Toy Room v3](https://build-small-hackathon-toy-room-v3.hf.space/toy-v3) |
+| Page directory | [All demo pages](https://build-small-hackathon-toy-room-v3.hf.space/pages) |
+| Research page | [MiniCPM-V 4.6 VLA paper page](https://build-small-hackathon-toy-room-v3.hf.space/vla-research) |
+| Research PDF | [Open PDF](https://build-small-hackathon-toy-room-v3.hf.space/frontend/research/minicpm-v46-fireboy-vla-research-paper.pdf) |
+| Policy evidence | [Policy gallery](https://build-small-hackathon-toy-room-v3.hf.space/fireboy-policy-gallery) |
+| YouTube demo | [Watch on YouTube](https://youtu.be/rwRIXLwaLmI) |
+| HF model repo | [fireboy-minicpm-v-4-6-vla](https://huggingface.co/build-small-hackathon/fireboy-minicpm-v-4-6-vla) |
+| HF dataset repo | [fireboy-vla-rollout-artifacts](https://huggingface.co/datasets/build-small-hackathon/fireboy-vla-rollout-artifacts) |
+| Previous build | [Toy Room v2](https://build-small-hackathon-toy-room-v2.hf.space/toy-v2) |
+
+## Screenshots
+
+<table>
+  <tr>
+    <td width="50%"><img src="frontend/page-shots/toy-v3-screen.png" alt="Toy Room v3 playable Fire Boy room"></td>
+    <td width="50%"><img src="frontend/research/vla-architecture.png" alt="MiniCPM-V 4.6 VLA router architecture"></td>
+  </tr>
+  <tr>
+    <td><b>Toy Room v3</b><br>Fire Boy is controlled through typed or spoken commands, drag/pet input, physics objects, speech, particles, and policy traces.</td>
+    <td><b>MiniCPM-V to VLA</b><br>A frozen MiniCPM-V backbone feeds a router/action head, then dispatches bounded skills into proof-backed controllers.</td>
+  </tr>
+  <tr>
+    <td><img src="Fireboy-training-policy-vla/proofs/toy-v3-vla-eat-berry-gui.png" alt="Fire Boy VLA berry eating proof"></td>
+    <td><img src="Fireboy-training-policy-vla/proofs/toy-v3-vla-live-bridge-pickup-ball.png" alt="Fire Boy VLA pickup proof"></td>
+  </tr>
+  <tr>
+    <td><b>VLA berry action</b><br>The command maps to <code>find_and_eat_berry</code>, then the toy-room runtime retargets the result into visible movement.</td>
+    <td><b>VLA pickup action</b><br>The router predicts the skill and target parameters, then Toy Room v3 performs the embodied result.</td>
+  </tr>
+</table>
+
+## From MiniCPM-V 4.6 To A VLA
+
+The core idea is deliberately small: keep MiniCPM-V 4.6 as the visual-language backbone, freeze it first, and add a compact action layer that learns to choose skills and parameters from room observations.
+
+```mermaid
+flowchart LR
+    A["Room image + user command + toy state"] --> B["MiniCPM-V 4.6 frozen encoder"]
+    B --> C["1024-d pooled vision-language embedding"]
+    C --> D["Router head: skill logits"]
+    C --> E["Parameter head: target xyz, radius, speed, flags"]
+    D --> F["Action contract"]
+    E --> F
+    F --> G["MuJoCo / policy registry proof rollout"]
+    G --> H["Retargeted Fire Boy action in Toy Room v3"]
+```
+
+The active embodied VLA route uses:
+
+- **Backbone:** `openbmb/MiniCPM-V-4.6`.
+- **Frozen embedding:** mean-pooled 1024-dimensional vision-language features.
+- **Router skills:** `walk_to`, `run_around`, `pick_up`, `find_and_eat_berry`.
+- **Continuous outputs:** target position, radius, speed hints, and object flags.
+- **Policy proof:** MuJoCo and retargeting artifacts stored in the model/dataset repos.
+- **Runtime:** Modal-hosted MiniCPM-V router first, with MiniCPM-o 4.5 as a separate general PET/chat fallback lane.
+
+This is not the only way to build a VLA. A stronger future version could train LoRA adapters through the vision-language trunk, fine-tune an omni model end to end, distill a fast local student policy, or use reinforcement learning over longer rollouts. This hackathon version keeps the system inspectable: frozen model, small action head, explicit action contract, visible physics result.
+
+## Modeling Pipeline
+
+<table>
+  <tr>
+    <td width="33%"><img src="potential-char-images/fire-boy.png" alt="Fire Boy concept image"></td>
+    <td width="33%"><img src="frontend/research/vla-modeling-pipeline.png" alt="Modeling pipeline from concept art through SAM, rigging, MuJoCo, and Toy Room"></td>
+    <td width="33%"><img src="Fireboy-training-policy-vla/screenshots/fixed-glb-vs-mujoco-skeleton-overlay.png" alt="GLB and MuJoCo skeleton alignment"></td>
+  </tr>
+  <tr>
+    <td><b>1. Character concept</b><br>Fire Boy started as generated character art and part references.</td>
+    <td><b>2. SAM and rigging</b><br>Image parts were converted to 3D assets, cleaned, rigged, and prepared as GLB bodies.</td>
+    <td><b>3. Physics alignment</b><br>The visual rig was aligned with MuJoCo-style skeleton and policy rollout artifacts.</td>
+  </tr>
+</table>
+
+## Character Cast
+
+<table>
+  <tr>
+    <td width="25%"><img src="potential-char-images/fire-boy.png" alt="Fire Boy concept"></td>
+    <td width="25%"><img src="potential-char-images/squeaky.png" alt="Squeaky concept"></td>
+    <td width="25%"><img src="potential-char-images/shark-girl.png" alt="Shark Girl concept"></td>
+    <td width="25%"><img src="potential-char-images/electraica-(her).png" alt="Electraica concept"></td>
+  </tr>
+  <tr>
+    <td><b>Fire Boy</b><br>Shipped v3 pet and VLA policy target.</td>
+    <td><b>Squeaky</b><br>V2 multi-agent room character.</td>
+    <td><b>Shark Girl</b><br>V2 multi-agent room character.</td>
+    <td><b>Electraica</b><br>V2 multi-agent room character.</td>
+  </tr>
+</table>
+
+## Training Evidence
+
+<table>
+  <tr>
+    <td width="50%"><img src="frontend/research/vla-success-progression.png" alt="VLA experiment success progression"></td>
+    <td width="50%"><img src="frontend/research/vla-router-loss-curve.png" alt="VLA router loss curve"></td>
+  </tr>
+  <tr>
+    <td><b>Experiment progression</b><br>Single-step manipulation failed first; chunked skills and the router/policy registry made pick-up and berry eating reliable.</td>
+    <td><b>Router training</b><br>The research page tracks validation loss and parameter error across frozen-router and LoRA experiments.</td>
+  </tr>
+  <tr>
+    <td><img src="frontend/research/vla-parameter-summary.png" alt="Trainable parameter summary for the VLA heads"></td>
+    <td><img src="frontend/research/vla-active-skills.png" alt="Final active skills graph"></td>
+  </tr>
+  <tr>
+    <td><b>Small action head</b><br>The demo separates the MiniCPM-V backbone from the compact trainable router/action heads.</td>
+    <td><b>Final skill set</b><br>The active runtime route exposes a bounded set of embodied skills instead of unrestricted text actions.</td>
+  </tr>
+</table>
+
+## Hackathon Prize Map
+
+| Track or prize | Why this repo qualifies |
+| --- | --- |
+| MiniCPM | The embodied route is built around `openbmb/MiniCPM-V-4.6`, with MiniCPM-o 4.5 as a separate fallback PET lane. |
+| OpenAI Codex | Codex was used throughout the build: UI scaffolding, routing, docs, evidence pages, runbooks, debugging, and commit-sized fixes. |
+| Modal | Modal hosts the serverless MiniCPM-V VLA router and MiniCPM-o fallback gateway with warmup/timeout settings for demo reliability. |
+| Thousand Token Wood | The project is a small virtual toy world where a tiny embodied pet observes, reacts, speaks, moves, and uses physics. |
+| Best Demo | The Space includes a playable page, research page, policy gallery, PDF, screenshots, video, model repo, and dataset repo. |
+
+## Repository Map
+
+| Path | Purpose |
+| --- | --- |
+| `app.py` | FastAPI plus Gradio mount, static routes, API endpoints, and demo pages. |
+| `frontend/toybox/` | Three.js Toy Room v3 runtime: room, senses, physics bodies, powers, pet controls. |
+| `src/vla_router_policy.py` | MiniCPM-V 4.6 VLA-first route for embodied actions. |
+| `src/modal_omni_policy.py` | Modal MiniCPM-o fallback/general PET action route. |
+| `fireboy-vla-physics/` | Modal router, policy registry, training scripts, and MuJoCo-side artifacts. |
+| `Fireboy-training-policy-vla/` | Proof screenshots, rollout videos, runpod notes, and VLA experiment evidence. |
+| `frontend/research/` | Research diagrams and the PDF paper served by the Space. |
+| `hub/` | Local model-card and dataset-card sources for the public HF repos. |
+
+## Quick Start
+
+Run the local app:
+
+```bash
+./start.sh
+```
+
+Then open:
+
+- Page directory: `http://localhost:65372/pages`
+- Shipped demo: `http://localhost:65372/toy-v3`
+- Research page: `http://localhost:65372/vla-research`
+- Policy gallery: `http://localhost:65372/fireboy-policy-gallery`
+
+The public Space uses environment variables for real Modal endpoints. The checked-in `.env.example` intentionally contains placeholders, not private or owner-specific URLs.
+
+## Key Docs
 
 - [Toy Room v3 architecture](docs/virtual-toy-v3-architecture.md)
 - [Hugging Face Spaces and submission notes](docs/hf-spaces-submission.md)
 - [Prize qualification evidence](docs/prize-qualification.md)
+- [HF blog draft](docs/hf-blog-draft.md)
 - [Discord submission draft](docs/discord-submission-post.md)
 
 ## Toy Room v3
