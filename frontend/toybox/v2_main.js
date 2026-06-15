@@ -266,6 +266,7 @@ let autoIndex = 0;
 let lowLevelIndex = 0;
 let lowLevelActions = 0;
 let modelStatus = { enabled: false, visionEnabled: false, model: "fallback-policy" };
+let modelStatusLoaded = false;
 let trainingStatus = { usableRows: 0, totalRows: 0, minRows: 20, ready: false, exists: false };
 let judgeStatus = { checks: [], score: { ok: 0, warn: 0, total: 0, requiredOk: 0, requiredTotal: 0, ready: false } };
 let aiEvidence = { checks: [], score: { ok: 0, warn: 0, total: 0, requiredOk: 0, requiredTotal: 0, ready: false }, metrics: {} };
@@ -288,6 +289,14 @@ function loadBrainMode() {
 
 function setBrainMode(mode) {
   if (!Object.hasOwn(BRAIN_MODE_LABELS, mode)) return;
+  if (modelStatusLoaded && !brainModeAvailable(mode)) {
+    brainModePinned = false;
+    chooseInitialBrainMode();
+    renderBrainModeControl();
+    updateAgentPanel();
+    showToast(`${BRAIN_MODE_LABELS[mode]} is unavailable; using ${BRAIN_MODE_LABELS[selectedBrainMode]}.`);
+    return;
+  }
   selectedBrainMode = mode;
   brainModePinned = true;
   try {
@@ -299,7 +308,7 @@ function setBrainMode(mode) {
 }
 
 function brainModeAvailable(mode) {
-  if (mode === "modal") return Boolean(modelStatus.vlaRouter?.enabled || modelStatus.modalOmniEnabled || modelStatus.modalOmniConfigured);
+  if (mode === "modal") return Boolean(modelStatus.vlaRouter?.enabled || modelStatus.modalOmniEnabled);
   if (mode === "ollama-vision") {
     return Boolean(modelStatus.localOllamaAvailable && modelStatus.localOllamaVisionInstalled);
   }
@@ -342,6 +351,9 @@ function renderBrainModeControl() {
 }
 
 function chooseInitialBrainMode() {
+  if (brainModePinned && !brainModeAvailable(selectedBrainMode)) {
+    brainModePinned = false;
+  }
   if (modelStatus.vlaRouter?.enabled) {
     selectedBrainMode = "modal";
     brainModePinned = false;
@@ -357,6 +369,9 @@ function chooseInitialBrainMode() {
   } else if (brainModeAvailable("ollama-text")) {
     selectedBrainMode = "ollama-text";
   }
+  try {
+    localStorage.setItem(BRAIN_MODE_STORAGE_KEY, selectedBrainMode);
+  } catch {}
 }
 
 for (const spec of AGENT_SPECS) {
@@ -1379,13 +1394,16 @@ async function requestAction(agent, message = "") {
   updateAgentPanel();
   const previousActive = activeAgent();
   senses.setPet(agent.pet);
-  const frameMime = selectedBrainMode === "ollama-vision" ? "image/png" : "image/jpeg";
+  chooseInitialBrainMode();
+  renderBrainModeControl();
+  const actionBrainMode = brainModeAvailable(selectedBrainMode) ? selectedBrainMode : "auto";
+  const frameMime = actionBrainMode === "ollama-vision" ? "image/png" : "image/jpeg";
   const petFrame = senses.capturePetFrame(frameMime, 0.45);
   senses.setPet(previousActive.pet);
   const payload = {
     pet: agent.kind,
     message,
-    brainMode: selectedBrainMode,
+    brainMode: actionBrainMode,
     scene: collectSceneState(agent),
     memories: agent.memories,
     forces: forceEvents.slice(-12),
@@ -3893,6 +3911,7 @@ async function refreshModelStatus() {
   try {
     const response = await fetch("/api/model-status");
     modelStatus = await response.json();
+    modelStatusLoaded = true;
     chooseInitialBrainMode();
     renderBrainModeControl();
     const defaultBrain = modelStatus.modalOmniEnabled
