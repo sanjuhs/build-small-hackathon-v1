@@ -85,10 +85,12 @@ The video shows the actual `/toy-v3` UI: Fire Boy's rig, quick action buttons, p
 
 Current local model status for this commit:
 
+- Model split, stated plainly: the **live Hugging Face Space action brain** is `openbmb/MiniCPM-o-4_5` served on Modal because it exposes the turn-based `/ws/chat` gateway used by Toy Room v3. The **VLA research/training artifact** is the MiniCPM-V 4.6 path: `openbmb/MiniCPM-V-4.6` is frozen, mean-pooled into vision-language embeddings, then used by the residual action heads, LoRA experiments, and skill-parameter router documented in `/vla-research`.
+- The public Space also keeps MiniCPM-V 4.6 routes documented and configurable: local Ollama `minicpm-v4.6` for the `Ollama V` button, and `TOYBOX_VLA_ROUTER_URL`/`TOYBOX_VLA_ROUTER_ACTION=1` for a hosted MiniCPM-V 4.6 VLA router service. Those are distinct from the Modal MiniCPM-o runtime brain.
 - Toy Room v3 uses the deployed Modal MiniCPM-o gateway as the primary action brain when `TOYBOX_MODAL_OMNI_ACTION=1` and `TOYBOX_MODAL_OMNI_URL` are set.
 - `/api/model-status` reports `provider: modal`, `mode: modal-omni-websocket`, `model: openbmb/MiniCPM-o-4_5`, `authRequired: false`, and `fallbackPolicy: asleep_when_configured`.
 - v3 is command-driven: page load and ambient autoplay do not call the model. One typed/spoken command or explicit quick button sends one `/api/pet-action` request, which opens one Modal `/ws/chat` turn and returns one PET state update.
-- `TOYBOX_MODAL_OMNI_SEND_IMAGE=auto` sends the compact scene/object JSON on every command and only attaches the camera frame for visual commands. Startup also warms Modal `/health` in the background to reduce first-command handshake stalls.
+- `TOYBOX_MODAL_OMNI_SEND_IMAGE=auto` sends the compact scene/object JSON on every command and only attaches the camera frame for visual commands. Startup also warms Modal `/health` in the background to reduce first-command handshake stalls. The deployed Modal worker keeps the L40S container warm for 180 seconds after traffic, and the Space uses 180-second connect/warmup/action timeouts so cold starts have room to finish.
 - Action attempts are stored in SQLite at `data/pet-action-events.sqlite3` by default. Inspect `/api/pet-action-stats` and `/api/pet-action-events?limit=50` for policy, latency, token, failure, and target data.
 - Verified local UI command: "Fire Boy, walk around the toy room" produced `interaction: walk`, `speech: "Me walky loop."`, `promptTokens: 1638`, `completionTokens: 9`, `tokensPerSecond: 2.35`, and `clientRoundTripMs: 3880.4`.
 - Verified local API command with an agent-view image: "Fire Boy, pick up the blue box" produced `interaction: pickup`, `promptTokens: 768`, `completionTokens: 7`, `tokensPerSecond: 1.96`, and `serverLatencyMs: 3565.4`.
@@ -365,8 +367,9 @@ export TOYBOX_MODAL_OMNI_ACTION=1
 export TOYBOX_MODAL_OMNI_URL=https://sanjuhs123--minicpm-omni-demo.modal.run
 export TOYBOX_MODAL_OMNI_MODEL=openbmb/MiniCPM-o-4_5
 export TOYBOX_MODAL_OMNI_SEND_IMAGE=auto
-export TOYBOX_MODAL_OMNI_CONNECT_TIMEOUT=45
-export TOYBOX_MODAL_OMNI_TIMEOUT=120
+export TOYBOX_MODAL_OMNI_CONNECT_TIMEOUT=180
+export TOYBOX_MODAL_OMNI_WARMUP_TIMEOUT=180
+export TOYBOX_MODAL_OMNI_TIMEOUT=180
 export TOYBOX_TRACE_POLICY=0
 ```
 
@@ -407,7 +410,7 @@ modal app logs minicpm-omni-45
 curl https://sanjuhs123--minicpm-omni-demo.modal.run/health
 ```
 
-The Modal app is now the primary Toy Room v3 action loop. It uses the official MiniCPM-o 4.5 demo gateway protocol: the backend opens `/ws/chat`, sends a compact command/scene/image prompt, reads `prefill_done`, `chunk`, and `done` events, then exposes prompt tokens, completion tokens, Modal event count, latency, and tokens/sec in the Brain Trace panel.
+The Modal app is now the primary Toy Room v3 action loop. It uses the official MiniCPM-o 4.5 demo gateway protocol: the backend opens `/ws/chat`, sends a compact command/scene/image prompt, reads `prefill_done`, `chunk`, and `done` events, then exposes prompt tokens, completion tokens, Modal event count, latency, and tokens/sec in the Brain Trace panel. The deployed Modal function uses `scaledown_window=180`, so repeated judging commands within a few minutes should reuse the warm MiniCPM-o worker instead of paying the full cold start every turn.
 
 Measure the current local runtime:
 

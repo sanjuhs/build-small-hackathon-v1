@@ -199,7 +199,7 @@ def _write_demo_config() -> None:
     volumes={"/models": model_volume},
     timeout=6 * 60 * 60,
     startup_timeout=45 * 60,
-    scaledown_window=60,
+    scaledown_window=180,
     min_containers=0,
     max_containers=1,
     memory=96 * 1024,
