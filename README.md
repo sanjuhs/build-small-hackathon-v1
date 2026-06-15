@@ -366,7 +366,7 @@ Use Modal MiniCPM-V 4.6 as the Toy Room v3 embodied VLA brain:
 
 ```bash
 export TOYBOX_VLA_ROUTER_ACTION=1
-export TOYBOX_VLA_ROUTER_URL=https://sanjuhs123--fireboy-vla-router.modal.run
+export TOYBOX_VLA_ROUTER_URL=https://YOUR-MODAL-WORKSPACE--fireboy-vla-router.modal.run
 export TOYBOX_VLA_ROUTER_TIMEOUT=180
 export TOYBOX_VLA_ROUTER_HEALTH_TIMEOUT=30
 ```
@@ -375,7 +375,7 @@ Keep Modal MiniCPM-o as the general/fallback PET lane:
 
 ```bash
 export TOYBOX_MODAL_OMNI_ACTION=1
-export TOYBOX_MODAL_OMNI_URL=https://sanjuhs123--minicpm-omni-demo.modal.run
+export TOYBOX_MODAL_OMNI_URL=https://YOUR-MODAL-WORKSPACE--minicpm-omni-demo.modal.run
 export TOYBOX_MODAL_OMNI_MODEL=openbmb/MiniCPM-o-4_5
 export TOYBOX_MODAL_OMNI_SEND_IMAGE=auto
 export TOYBOX_MODAL_OMNI_CONNECT_TIMEOUT=180
@@ -425,9 +425,9 @@ Check Modal remote execution and the deployed MiniCPM apps:
 uv run --with modal modal run scripts/modal_square_smoke.py
 modal app list
 modal app logs fireboy-vla-router
-curl https://sanjuhs123--fireboy-vla-router.modal.run/health
+curl https://YOUR-MODAL-WORKSPACE--fireboy-vla-router.modal.run/health
 modal app logs minicpm-omni-45
-curl https://sanjuhs123--minicpm-omni-demo.modal.run/health
+curl https://YOUR-MODAL-WORKSPACE--minicpm-omni-demo.modal.run/health
 ```
 
 The Modal MiniCPM-V VLA router is the first Toy Room v3 embodied-action path when `TOYBOX_VLA_ROUTER_ACTION=1`. It maps the command and scene into a skill/parameter contract, then the app dispatches to the MuJoCo policy registry and retargeted Fire Boy motions. The Modal MiniCPM-o app is the fallback/general PET brain: the backend opens `/ws/chat`, sends a compact command/scene/image prompt, reads `prefill_done`, `chunk`, and `done` events, then exposes prompt tokens, completion tokens, Modal event count, latency, and tokens/sec in the Brain Trace panel. Both deployed Modal functions use `scaledown_window=180`, so repeated judging commands within a few minutes should reuse warm workers instead of paying the full cold start every turn.

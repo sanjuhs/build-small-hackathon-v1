@@ -18,7 +18,7 @@ Opening the local page does not automatically wake the Modal GPU. Use `Wake`, `R
 The local frontend reads `modal-minicpm-omni/local-frontend/.env` directly:
 
 ```bash
-MINICPM_MODAL_URL=https://sanjuhs123--minicpm-omni-demo.modal.run
+MINICPM_MODAL_URL=https://YOUR-MODAL-WORKSPACE--minicpm-omni-demo.modal.run
 MINICPM_MODAL_APP=minicpm-omni-45
 PORT=5174
 ```

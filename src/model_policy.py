@@ -13,6 +13,7 @@ from src.pet_actions import action_schema, validate_action
 from src.pet_memory import memory_path
 from src.pet_payload import compact_payload, target_from_payload, target_ids_from_payload
 from src.pet_profiles import PET_PROFILES, VALID_EMOTIONS, normalize_pet
+from src.redaction import redact_endpoint_url
 
 
 DEFAULT_OLLAMA_BASE_URL = "http://127.0.0.1:11434"
@@ -168,7 +169,9 @@ def model_status() -> dict[str, Any]:
         "provider": "modal"
         if modal_requested
         else (endpoint_provider(endpoint) or (endpoint_provider(vision_endpoint) if vision_action_configured else None)),
-        "endpoint": modal_url if modal_requested else (endpoint or (vision_endpoint if vision_action_configured else None) or None),
+        "endpoint": redact_endpoint_url(
+            modal_url if modal_requested else (endpoint or (vision_endpoint if vision_action_configured else None) or None)
+        ),
         "model": modal_model if modal_requested else (model or (vision_model if vision_action_configured else "") or "fallback-policy"),
         "authRequired": (False if modal_requested else llm_auth_required)
         or (not modal_requested and vision_action_configured and vision_auth_required),
@@ -177,7 +180,7 @@ def model_status() -> dict[str, Any]:
         "modalOmniRequested": modal_requested,
         "modalOmniConfigured": modal_configured,
         "modalOmniEnabled": modal_configured,
-        "modalOmniUrl": modal_url or None,
+        "modalOmniUrl": redact_endpoint_url(modal_url),
         "modalOmniModel": modal_model,
         "modalOmniImageMode": os.getenv("TOYBOX_MODAL_OMNI_SEND_IMAGE", "auto").strip() or "auto",
         "modalOmniWsPath": "/ws/chat",
@@ -195,7 +198,7 @@ def model_status() -> dict[str, Any]:
         "visionActionEnabled": vision_action_configured and (not vision_auth_required or vision_auth_configured),
         "visionMode": "ollama" if vision_ollama else (endpoint_mode(vision_endpoint) if vision_endpoint else "none"),
         "visionProvider": endpoint_provider(vision_endpoint),
-        "visionEndpoint": vision_endpoint or None,
+        "visionEndpoint": redact_endpoint_url(vision_endpoint),
         "visionModel": vision_model or None,
         "visionAuthRequired": vision_auth_required,
         "visionAuthConfigured": vision_auth_configured,

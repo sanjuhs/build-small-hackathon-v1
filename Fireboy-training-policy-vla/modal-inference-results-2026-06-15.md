@@ -6,7 +6,7 @@ Date: 2026-06-15
 
 ```text
 Modal app: fireboy-vla-router
-URL: https://sanjuhs123--fireboy-vla-router.modal.run
+URL: https://YOUR-MODAL-WORKSPACE--fireboy-vla-router.modal.run
 GPU: L40S
 idle scaledown window: 60 seconds
 checkpoint: Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_skill_param_head/minicpm_vla_skill_param_head.pt
@@ -21,7 +21,7 @@ needs MiniCPM hidden states plus a custom continuous head, not token generation.
 ## Local Website Wiring
 
 ```text
-TOYBOX_VLA_ROUTER_URL=https://sanjuhs123--fireboy-vla-router.modal.run
+TOYBOX_VLA_ROUTER_URL=https://YOUR-MODAL-WORKSPACE--fireboy-vla-router.modal.run
 TOYBOX_VLA_ROUTER_ACTION=1
 local app: http://127.0.0.1:65373
 policy gallery: http://127.0.0.1:65373/fireboy-policy-gallery

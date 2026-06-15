@@ -17,7 +17,7 @@ Do not place Hugging Face tokens in this folder. Store them only in Modal Secret
 The first working deployment is live at:
 
 ```text
-https://sanjuhs123--minicpm-omni-demo.modal.run
+https://YOUR-MODAL-WORKSPACE--minicpm-omni-demo.modal.run
 ```
 
 Verified on 2026-06-13:
@@ -28,6 +28,9 @@ Verified on 2026-06-13:
 - Modal GPU probe reported `NVIDIA L40S`, PyTorch `2.8.0+cu128`, and about `44.39 GB` available GPU memory.
 - The model cache volume contains about `18.67 GB` for the full PyTorch model.
 - The upstream turn-based `english_call` preset is patched to `Helpful Chat` because the original voice-cloning preset caused one-token echo responses for normal text prompts.
+
+The owner-specific live endpoint is intentionally not committed; keep it in
+local `.env`, Modal dashboard notes, or Hugging Face Space variables.
 
 Useful live commands:
 

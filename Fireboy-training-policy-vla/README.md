@@ -70,7 +70,7 @@ The promoted frozen router is now deployed as a Modal GPU endpoint:
 
 ```text
 Modal app: fireboy-vla-router
-URL: https://sanjuhs123--fireboy-vla-router.modal.run
+URL: https://YOUR-MODAL-WORKSPACE--fireboy-vla-router.modal.run
 GPU: L40S
 idle scaledown window: 60 seconds
 checkpoint: Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_skill_param_head/minicpm_vla_skill_param_head.pt
@@ -79,7 +79,7 @@ checkpoint: Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_min
 Local Toy Room wiring:
 
 ```bash
-TOYBOX_VLA_ROUTER_URL='https://sanjuhs123--fireboy-vla-router.modal.run' \
+TOYBOX_VLA_ROUTER_URL='https://YOUR-MODAL-WORKSPACE--fireboy-vla-router.modal.run' \
 TOYBOX_VLA_ROUTER_ACTION=1 \
 PORT=65373 PID_FILE=.toybox-65373.pid LOG_FILE=.toybox-65373.log ./start.sh
 ```

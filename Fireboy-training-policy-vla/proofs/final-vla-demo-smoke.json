@@ -6,7 +6,7 @@
     "vlaRouterConfigured": true,
     "vlaRouterEnabled": true,
     "vlaRouterHealthOk": true,
-    "vlaRouterUrl": "https://sanjuhs123--fireboy-vla-router.modal.run",
+    "vlaRouterUrl": "https://<modal-endpoint-redacted>",
     "routerCheckpointExists": true,
     "routerModelLoaded": false,
     "routerHealthLatencyMs": 791.8

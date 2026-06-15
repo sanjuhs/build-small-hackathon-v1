@@ -41,7 +41,7 @@ const els = {
   template: $("#message-template"),
 };
 
-let defaultRemote = "https://sanjuhs123--minicpm-omni-demo.modal.run";
+let defaultRemote = "";
 let attachments = [];
 let attachmentUrls = new Map();
 let transcript = [];

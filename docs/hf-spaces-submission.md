@@ -77,7 +77,7 @@ For the Modal MiniCPM-V v3 embodied VLA route:
 
 ```bash
 TOYBOX_VLA_ROUTER_ACTION=1
-TOYBOX_VLA_ROUTER_URL=https://sanjuhs123--fireboy-vla-router.modal.run
+TOYBOX_VLA_ROUTER_URL=https://YOUR-MODAL-WORKSPACE--fireboy-vla-router.modal.run
 TOYBOX_VLA_ROUTER_TIMEOUT=180
 TOYBOX_VLA_ROUTER_HEALTH_TIMEOUT=30
 ```
@@ -86,7 +86,7 @@ For the Modal MiniCPM-o fallback/general PET route:
 
 ```bash
 TOYBOX_MODAL_OMNI_ACTION=1
-TOYBOX_MODAL_OMNI_URL=https://sanjuhs123--minicpm-omni-demo.modal.run
+TOYBOX_MODAL_OMNI_URL=https://YOUR-MODAL-WORKSPACE--minicpm-omni-demo.modal.run
 TOYBOX_MODAL_OMNI_MODEL=openbmb/MiniCPM-o-4_5
 TOYBOX_MODAL_OMNI_SEND_IMAGE=auto
 TOYBOX_MODAL_OMNI_CONNECT_TIMEOUT=180
@@ -120,10 +120,10 @@ The current Modal deployments are:
 
 ```text
 fireboy-vla-router
-https://sanjuhs123--fireboy-vla-router.modal.run
+https://YOUR-MODAL-WORKSPACE--fireboy-vla-router.modal.run
 
 minicpm-omni-45
-https://sanjuhs123--minicpm-omni-demo.modal.run
+https://YOUR-MODAL-WORKSPACE--minicpm-omni-demo.modal.run
 ```
 
 `fireboy-vla-router` is the judge-facing embodied route. It loads `openbmb/MiniCPM-V-4.6`, uses the frozen MiniCPM-V embedding with the trained skill/parameter head, and returns a bounded skill contract for MuJoCo/retargeted Fire Boy actions.
@@ -136,9 +136,9 @@ Useful Modal commands:
 modal app list
 modal container list --json
 modal app logs fireboy-vla-router --since 15m
-curl --max-time 45 https://sanjuhs123--fireboy-vla-router.modal.run/health
+curl --max-time 45 https://YOUR-MODAL-WORKSPACE--fireboy-vla-router.modal.run/health
 modal app logs minicpm-omni-45 --since 15m
-curl --max-time 45 https://sanjuhs123--minicpm-omni-demo.modal.run/health
+curl --max-time 45 https://YOUR-MODAL-WORKSPACE--minicpm-omni-demo.modal.run/health
 modal deploy fireboy-vla-physics/modal_vla_router.py
 modal deploy modal-minicpm-omni/modal_minicpm_omni.py
 ```

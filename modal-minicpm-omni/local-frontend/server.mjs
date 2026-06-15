@@ -8,8 +8,7 @@ import { existsSync, readFileSync } from "node:fs";
 const __dirname = fileURLToPath(new URL(".", import.meta.url));
 const publicDir = resolve(__dirname, "public");
 loadEnvFile(resolve(__dirname, ".env"));
-const defaultRemote =
-  process.env.MINICPM_MODAL_URL || "https://sanjuhs123--minicpm-omni-demo.modal.run";
+const defaultRemote = process.env.MINICPM_MODAL_URL || "";
 const appName = process.env.MINICPM_MODAL_APP || "minicpm-omni-45";
 const port = Number(process.env.PORT || getArg("--port") || 5174);
 

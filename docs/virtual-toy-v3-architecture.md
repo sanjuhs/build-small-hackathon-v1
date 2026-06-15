@@ -6,7 +6,7 @@ Toy Room v3 is the small, shippable cut of Tiny Toybox: one controllable Fire Bo
 
 As of this build, Toy Room v3 is wired to a MiniCPM-V-first embodied action route:
 
-- `/api/model-status` includes a nested `vlaRouter` object for `https://sanjuhs123--fireboy-vla-router.modal.run`; that route uses `openbmb/MiniCPM-V-4.6`.
+- `/api/model-status` includes a nested `vlaRouter` object for the Modal VLA route; the raw backend URL is redacted in public status output, and the route uses `openbmb/MiniCPM-V-4.6`.
 - The top-level Modal/MiniCPM-o status describes the fallback/general PET lane, not the first embodied VLA path.
 - Toy Room v3 sends one `/api/pet-action` request per typed/spoken command or explicit quick button.
 - `app.py` intentionally evaluates `run_vla_router_pet_action(payload) or run_mujoco_pet_action(payload) or choose_pet_action(payload)`.
@@ -177,8 +177,8 @@ Toy Room v3 uses two Modal apps:
 
 Both are real Modal runtime components for the submission:
 
-- The public VLA endpoint is `https://sanjuhs123--fireboy-vla-router.modal.run`.
-- The public MiniCPM-o endpoint is `https://sanjuhs123--minicpm-omni-demo.modal.run`.
+- The VLA endpoint is stored in Space variables and redacted from public repo/status output.
+- The MiniCPM-o endpoint is stored in Space variables and redacted from public repo/status output.
 - Both workers use GPU-backed Modal deployments and 180-second scale-down windows for judge-facing reliability.
 
 ```mermaid

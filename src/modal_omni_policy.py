@@ -11,6 +11,7 @@ from src.model_policy import attach_model_debug, elapsed_ms, extract_json
 from src.pet_actions import validate_action
 from src.pet_payload import compact_payload, object_label, target_from_payload, target_ids_from_payload
 from src.pet_profiles import PET_PROFILES, VALID_EMOTIONS, normalize_pet
+from src.redaction import redact_endpoint_text, redact_endpoint_url
 from src.vision_policy import image_base64
 
 
@@ -118,7 +119,7 @@ def try_modal_omni_policy(payload: dict[str, Any]) -> dict[str, Any] | None:
         if isinstance(debug, dict):
             debug["policy"] = "modal_omni_action"
             debug["modalOmni"] = True
-            debug["modalBaseUrl"] = base_url
+            debug["modalBaseUrl"] = redact_endpoint_url(base_url)
             debug["modalWsPath"] = "/ws/chat"
             debug["modalImageSent"] = image_sent
             debug["modalEvents"] = event_count
@@ -130,14 +131,14 @@ def try_modal_omni_policy(payload: dict[str, Any]) -> dict[str, Any] | None:
     except Exception as exc:
         _LAST_MODAL_ERROR = {
             "type": type(exc).__name__,
-            "message": str(exc)[:360],
+            "message": redact_endpoint_text(exc)[:360],
             "elapsedMs": elapsed_ms(started),
-            "baseUrl": base_url,
+            "baseUrl": redact_endpoint_url(base_url),
             "wsPath": "/ws/chat",
             "imageSent": image_sent,
         }
         if os.getenv("TOYBOX_MODAL_OMNI_DEBUG", "").lower() in {"1", "true", "yes"}:
-            print(f"Modal MiniCPM-o action policy failed: {str(exc)[:360]}", flush=True)
+            print(f"Modal MiniCPM-o action policy failed: {redact_endpoint_text(exc)[:360]}", flush=True)
         return None
 
 

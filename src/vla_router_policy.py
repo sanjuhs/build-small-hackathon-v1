@@ -5,6 +5,7 @@ import time
 from typing import Any
 
 from src.mujoco_policy_bridge import run_mujoco_pet_action
+from src.redaction import redact_endpoint_text, redact_endpoint_url
 
 
 _LAST_VLA_ROUTER_ERROR: dict[str, Any] = {}
@@ -27,7 +28,7 @@ def vla_router_status() -> dict[str, Any]:
     status = {
         "configured": bool(base_url),
         "enabled": vla_router_action_configured() and bool(base_url),
-        "url": base_url,
+        "url": redact_endpoint_url(base_url),
         "lastError": vla_router_last_error(),
     }
     if not base_url:
@@ -81,9 +82,9 @@ def route_vla(payload: dict[str, Any]) -> dict[str, Any]:
     except Exception as exc:
         _LAST_VLA_ROUTER_ERROR = {
             "type": type(exc).__name__,
-            "message": str(exc)[:360],
+            "message": redact_endpoint_text(exc)[:360],
             "elapsedMs": round((time.perf_counter() - started) * 1000, 1),
-            "url": base_url,
+            "url": redact_endpoint_url(base_url),
         }
         raise
 
@@ -119,7 +120,7 @@ def run_vla_router_pet_action(payload: dict[str, Any]) -> dict[str, Any] | None:
     if isinstance(debug, dict):
         debug["policy"] = "modal_minicpm_vla_router_plus_mujoco"
         debug["vlaRouter"] = compact_vla_result(routed)
-        debug["vlaRouterUrl"] = vla_router_base_url()
+        debug["vlaRouterUrl"] = redact_endpoint_url(vla_router_base_url())
         debug["vlaRouterDispatchMessage"] = dispatch_payload["message"]
         debug["clientCommand"] = str(payload.get("message") or "")
     action["intent"] = f"vla_router_{action.get('intent') or 'mujoco_policy'}"

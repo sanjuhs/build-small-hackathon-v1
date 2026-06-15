@@ -11,8 +11,8 @@ Toy Room v3 is packaged for the Build Small Hackathon as a tiny-world virtual pe
 - MiniCPM-V VLA model artifacts: `https://huggingface.co/build-small-hackathon/fireboy-minicpm-v-4-6-vla`
 - rollout/media artifact dataset: `https://huggingface.co/datasets/build-small-hackathon/fireboy-vla-rollout-artifacts`
 - Demo MP4: `demo/fire-boy-v3-demo.mp4`
-- Modal MiniCPM-V VLA router: `https://sanjuhs123--fireboy-vla-router.modal.run`
-- Modal MiniCPM-o endpoint: `https://sanjuhs123--minicpm-omni-demo.modal.run`
+- Modal MiniCPM-V VLA router: configured as a Hugging Face Space variable and redacted from public diagnostics.
+- Modal MiniCPM-o endpoint: configured as a Hugging Face Space variable and redacted from public diagnostics.
 
 ## Prize Map
 
@@ -27,7 +27,7 @@ Toy Room v3 is packaged for the Build Small Hackathon as a tiny-world virtual pe
 
 ## Runtime Truth
 
-Toy Room v3 is configured for the Modal MiniCPM-V router by setting `TOYBOX_VLA_ROUTER_ACTION=1` and `TOYBOX_VLA_ROUTER_URL=https://sanjuhs123--fireboy-vla-router.modal.run`. The runtime panel and `/api/model-status` show the nested `vlaRouter` health, while the top-level MiniCPM-o fields describe the fallback lane.
+Toy Room v3 is configured for the Modal MiniCPM-V router by setting `TOYBOX_VLA_ROUTER_ACTION=1` and `TOYBOX_VLA_ROUTER_URL` in Hugging Face Space variables. The runtime panel and `/api/model-status` show nested `vlaRouter` health with the raw backend URL redacted, while the top-level MiniCPM-o fields describe the fallback lane.
 
 When model endpoints are configured, the same PET action contract supports:
 
@@ -84,7 +84,7 @@ The MiniCPM-V VLA Modal app uses:
 - Model: `openbmb/MiniCPM-V-4.6`
 - Policy artifact: `minicpm_vla_skill_param_head.pt`
 - Dispatch: `walk_to`, `run_around`, `pick_up`, and `find_and_eat_berry`
-- Public endpoint: `https://sanjuhs123--fireboy-vla-router.modal.run`
+- Public endpoint: stored in Space variables; redacted in public repo/status output.
 
 The MiniCPM-o fallback Modal app uses:
 
@@ -93,7 +93,7 @@ The MiniCPM-o fallback Modal app uses:
 - GPU: `L40S`
 - Volume: `minicpm-omni-cache`
 - Secret: `huggingface-token`
-- Public endpoint: `https://sanjuhs123--minicpm-omni-demo.modal.run`
+- Public endpoint: stored in Space variables; redacted in public repo/status output.
 
 Validation commands:
 
@@ -101,9 +101,9 @@ Validation commands:
 modal app list
 modal container list --json
 modal app logs fireboy-vla-router
-curl https://sanjuhs123--fireboy-vla-router.modal.run/health
+curl https://YOUR-MODAL-WORKSPACE--fireboy-vla-router.modal.run/health
 modal app logs minicpm-omni-45
-curl https://sanjuhs123--minicpm-omni-demo.modal.run/health
+curl https://YOUR-MODAL-WORKSPACE--minicpm-omni-demo.modal.run/health
 ```
 
 The Modal path is a real runtime component for Toy Room v3. Verified Space API commands route through the VLA router:
