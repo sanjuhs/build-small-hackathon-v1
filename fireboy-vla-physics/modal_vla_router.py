@@ -71,7 +71,7 @@ def get_router() -> Any:
     volumes={"/cache": cache_volume},
     timeout=30 * 60,
     startup_timeout=30 * 60,
-    scaledown_window=60,
+    scaledown_window=180,
     max_containers=1,
     memory=64 * 1024,
 )

@@ -62,3 +62,14 @@ fireboy-vla-physics/**/*.npz
 fireboy-vla-physics/**/*.pt
 fireboy-vla-physics/**/*.pth
 fireboy-vla-physics/**/*.safetensors
+
+# Runtime artifacts intentionally shipped with the Space so the Modal
+# MiniCPM-V VLA router can dispatch into local Toy Room policy proofs.
+!Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_skill_param_head/minicpm_vla_skill_param_head.pt
+!Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_minicpm_vla_skill_param_head/fireboy_vla_skill_params_allskill.jsonl
+!Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_articulated_go_eat_berry/faithful_articulated_policy.npz
+!Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_articulated_go_to_point/faithful_articulated_policy.npz
+!Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_articulated_go_to_point_clock/faithful_articulated_policy.npz
+!Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_articulated_pick_up/faithful_articulated_policy.npz
+!Fireboy-training-policy-vla/runpod-artifacts/checkpoints/fireboy_articulated_run_around/faithful_articulated_policy.npz
+!fireboy-vla-physics/checkpoints/berry_eat_wide/state_policy.npz
