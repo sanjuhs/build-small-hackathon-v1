@@ -35,6 +35,7 @@ datasets:
 | --- | --- |
 | Creator | **Sanjay Prasad H S** (`sanjuhs`) |
 | GitHub repo | [sanjuhs/build-small-hackathon-v1](https://github.com/sanjuhs/build-small-hackathon-v1) |
+| HF collection | [Fire Boy MiniCPM-V VLA Toy Room](https://huggingface.co/collections/sanjuhs/fire-boy-minicpm-v-vla-toy-room-6a30d607f5910fb02c0e19ef) |
 | Canonical HF Space repo | [build-small-hackathon/toy-room-v3](https://huggingface.co/spaces/build-small-hackathon/toy-room-v3) |
 | Canonical live Space | [https://build-small-hackathon-toy-room-v3.hf.space/toy-v3](https://build-small-hackathon-toy-room-v3.hf.space/toy-v3) |
 | Personal HF Space mirror | [sanjuhs/toy-room-v3](https://huggingface.co/spaces/sanjuhs/toy-room-v3) |
@@ -47,6 +48,7 @@ This repository backs the Toy Room v3 embodied-action demo:
 
 - Space: https://build-small-hackathon-toy-room-v3.hf.space/toy-v3
 - GitHub: https://github.com/sanjuhs/build-small-hackathon-v1
+- HF collection: https://huggingface.co/collections/sanjuhs/fire-boy-minicpm-v-vla-toy-room-6a30d607f5910fb02c0e19ef
 - YouTube demo: https://youtu.be/rwRIXLwaLmI
 - VLA research page: https://build-small-hackathon-toy-room-v3.hf.space/vla-research
 - Policy gallery: https://build-small-hackathon-toy-room-v3.hf.space/fireboy-policy-gallery

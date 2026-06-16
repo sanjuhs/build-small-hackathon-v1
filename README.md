@@ -81,6 +81,7 @@ models:
 | --- | --- |
 | Creator | **Sanjay Prasad H S** (`sanjuhs`) |
 | GitHub repo | [sanjuhs/build-small-hackathon-v1](https://github.com/sanjuhs/build-small-hackathon-v1) |
+| HF collection | [Fire Boy MiniCPM-V VLA Toy Room](https://huggingface.co/collections/sanjuhs/fire-boy-minicpm-v-vla-toy-room-6a30d607f5910fb02c0e19ef) |
 | Canonical HF Space repo | [build-small-hackathon/toy-room-v3](https://huggingface.co/spaces/build-small-hackathon/toy-room-v3) |
 | Canonical live Space | [https://build-small-hackathon-toy-room-v3.hf.space/toy-v3](https://build-small-hackathon-toy-room-v3.hf.space/toy-v3) |
 | Personal HF Space mirror | [sanjuhs/toy-room-v3](https://huggingface.co/spaces/sanjuhs/toy-room-v3) |
@@ -107,6 +108,7 @@ This repo is also a research artifact for the question: **how do we turn a compa
 | Research PDF | [Open PDF](https://build-small-hackathon-toy-room-v3.hf.space/frontend/research/minicpm-v46-fireboy-vla-research-paper.pdf) |
 | Policy evidence | [Policy gallery](https://build-small-hackathon-toy-room-v3.hf.space/fireboy-policy-gallery) |
 | YouTube demo | [Watch on YouTube](https://youtu.be/rwRIXLwaLmI) |
+| HF collection | [Fire Boy MiniCPM-V VLA Toy Room](https://huggingface.co/collections/sanjuhs/fire-boy-minicpm-v-vla-toy-room-6a30d607f5910fb02c0e19ef) |
 | HF model repo | [fireboy-minicpm-v-4-6-vla](https://huggingface.co/build-small-hackathon/fireboy-minicpm-v-4-6-vla) |
 | HF dataset repo | [fireboy-vla-rollout-artifacts](https://huggingface.co/datasets/build-small-hackathon/fireboy-vla-rollout-artifacts) |
 | Previous build | [Toy Room v2](https://build-small-hackathon-toy-room-v2.hf.space/toy-v2) |
